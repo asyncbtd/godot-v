@@ -1,0 +1,10 @@
+### V ###
+*.exe
+*.exe~
+*.so
+*.dylib
+*.dll
+bin/
+
+### VS Code ###
+.vscode/
