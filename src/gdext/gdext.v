@@ -24,6 +24,7 @@ pub struct GDExt {
 	GDExtensionInterfaceFunctions
 }
 
+// setup loads the GDExtension interface and keeps it for later calls.
 pub fn setup(gpaddr fn (&i8) GDExtensionInterfaceFunctionPtr, clp GDExtensionClassLibraryPtr) &GDExt {
 	C._vinit(0, unsafe { nil })
 
@@ -205,6 +206,7 @@ __global (
 	utility_bind_ptrs []voidptr
 )
 
+// prepare_binds allocates the method-bind pointer tables.
 pub fn prepare_binds() {
 	if class_bind_ptrs.len != class_bind_count {
 		class_bind_ptrs = []voidptr{len: class_bind_count}

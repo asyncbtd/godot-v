@@ -31,7 +31,7 @@ struct OpOptions {
 	different_types bool
 }
 
-const binary_ops = ['<', '>', '==', '!=', '<=', '>=', 'in']
+const binary_ops = ['<', '>', '==', '!=', '<=', '>=', 'in']!
 
 const op_types = {
 	'+':  '.op_add'

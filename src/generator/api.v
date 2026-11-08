@@ -190,7 +190,6 @@ pub mut:
 
 	global_constants []struct {}
 
-
 	global_enums []struct {
 		name        string           @[required]
 		is_bitfield bool             @[required]

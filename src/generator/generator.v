@@ -23,7 +23,7 @@
 
 module generator
 
-import json
+import json2
 import os
 import strings
 import time
@@ -33,12 +33,12 @@ pub struct Generator {
 	api     API @[required]
 	out_dir string
 mut:
-	class_names    []string
-	builtin_names  []string
-	enum_defaults  map[string]string
-	class_bind     int
-	builtin_bind   int
-	utility_bind   int
+	class_names   []string
+	builtin_names []string
+	enum_defaults map[string]string
+	class_bind    int
+	builtin_bind  int
+	utility_bind  int
 }
 
 fn (g &Generator) layout_index() int {
@@ -53,8 +53,9 @@ fn (g &Generator) layout_index() int {
 	panic('missing builtin layout ${name}')
 }
 
+// Generator.new decodes an extension API dump into a generator.
 pub fn Generator.new(api_dump string, out_dir string) Generator {
-	api := json.decode(API, api_dump) or { panic('Failed to parse API dump JSON: ${err}') }
+	api := json2.decode[API](api_dump) or { panic('Failed to parse API dump JSON: ${err}') }
 
 	return Generator{
 		api:     api
@@ -66,6 +67,7 @@ fn (g &Generator) file(name string) string {
 	return os.join_path(g.out_dir, name)
 }
 
+// run writes the V bindings for the decoded API.
 pub fn (mut g Generator) run() ! {
 	g.setup()
 
@@ -205,10 +207,9 @@ fn (mut g Generator) gen_functions() ! {
 
 		// body
 		if has_return {
-			buf.writeln('\tmut result := ${convert_return(return_type, method.return_type,
-				g.enum_defaults)}')
+			buf.writeln('\tmut result := ${convert_return(return_type, method.return_type, g.enum_defaults)}')
 		}
-		buf.writeln('\tf := utility_function(${g.utility_bind}, \'${method.name}\', i64(${method.hash}))')
+		buf.writeln("\tf := utility_function(${g.utility_bind}, '${method.name}', i64(${method.hash}))")
 		g.utility_bind++
 
 		// Variant -> ToVariant
@@ -632,7 +633,7 @@ fn (mut g Generator) gen_builtin_classes() ! {
 			}
 
 			// body
-			buf.writeln('\tf := builtin_method_bind(${g.builtin_bind}, GDExtensionVariantType.type_${class.name.to_lower()}, \'${method.name}\', i64(${method.hash}))')
+			buf.writeln("\tf := builtin_method_bind(${g.builtin_bind}, GDExtensionVariantType.type_${class.name.to_lower()}, '${method.name}', i64(${method.hash}))")
 			g.builtin_bind++
 
 			// args
@@ -722,8 +723,7 @@ fn (mut g Generator) gen_builtin_classes() ! {
 				'unsafe{ nil }'
 			}
 			if has_return {
-				buf.writeln('\tmut result := ${convert_return(return_type, method.return_type,
-					g.enum_defaults)}')
+				buf.writeln('\tmut result := ${convert_return(return_type, method.return_type, g.enum_defaults)}')
 			}
 			if method.is_vararg {
 				buf.writeln('
@@ -1114,7 +1114,7 @@ fn (mut g Generator) gen_classes() ! {
 			}
 
 			// body
-			buf.writeln('\tmb := class_method_bind(${g.class_bind}, \'${class.name}\', \'${method.name}\', i64(${method.hash}))')
+			buf.writeln("\tmb := class_method_bind(${g.class_bind}, '${class.name}', '${method.name}', i64(${method.hash}))")
 			g.class_bind++
 
 			// args
@@ -1204,8 +1204,7 @@ fn (mut g Generator) gen_classes() ! {
 				'unsafe{nil}'
 			}
 			if has_return {
-				buf.writeln('\tmut result := ${convert_return(return_type, method.return_value.type,
-					g.enum_defaults)}')
+				buf.writeln('\tmut result := ${convert_return(return_type, method.return_value.type, g.enum_defaults)}')
 			}
 			if method.is_vararg {
 				buf.writeln('\tmut err := GDExtensionCallError{}')

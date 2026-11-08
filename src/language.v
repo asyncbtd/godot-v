@@ -70,8 +70,8 @@ fn write_template(args voidptr, ret voidptr) {
 }
 
 fn template_source(class_name string, base string) string {
-	name := if class_name.len == 0 { 'Script' } else { class_name }
-	parent := if base.len == 0 { 'Node' } else { base }
+	name := if class_name == '' { 'Script' } else { class_name }
+	parent := if base == '' { 'Node' } else { base }
 	return "@[godot.extends('${parent}')]\npub struct ${name} {\n}\n\npub fn (mut self ${name}) ready() {}\n"
 }
 

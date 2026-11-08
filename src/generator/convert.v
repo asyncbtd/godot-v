@@ -23,9 +23,9 @@
 
 module generator
 
-const strings = ['String', 'StringName']
+const strings = ['String', 'StringName']!
 
-const numbers = ['f32', 'f64', 'i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'i64', 'u64', 'int']
+const numbers = ['f32', 'f64', 'i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'i64', 'u64', 'int']!
 
 const keywords = [
 	'__global',
@@ -78,12 +78,12 @@ const keywords = [
 	'unsafe',
 	'volatile',
 	'voidptr',
-]
+]!
 
 const genwords = [
 	'classname',
 	'result',
-]
+]!
 
 // convert name from C++ to V
 fn convert_name(_name string) string {

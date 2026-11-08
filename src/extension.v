@@ -438,6 +438,7 @@ fn singleton(name string) voidptr {
 	return object
 }
 
+// report writes a message to Godot's error output.
 pub fn report(message string) {
 	$if script_guest ? {
 		C.godot_v_report(message.str, message.len)
@@ -456,7 +457,7 @@ fn report_impl(message string) {
 
 fn (mut s GdString) set_text(text string) {
 	s.clear()
-	if text.len == 0 {
+	if text == '' {
 		return
 	}
 	f := unsafe { StringNew(api.string_new) }
@@ -518,7 +519,7 @@ fn read_gd_string(src voidptr) string {
 }
 
 fn write_string(dest voidptr, text string) {
-	if text.len == 0 {
+	if text == '' {
 		zero(dest, 8)
 		return
 	}
@@ -527,7 +528,7 @@ fn write_string(dest voidptr, text string) {
 }
 
 fn write_string_name(dest voidptr, text string) {
-	if text.len == 0 {
+	if text == '' {
 		zero(dest, 8)
 		return
 	}
@@ -726,7 +727,7 @@ fn editor_open() bool {
 fn call_string(instance voidptr, class_name string, method string, hash i64, arg string) string {
 	bind := method_bind(class_name, method, hash)
 	mut result := GdString{}
-	if arg.len == 0 {
+	if arg == '' {
 		call_none(bind, instance, voidptr(&result))
 	} else {
 		mut input := GdString{}

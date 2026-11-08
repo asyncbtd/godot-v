@@ -54,10 +54,10 @@ fn cache_dir() string {
 	return raw
 }
 
-fn json_field(dump string, key string) string {
+fn json_field(body string, key string) string {
 	needle := '"${key}": "'
-	start := dump.index(needle) or { return '' }
-	rest := dump[start + needle.len..]
+	start := body.index(needle) or { return '' }
+	rest := body[start + needle.len..]
 	end := rest.index('"') or { return '' }
 	return rest[..end]
 }
@@ -75,10 +75,10 @@ fn main() {
 	out_dir := os.join_path(cache, 'gdext')
 	dump_path := os.join_path(cache, 'extension_api.json')
 	hash_path := os.join_path(cache, 'extension_api.sha256')
-	dump := os.read_file(dump_path) or { panic(err) }
-	sum := sha256.hexhash(dump)
-	label := json_field(dump, 'version_full_name')
-	precision := json_field(dump, 'precision')
+	body := os.read_file(dump_path) or { panic(err) }
+	sum := sha256.hexhash(body)
+	label := json_field(body, 'version_full_name')
+	precision := json_field(body, 'precision')
 	println('API ${label} precision ${precision}')
 	previous := os.read_file(hash_path) or { '' }
 	if previous.trim_space() == sum && os.exists(os.join_path(out_dir, '__info.v')) {
@@ -88,7 +88,7 @@ fn main() {
 	println('Generating V bindings into ${out_dir}...')
 	os.mkdir_all(out_dir) or { panic(err) }
 	os.execute('rm -f ${quote(out_dir)}/_*.v')
-	mut gen := Generator.new(dump, out_dir)
+	mut gen := Generator.new(body, out_dir)
 	gen.run() or { panic('Failed to generate V bindings: ${err}') }
 	copy_runtime(out_dir)
 	os.write_file(hash_path, '${sum}\n') or { panic(err) }

@@ -134,7 +134,7 @@ fn flag_of(value bool) u8 {
 }
 
 fn source_has_method(source string, name string) bool {
-	if name.len == 0 || source.len == 0 {
+	if name == '' || source == '' {
 		return false
 	}
 	if source.contains("name == '${name}'") {
@@ -190,7 +190,7 @@ fn call_signal(signal voidptr, name string) bool {
 }
 
 fn run_script_method(data voidptr, name string) bool {
-	if data == unsafe { nil } || name.len == 0 {
+	if data == unsafe { nil } || name == '' {
 		return false
 	}
 	ensure_project_scripts()
@@ -530,7 +530,7 @@ fn call_group_impl(object voidptr, group string, method string) {
 }
 
 fn play_anim_impl(object voidptr, name string) {
-	if name.len == 0 {
+	if name == '' {
 		call_void(object, 'play')
 		return
 	}
@@ -633,6 +633,7 @@ fn action_down_impl(name string) bool {
 	return flag != 0
 }
 
+// register_main stores the callbacks for a main script.
 pub fn register_main(enter fn (), signal fn (string) bool) {
 	$if script_guest ? {
 		C.godot_v_register_main(voidptr(enter), voidptr(signal))
@@ -641,6 +642,7 @@ pub fn register_main(enter fn (), signal fn (string) bool) {
 	}
 }
 
+// register_player stores the callbacks for a player script.
 pub fn register_player(enter fn (), frame fn (f64), signal fn (string) bool) {
 	$if script_guest ? {
 		C.godot_v_register_player(voidptr(enter), voidptr(frame), voidptr(signal))
@@ -649,6 +651,7 @@ pub fn register_player(enter fn (), frame fn (f64), signal fn (string) bool) {
 	}
 }
 
+// register_mob stores the callback for a mob script.
 pub fn register_mob(enter fn ()) {
 	$if script_guest ? {
 		C.godot_v_register_mob(voidptr(enter))
@@ -657,10 +660,12 @@ pub fn register_mob(enter fn ()) {
 	}
 }
 
+// live returns the session shared by the running scripts.
 pub fn live() &Session {
 	return active_session
 }
 
+// owner returns the node whose script is currently running.
 pub fn owner() voidptr {
 	$if script_guest ? {
 		return C.godot_v_owner()
@@ -669,6 +674,7 @@ pub fn owner() voidptr {
 	}
 }
 
+// call_group calls method on every node in group.
 pub fn call_group(object voidptr, group string, method string) {
 	$if script_guest ? {
 		C.godot_v_call_group(object, group.str, group.len, method.str, method.len)
@@ -677,6 +683,7 @@ pub fn call_group(object voidptr, group string, method string) {
 	}
 }
 
+// call_method calls method on object with no arguments.
 pub fn call_method(object voidptr, method string) {
 	$if script_guest ? {
 		C.godot_v_call_method(object, method.str, method.len)
@@ -685,6 +692,7 @@ pub fn call_method(object voidptr, method string) {
 	}
 }
 
+// node_at returns the node at path, or nil when it is missing.
 pub fn node_at(object voidptr, path string) voidptr {
 	$if script_guest ? {
 		return C.godot_v_node_at(object, path.str, path.len)
@@ -693,6 +701,7 @@ pub fn node_at(object voidptr, path string) voidptr {
 	}
 }
 
+// timer_start starts a timer node.
 pub fn timer_start(object voidptr) {
 	$if script_guest ? {
 		C.godot_v_timer_start(object)
@@ -701,6 +710,7 @@ pub fn timer_start(object voidptr) {
 	}
 }
 
+// timer_stop stops a timer node.
 pub fn timer_stop(object voidptr) {
 	$if script_guest ? {
 		C.godot_v_timer_stop(object)
@@ -709,6 +719,7 @@ pub fn timer_stop(object voidptr) {
 	}
 }
 
+// hide_node hides a canvas item.
 pub fn hide_node(object voidptr) {
 	$if script_guest ? {
 		C.godot_v_hide_node(object)
@@ -717,6 +728,7 @@ pub fn hide_node(object voidptr) {
 	}
 }
 
+// show_node shows a canvas item.
 pub fn show_node(object voidptr) {
 	$if script_guest ? {
 		C.godot_v_show_node(object)
@@ -725,6 +737,7 @@ pub fn show_node(object voidptr) {
 	}
 }
 
+// audio_play starts an audio player.
 pub fn audio_play(object voidptr) {
 	$if script_guest ? {
 		C.godot_v_audio_play(object)
@@ -733,6 +746,7 @@ pub fn audio_play(object voidptr) {
 	}
 }
 
+// audio_stop stops an audio player.
 pub fn audio_stop(object voidptr) {
 	$if script_guest ? {
 		C.godot_v_audio_stop(object)
@@ -741,6 +755,7 @@ pub fn audio_stop(object voidptr) {
 	}
 }
 
+// load_resource loads the resource at path.
 pub fn load_resource(path string) voidptr {
 	$if script_guest ? {
 		return C.godot_v_load_resource(path.str, path.len)
@@ -749,6 +764,7 @@ pub fn load_resource(path string) voidptr {
 	}
 }
 
+// feature reports whether Godot was started with the named feature.
 pub fn feature(name string) bool {
 	$if script_guest ? {
 		return C.godot_v_feature(name.str, name.len) != 0
@@ -757,6 +773,7 @@ pub fn feature(name string) bool {
 	}
 }
 
+// set_text_prop sets a string property on object.
 pub fn set_text_prop(object voidptr, prop string, value string) {
 	$if script_guest ? {
 		C.godot_v_set_text_prop(object, prop.str, prop.len, value.str, value.len)
@@ -765,6 +782,7 @@ pub fn set_text_prop(object voidptr, prop string, value string) {
 	}
 }
 
+// set_flag_prop sets a bool property on object.
 pub fn set_flag_prop(object voidptr, prop string, value bool) {
 	$if script_guest ? {
 		C.godot_v_set_flag_prop(object, prop.str, prop.len, flag_of(value))
@@ -773,6 +791,7 @@ pub fn set_flag_prop(object voidptr, prop string, value bool) {
 	}
 }
 
+// instance_scene instantiates a packed scene.
 pub fn instance_scene(scene voidptr) voidptr {
 	$if script_guest ? {
 		return C.godot_v_instance_scene(scene)
@@ -781,6 +800,7 @@ pub fn instance_scene(scene voidptr) voidptr {
 	}
 }
 
+// set_progress_ratio sets progress_ratio on a path follow.
 pub fn set_progress_ratio(object voidptr, ratio f64) {
 	$if script_guest ? {
 		C.godot_v_set_progress_ratio(object, ratio)
@@ -789,6 +809,7 @@ pub fn set_progress_ratio(object voidptr, ratio f64) {
 	}
 }
 
+// position_of reads the position of a node.
 pub fn position_of(object voidptr) (f32, f32) {
 	$if script_guest ? {
 		mut x := f32(0)
@@ -800,6 +821,7 @@ pub fn position_of(object voidptr) (f32, f32) {
 	}
 }
 
+// rotation_of reads the rotation of a node.
 pub fn rotation_of(object voidptr) f64 {
 	$if script_guest ? {
 		return C.godot_v_rotation_of(object)
@@ -808,6 +830,7 @@ pub fn rotation_of(object voidptr) f64 {
 	}
 }
 
+// move_to sets the position of a node.
 pub fn move_to(object voidptr, x f32, y f32) {
 	$if script_guest ? {
 		C.godot_v_move_to(object, x, y)
@@ -816,6 +839,7 @@ pub fn move_to(object voidptr, x f32, y f32) {
 	}
 }
 
+// set_rotation sets the rotation of a node.
 pub fn set_rotation(object voidptr, angle f64) {
 	$if script_guest ? {
 		C.godot_v_set_rotation(object, angle)
@@ -824,6 +848,7 @@ pub fn set_rotation(object voidptr, angle f64) {
 	}
 }
 
+// push_velocity sets the linear velocity of a rigid body.
 pub fn push_velocity(object voidptr, x f32, y f32) {
 	$if script_guest ? {
 		C.godot_v_push_velocity(object, x, y)
@@ -832,6 +857,7 @@ pub fn push_velocity(object voidptr, x f32, y f32) {
 	}
 }
 
+// add_child adds child to parent.
 pub fn add_child(parent voidptr, child voidptr) {
 	$if script_guest ? {
 		C.godot_v_add_child(parent, child)
@@ -840,6 +866,7 @@ pub fn add_child(parent voidptr, child voidptr) {
 	}
 }
 
+// play_anim plays an animation, or the current one when name is empty.
 pub fn play_anim(object voidptr, name string) {
 	$if script_guest ? {
 		C.godot_v_play_anim(object, name.str, name.len)
@@ -848,6 +875,7 @@ pub fn play_anim(object voidptr, name string) {
 	}
 }
 
+// stop_anim stops an animated sprite.
 pub fn stop_anim(object voidptr) {
 	$if script_guest ? {
 		C.godot_v_stop_anim(object)
@@ -856,6 +884,7 @@ pub fn stop_anim(object voidptr) {
 	}
 }
 
+// viewport_size reads the visible size of the node's viewport.
 pub fn viewport_size(object voidptr) (f32, f32) {
 	$if script_guest ? {
 		mut x := f32(0)
@@ -867,6 +896,7 @@ pub fn viewport_size(object voidptr) (f32, f32) {
 	}
 }
 
+// set_disabled sets the disabled property of a collision shape.
 pub fn set_disabled(object voidptr, disabled bool) {
 	$if script_guest ? {
 		C.godot_v_set_disabled(object, flag_of(disabled))
@@ -875,6 +905,7 @@ pub fn set_disabled(object voidptr, disabled bool) {
 	}
 }
 
+// parent_of returns the parent of a node.
 pub fn parent_of(object voidptr) voidptr {
 	$if script_guest ? {
 		return C.godot_v_parent_of(object)
@@ -883,6 +914,7 @@ pub fn parent_of(object voidptr) voidptr {
 	}
 }
 
+// set_deferred_flag sets a bool property at the end of the frame.
 pub fn set_deferred_flag(object voidptr, prop string, value bool) {
 	$if script_guest ? {
 		C.godot_v_set_deferred_flag(object, prop.str, prop.len, flag_of(value))
@@ -891,6 +923,7 @@ pub fn set_deferred_flag(object voidptr, prop string, value bool) {
 	}
 }
 
+// action_down reports whether an input action is pressed.
 pub fn action_down(name string) bool {
 	$if script_guest ? {
 		return C.godot_v_action_down(name.str, name.len) != 0
@@ -899,6 +932,7 @@ pub fn action_down(name string) bool {
 	}
 }
 
+// delta_of reads the process delta of a node.
 pub fn delta_of(object voidptr) f64 {
 	$if script_guest ? {
 		return C.godot_v_delta_of(object)
