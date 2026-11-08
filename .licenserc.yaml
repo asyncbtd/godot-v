@@ -10,6 +10,7 @@ header:
       comment_style_id: DoubleSlash
   paths:
     - "**/*.v"
+    - "**/*.h"
   paths-ignore:
     - "**/.git/**"
     - "src/generator/**"
