@@ -27,8 +27,12 @@ const bind_ram_kb = 8388608
 
 const type_bool = 1
 const type_int = 2
+const type_float = 3
 const type_string = 4
+const type_vector2 = 5
+const type_rect2 = 7
 const type_string_name = 21
+const type_node_path = 22
 const type_object = 24
 const type_dictionary = 27
 const type_array = 28
@@ -82,6 +86,7 @@ const action_saver_path = 28
 const action_saver_save = 29
 const action_script_instance = 30
 const action_script_has_method = 31
+const action_scripts_refresh = 32
 
 struct Initialization {
 mut:
@@ -222,6 +227,8 @@ mut:
 	saver               voidptr
 	script_instance     voidptr
 	call_script         voidptr
+	variant_call        voidptr
+	to_type             voidptr
 	editor_hint         voidptr
 	string_from_name    voidptr
 	script_name         GdString
@@ -352,6 +359,8 @@ fn load_api() {
 	api.remove_saver = method_bind('ResourceSaver', 'remove_resource_format_saver', 3373026878)
 	api.script_instance = proc('script_instance_create3')
 	api.call_script = proc('object_call_script_method')
+	api.variant_call = proc('variant_call')
+	api.to_type = proc('get_variant_to_type_constructor')
 	api.string_from_name = constructor_of(type_string, 2)
 	api.script_name = string_name('Script')
 	api.vscript_name = string_name('VScript')
@@ -373,6 +382,11 @@ fn destructor_of(typ int) voidptr {
 
 fn from_type_of(typ int) voidptr {
 	f := unsafe { FromType(api.from_type) }
+	return f(typ)
+}
+
+fn to_type_of(typ int) voidptr {
+	f := unsafe { FromType(api.to_type) }
 	return f(typ)
 }
 
@@ -425,6 +439,14 @@ fn singleton(name string) voidptr {
 }
 
 pub fn report(message string) {
+	$if script_guest ? {
+		C.godot_v_report(message.str, message.len)
+	} $else {
+		report_impl(message)
+	}
+}
+
+fn report_impl(message string) {
 	if api.print_error == unsafe { nil } {
 		return
 	}
@@ -816,6 +838,9 @@ fn initialize_level(userdata voidptr, level u32) {
 		unsafe { nil })
 	call_ptr2(api.add_saver, api.resource_saver, voidptr(&api.saver), voidptr(&at_front),
 		unsafe { nil })
+	if editor_open() == false {
+		load_project_scripts()
+	}
 }
 
 fn deinitialize_level(userdata voidptr, level u32) {
@@ -1099,9 +1124,9 @@ fn method_specs() []Spec {
 		Spec{kind_language, '_debug_get_globals', action_stub, ret_dictionary},
 		Spec{kind_language, '_debug_parse_stack_level_expression', action_stub, ret_string},
 		Spec{kind_language, '_debug_get_current_stack_info', action_stub, ret_array},
-		Spec{kind_language, '_reload_all_scripts', action_stub, ret_none},
-		Spec{kind_language, '_reload_scripts', action_stub, ret_none},
-		Spec{kind_language, '_reload_tool_script', action_stub, ret_none},
+		Spec{kind_language, '_reload_all_scripts', action_scripts_refresh, ret_none},
+		Spec{kind_language, '_reload_scripts', action_scripts_refresh, ret_none},
+		Spec{kind_language, '_reload_tool_script', action_scripts_refresh, ret_none},
 		Spec{kind_language, '_get_recognized_extensions', action_lang_extensions, ret_packed_string},
 		Spec{kind_language, '_get_public_functions', action_stub, ret_array},
 		Spec{kind_language, '_get_public_constants', action_stub, ret_dictionary},
@@ -1111,7 +1136,7 @@ fn method_specs() []Spec {
 		Spec{kind_language, '_profiling_set_save_native_calls', action_stub, ret_none},
 		Spec{kind_language, '_profiling_get_accumulated_data', action_stub, ret_number},
 		Spec{kind_language, '_profiling_get_frame_data', action_stub, ret_number},
-		Spec{kind_language, '_frame', action_stub, ret_none},
+		Spec{kind_language, '_frame', action_scripts_refresh, ret_none},
 		Spec{kind_language, '_handles_global_class_type', action_stub, ret_bool},
 		Spec{kind_language, '_get_global_class_name', action_stub, ret_dictionary},
 		Spec{kind_script, '_editor_can_reload_from_file', action_script_reload_file, ret_bool},

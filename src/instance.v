@@ -78,19 +78,35 @@ fn script_can_run(instance voidptr) bool {
 }
 
 fn script_has_method(instance voidptr, name string) bool {
-	return false
+	return source_has_method(script_state(instance).source.text(), name)
 }
 
 fn make_live(state &ScriptState, owner voidptr) voidptr {
 	mut box := unsafe { &Live(alloc(usize(sizeof(Live)))) }
 	box.owner = owner
 	box.script = state.object
+	ensure_project_scripts()
 	create := unsafe { ScriptCreate(api.script_instance) }
-	return create(voidptr(&script_info), voidptr(box))
+	instance := create(voidptr(&script_info), voidptr(box))
+	if source_has_method(state.source.text(), '_process') {
+		set_process_enabled(owner)
+	}
+	return instance
 }
 
 fn live_has_method(data voidptr, method voidptr) bool {
-	return false
+	if data == unsafe { nil } {
+		return false
+	}
+	script := unsafe { &Live(data) }.script
+	if script == unsafe { nil } {
+		return false
+	}
+	state := script_state(binding_of(script))
+	if state == unsafe { nil } {
+		return false
+	}
+	return source_has_method(state.source.text(), read_name(method))
 }
 
 fn live_call(data voidptr, method voidptr, args voidptr, count i64, ret voidptr, err voidptr) {
@@ -100,7 +116,9 @@ fn live_call(data voidptr, method voidptr, args voidptr, count i64, ret voidptr,
 	if err != unsafe { nil } {
 		zero(err, 12)
 	}
-	mark_bad(err)
+	if run_script_method(data, read_name(method)) == false {
+		mark_bad(err)
+	}
 }
 
 fn mark_bad(err voidptr) {
@@ -113,6 +131,10 @@ fn mark_bad(err voidptr) {
 }
 
 fn live_notify(data voidptr, what int, reversed u8) {
+	if what != 13 {
+		return
+	}
+	run_script_enter(data)
 }
 
 fn live_owner(data voidptr) voidptr {

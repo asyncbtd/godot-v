@@ -35,7 +35,11 @@ fn dispatch(action int, instance voidptr, args voidptr, ret voidptr) {
 		}
 		action_script_reload_file { write_bool(ret, true) }
 		action_script_valid { write_bool(ret, true) }
-		action_script_reload { write_number(ret, 0) }
+		action_script_reload {
+			load_project_scripts()
+			write_number(ret, 0)
+		}
+		action_scripts_refresh { load_project_scripts() }
 		action_script_language { write_pointer(ret, api.language) }
 		action_script_base { write_script_base(instance, ret) }
 		action_script_has_source { write_bool(ret, script_state(instance).source.text().len > 0) }
@@ -161,12 +165,10 @@ fn load_script(args voidptr, ret voidptr) {
 	source := file_text.text()
 	file_text.clear()
 	script := construct_class(kind_script)
-	set_script_source(binding_of(script), source)
-	set_script_path(binding_of(script), resource_path)
-	mut resource := GdString{}
-	resource.set_text(resource_path)
-	call_ptr(api.set_path, script, voidptr(&resource), unsafe { nil })
-	resource.clear()
+	state := binding_of(script)
+	set_script_source(state, source)
+	set_script_path(state, resource_path)
+	remember_script(state)
 	variant_object(ret, script)
 }
 
