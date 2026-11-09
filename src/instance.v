@@ -82,7 +82,7 @@ fn script_has_method(instance voidptr, name string) bool {
 }
 
 fn make_live(state &ScriptState, owner voidptr) voidptr {
-	mut box := unsafe { &Live(alloc(usize(sizeof(Live)))) }
+	mut box := unsafe { &Live(alloc(uint(sizeof(Live)))) }
 	box.owner = owner
 	box.script = state.object
 	ensure_project_scripts()
@@ -109,7 +109,7 @@ fn live_has_method(data voidptr, method voidptr) bool {
 	return source_has_method(state.source.text(), read_name(method))
 }
 
-fn live_call(data voidptr, method voidptr, args voidptr, count i64, ret voidptr, err voidptr) {
+fn live_call(data voidptr, method voidptr, _args voidptr, _count i64, ret voidptr, err voidptr) {
 	if ret != unsafe { nil } {
 		zero(ret, 24)
 	}
@@ -130,7 +130,7 @@ fn mark_bad(err voidptr) {
 	}
 }
 
-fn live_notify(data voidptr, what int, reversed u8) {
+fn live_notify(data voidptr, what int, _reversed u8) {
 	if what != 13 {
 		return
 	}
@@ -151,11 +151,11 @@ fn live_script(data voidptr) voidptr {
 	return unsafe { &Live(data) }.script
 }
 
-fn live_language(data voidptr) voidptr {
+fn live_language(_data voidptr) voidptr {
 	return api.language
 }
 
-fn live_placeholder(data voidptr) u8 {
+fn live_placeholder(_data voidptr) u8 {
 	return 0
 }
 

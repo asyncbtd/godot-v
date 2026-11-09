@@ -259,7 +259,7 @@ type StringRead = fn (voidptr, &u8, i64) i64
 
 type StringNameNew = fn (voidptr, &u8, u8)
 
-type MemAlloc = fn (usize) voidptr
+type MemAlloc = fn (uint) voidptr
 
 type MemFree = fn (voidptr)
 
@@ -508,7 +508,7 @@ fn read_gd_string(src voidptr) string {
 		return ''
 	}
 	mut out := string{
-		str: unsafe { malloc(isize(len + 1)) }
+		str: unsafe { malloc(int(len + 1)) }
 		len: len
 	}
 	C.godot_call_string_read(api.string_read, src, out.str, i64(len))
@@ -620,7 +620,7 @@ fn zero(ptr voidptr, size int) {
 	}
 }
 
-fn alloc(size usize) voidptr {
+fn alloc(size uint) voidptr {
 	f := unsafe { MemAlloc(api.mem_alloc) }
 	ptr := f(size)
 	zero(ptr, int(size))
@@ -816,7 +816,7 @@ fn godot_v_init(get_proc_address voidptr, library voidptr, initialization voidpt
 	return 1
 }
 
-fn initialize_level(userdata voidptr, level u32) {
+fn initialize_level(_userdata voidptr, level u32) {
 	if level != level_scene {
 		return
 	}
@@ -844,7 +844,7 @@ fn initialize_level(userdata voidptr, level u32) {
 	}
 }
 
-fn deinitialize_level(userdata voidptr, level u32) {
+fn deinitialize_level(_userdata voidptr, level u32) {
 	if level != level_scene {
 		return
 	}
@@ -875,7 +875,7 @@ fn destroy_object(object voidptr) {
 }
 
 fn keep_name(data voidptr) {
-	mut node := unsafe { &NameNode(alloc(usize(sizeof(NameNode)))) }
+	mut node := unsafe { &NameNode(alloc(uint(sizeof(NameNode)))) }
 	node.data = data
 	node.next = api.names
 	api.names = voidptr(node)
@@ -914,8 +914,8 @@ fn register_classes() {
 fn register_method(spec Spec) {
 	name := string_name(spec.name)
 	keep_name(name.data)
-	key := u64(usize(name.data))
-	mut method := unsafe { &Method(alloc(usize(sizeof(Method)))) }
+	key := u64(uint(name.data))
+	mut method := unsafe { &Method(alloc(uint(sizeof(Method)))) }
 	method.action = spec.action
 	method.ret = spec.ret
 	slot := MethodSlot{
@@ -958,11 +958,11 @@ fn register_class(class_name string, parent string, kind int) {
 }
 
 fn kind_pointer(kind int) voidptr {
-	return voidptr(usize(u32(kind + 1)))
+	return voidptr(uint(u32(kind + 1)))
 }
 
 fn pointer_kind(ptr voidptr) int {
-	return int(usize(ptr)) - 1
+	return int(uint(ptr)) - 1
 }
 
 fn construct_class(kind int) voidptr {
@@ -1018,11 +1018,11 @@ fn create_instance(class_userdata voidptr, notify u8) voidptr {
 
 fn new_instance(kind int, object voidptr) voidptr {
 	if kind == kind_script {
-		mut state := unsafe { &ScriptState(alloc(usize(sizeof(ScriptState)))) }
+		mut state := unsafe { &ScriptState(alloc(uint(sizeof(ScriptState)))) }
 		state.object = object
 		return voidptr(state)
 	}
-	mut plain := unsafe { &PlainObject(alloc(usize(sizeof(PlainObject)))) }
+	mut plain := unsafe { &PlainObject(alloc(uint(sizeof(PlainObject)))) }
 	plain.object = object
 	return voidptr(plain)
 }
@@ -1041,8 +1041,8 @@ fn free_instance(class_userdata voidptr, instance voidptr) {
 	release(instance)
 }
 
-fn virtual_data(class_userdata voidptr, name voidptr, hash u32) voidptr {
-	key := u64(usize(unsafe { *&voidptr(name) }))
+fn virtual_data(class_userdata voidptr, name voidptr, _hash u32) voidptr {
+	key := u64(uint(unsafe { *&voidptr(name) }))
 	kind := pointer_kind(class_userdata)
 	return match kind {
 		kind_language { find_method(language_methods, key) }
@@ -1053,7 +1053,7 @@ fn virtual_data(class_userdata voidptr, name voidptr, hash u32) voidptr {
 	}
 }
 
-fn call_virtual(instance voidptr, name voidptr, method_data voidptr, args voidptr, ret voidptr) {
+fn call_virtual(instance voidptr, _name voidptr, method_data voidptr, args voidptr, ret voidptr) {
 	method := unsafe { &Method(method_data) }
 	if method.action == action_stub {
 		write_stub(ret, method.ret)
