@@ -14,7 +14,6 @@
 
 module godot
 
-import crypto.sha256
 import os
 
 #include "@VMODROOT/src/script_guest.h"
@@ -107,8 +106,6 @@ __global bound_owner = unsafe { nil }
 __global session Session
 __global active_session = unsafe { &Session(nil) }
 __global script_library = unsafe { nil }
-__global loaded_stamp = i64(0)
-__global loaded_hash = ''
 __global script_resources = []voidptr{}
 
 fn init() {
@@ -941,26 +938,6 @@ pub fn delta_of(object voidptr) f64 {
 	}
 }
 
-fn script_hash(files []string) string {
-	mut all := []u8{}
-	for file in files {
-		text := os.read_file(file) or { '' }
-		all << text.bytes()
-	}
-	return sha256.hexhash(all.bytestr())
-}
-
-fn link_module(cache string) bool {
-	dir := os.join_path(cache, 'modules', 'asyncbtd')
-	os.mkdir_all(dir) or { return false }
-	link := os.join_path(dir, 'godot')
-	if os.exists(link) {
-		os.rm(link) or { return false }
-	}
-	os.symlink(@VMODROOT, link) or { return false }
-	return true
-}
-
 fn host_library() string {
 	text := os.read_file('/proc/self/maps') or { return '' }
 	for line in text.split_into_lines() {
@@ -1027,14 +1004,6 @@ fn remember_script(state voidptr) {
 	script_resources << state
 }
 
-fn files_stamp(files []string) i64 {
-	mut stamp := i64(0)
-	for file in files {
-		stamp += os.file_last_mod_unix(file)
-	}
-	return stamp
-}
-
 fn reload_script_sources(project string) {
 	for state in script_resources {
 		res_path := script_state(state).path.text()
@@ -1060,49 +1029,13 @@ fn load_project_scripts() {
 	if project.len == 0 {
 		return
 	}
-	script_dir := os.join_path(project, 'script')
-	if os.exists(os.join_path(script_dir, 'entry.v')) == false {
+	so_path := os.join_path(project, 'script', 'script.so')
+	if os.exists(so_path) == false || script_library != unsafe { nil } {
 		return
-	}
-	mut files := os.walk_ext(script_dir, '.v')
-	files.sort()
-	if files.len == 0 {
-		return
-	}
-	stamp := files_stamp(files)
-	if script_library != unsafe { nil } && stamp == loaded_stamp {
-		return
-	}
-	sum := script_hash(files)
-	loaded_stamp = stamp
-	if script_library != unsafe { nil } && sum == loaded_hash {
-		return
-	}
-	cache := os.join_path(project, '.godot', 'godot-v')
-	os.mkdir_all(cache) or {
-		report('script cache directory failed')
-		return
-	}
-	so_path := os.join_path(cache, 'libscript-' + sum + '.so')
-	if os.exists(so_path) == false {
-		if link_module(cache) == false {
-			report('script module link failed')
-			return
-		}
-		limit := bind_ram_kb.str()
-		modules := os.join_path(cache, 'modules')
-		command := 'cd ' + sh_quote(script_dir) + ' && ulimit -v ' + limit + ' && VMODULES=' +
-			sh_quote(modules) + ' v -cc gcc -d script_guest -shared -enable-globals -o ' +
-			sh_quote(so_path) + ' .'
-		if shell(command) != 0 {
-			report('script compile failed')
-			return
-		}
 	}
 	if open_script_library(so_path) == false {
 		return
 	}
-	loaded_hash = sum
 	reload_script_sources(project)
 }
 
