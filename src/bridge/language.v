@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module godot
+module bridge
 
 fn dispatch(action int, instance voidptr, args voidptr, ret voidptr) {
 	match action {

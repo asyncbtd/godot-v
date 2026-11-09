@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module gdext
+module godot
 
 // TODO: use the enums generated from api dump
 

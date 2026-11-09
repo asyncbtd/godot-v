@@ -12,53 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module godot
+module bridge
 
 import os
-
-#include "@VMODROOT/src/script_guest.h"
 
 fn C.dlopen(filename &u8, flags int) voidptr
 
 fn C.dlsym(handle voidptr, name &u8) voidptr
 
 fn C.dlerror() &u8
-
-fn C.godot_v_report(ptr &u8, len int)
-fn C.godot_v_register_main(enter voidptr, handler voidptr)
-fn C.godot_v_register_player(enter voidptr, frame voidptr, handler voidptr)
-fn C.godot_v_register_mob(enter voidptr)
-fn C.godot_v_live() voidptr
-fn C.godot_v_owner() voidptr
-fn C.godot_v_call_group(object voidptr, group &u8, group_len int, method &u8, method_len int)
-fn C.godot_v_call_method(object voidptr, method &u8, len int)
-fn C.godot_v_node_at(object voidptr, path &u8, len int) voidptr
-fn C.godot_v_timer_start(object voidptr)
-fn C.godot_v_timer_stop(object voidptr)
-fn C.godot_v_hide_node(object voidptr)
-fn C.godot_v_show_node(object voidptr)
-fn C.godot_v_audio_play(object voidptr)
-fn C.godot_v_audio_stop(object voidptr)
-fn C.godot_v_load_resource(path &u8, len int) voidptr
-fn C.godot_v_feature(name &u8, len int) u8
-fn C.godot_v_set_text_prop(object voidptr, prop &u8, prop_len int, value &u8, value_len int)
-fn C.godot_v_set_flag_prop(object voidptr, prop &u8, prop_len int, value u8)
-fn C.godot_v_instance_scene(scene voidptr) voidptr
-fn C.godot_v_set_progress_ratio(object voidptr, ratio f64)
-fn C.godot_v_position_of(object voidptr, x &f32, y &f32)
-fn C.godot_v_rotation_of(object voidptr) f64
-fn C.godot_v_move_to(object voidptr, x f32, y f32)
-fn C.godot_v_set_rotation(object voidptr, angle f64)
-fn C.godot_v_push_velocity(object voidptr, x f32, y f32)
-fn C.godot_v_add_child(parent voidptr, child voidptr)
-fn C.godot_v_play_anim(object voidptr, name &u8, len int)
-fn C.godot_v_stop_anim(object voidptr)
-fn C.godot_v_viewport_size(object voidptr, x &f32, y &f32)
-fn C.godot_v_set_disabled(object voidptr, disabled u8)
-fn C.godot_v_parent_of(object voidptr) voidptr
-fn C.godot_v_set_deferred_flag(object voidptr, prop &u8, len int, value u8)
-fn C.godot_v_action_down(name &u8, len int) u8
-fn C.godot_v_delta_of(object voidptr) f64
 
 type VariantCall = fn (voidptr, voidptr, voidptr, i64, voidptr, voidptr)
 
@@ -109,11 +71,7 @@ __global script_library = unsafe { nil }
 __global script_resources = []voidptr{}
 
 fn init() {
-	$if script_guest ? {
-		active_session = unsafe { &Session(C.godot_v_live()) }
-	} $else {
-		active_session = unsafe { &session }
-	}
+	active_session = unsafe { &session }
 }
 
 fn text_of(ptr &u8, len int) string {
@@ -632,29 +590,17 @@ fn action_down_impl(name string) bool {
 
 // register_main stores the callbacks for a main script.
 pub fn register_main(enter fn (), signal fn (string) bool) {
-	$if script_guest ? {
-		C.godot_v_register_main(voidptr(enter), voidptr(signal))
-	} $else {
-		bind_script('main', voidptr(enter), unsafe { nil }, voidptr(signal))
-	}
+	bind_script('main', voidptr(enter), unsafe { nil }, voidptr(signal))
 }
 
 // register_player stores the callbacks for a player script.
 pub fn register_player(enter fn (), frame fn (f64), signal fn (string) bool) {
-	$if script_guest ? {
-		C.godot_v_register_player(voidptr(enter), voidptr(frame), voidptr(signal))
-	} $else {
-		bind_script('player', voidptr(enter), voidptr(frame), voidptr(signal))
-	}
+	bind_script('player', voidptr(enter), voidptr(frame), voidptr(signal))
 }
 
 // register_mob stores the callback for a mob script.
 pub fn register_mob(enter fn ()) {
-	$if script_guest ? {
-		C.godot_v_register_mob(voidptr(enter))
-	} $else {
-		bind_script('mob', voidptr(enter), unsafe { nil }, unsafe { nil })
-	}
+	bind_script('mob', voidptr(enter), unsafe { nil }, unsafe { nil })
 }
 
 // live returns the session shared by the running scripts.
@@ -664,278 +610,152 @@ pub fn live() &Session {
 
 // owner returns the node whose script is currently running.
 pub fn owner() voidptr {
-	$if script_guest ? {
-		return C.godot_v_owner()
-	} $else {
-		return bound_owner
-	}
+	return bound_owner
 }
 
 // call_group calls method on every node in group.
 pub fn call_group(object voidptr, group string, method string) {
-	$if script_guest ? {
-		C.godot_v_call_group(object, group.str, group.len, method.str, method.len)
-	} $else {
-		call_group_impl(object, group, method)
-	}
+	call_group_impl(object, group, method)
 }
 
 // call_method calls method on object with no arguments.
 pub fn call_method(object voidptr, method string) {
-	$if script_guest ? {
-		C.godot_v_call_method(object, method.str, method.len)
-	} $else {
-		call_void(object, method)
-	}
+	call_void(object, method)
 }
 
 // node_at returns the node at path, or nil when it is missing.
 pub fn node_at(object voidptr, path string) voidptr {
-	$if script_guest ? {
-		return C.godot_v_node_at(object, path.str, path.len)
-	} $else {
-		return node_at_impl(object, path)
-	}
+	return node_at_impl(object, path)
 }
 
 // timer_start starts a timer node.
 pub fn timer_start(object voidptr) {
-	$if script_guest ? {
-		C.godot_v_timer_start(object)
-	} $else {
-		call_void(object, 'start')
-	}
+	call_void(object, 'start')
 }
 
 // timer_stop stops a timer node.
 pub fn timer_stop(object voidptr) {
-	$if script_guest ? {
-		C.godot_v_timer_stop(object)
-	} $else {
-		call_void(object, 'stop')
-	}
+	call_void(object, 'stop')
 }
 
 // hide_node hides a canvas item.
 pub fn hide_node(object voidptr) {
-	$if script_guest ? {
-		C.godot_v_hide_node(object)
-	} $else {
-		call_void(object, 'hide')
-	}
+	call_void(object, 'hide')
 }
 
 // show_node shows a canvas item.
 pub fn show_node(object voidptr) {
-	$if script_guest ? {
-		C.godot_v_show_node(object)
-	} $else {
-		call_void(object, 'show')
-	}
+	call_void(object, 'show')
 }
 
 // audio_play starts an audio player.
 pub fn audio_play(object voidptr) {
-	$if script_guest ? {
-		C.godot_v_audio_play(object)
-	} $else {
-		call_void(object, 'play')
-	}
+	call_void(object, 'play')
 }
 
 // audio_stop stops an audio player.
 pub fn audio_stop(object voidptr) {
-	$if script_guest ? {
-		C.godot_v_audio_stop(object)
-	} $else {
-		call_void(object, 'stop')
-	}
+	call_void(object, 'stop')
 }
 
 // load_resource loads the resource at path.
 pub fn load_resource(path string) voidptr {
-	$if script_guest ? {
-		return C.godot_v_load_resource(path.str, path.len)
-	} $else {
-		return load_resource_impl(path)
-	}
+	return load_resource_impl(path)
 }
 
 // feature reports whether Godot was started with the named feature.
 pub fn feature(name string) bool {
-	$if script_guest ? {
-		return C.godot_v_feature(name.str, name.len) != 0
-	} $else {
-		return feature_impl(name)
-	}
+	return feature_impl(name)
 }
 
 // set_text_prop sets a string property on object.
 pub fn set_text_prop(object voidptr, prop string, value string) {
-	$if script_guest ? {
-		C.godot_v_set_text_prop(object, prop.str, prop.len, value.str, value.len)
-	} $else {
-		set_text_prop_impl(object, prop, value)
-	}
+	set_text_prop_impl(object, prop, value)
 }
 
 // set_flag_prop sets a bool property on object.
 pub fn set_flag_prop(object voidptr, prop string, value bool) {
-	$if script_guest ? {
-		C.godot_v_set_flag_prop(object, prop.str, prop.len, flag_of(value))
-	} $else {
-		set_bool_prop(object, prop, value)
-	}
+	set_bool_prop(object, prop, value)
 }
 
 // instance_scene instantiates a packed scene.
 pub fn instance_scene(scene voidptr) voidptr {
-	$if script_guest ? {
-		return C.godot_v_instance_scene(scene)
-	} $else {
-		return call_object(scene, 'instantiate')
-	}
+	return call_object(scene, 'instantiate')
 }
 
 // set_progress_ratio sets progress_ratio on a path follow.
 pub fn set_progress_ratio(object voidptr, ratio f64) {
-	$if script_guest ? {
-		C.godot_v_set_progress_ratio(object, ratio)
-	} $else {
-		set_float_prop(object, 'progress_ratio', ratio)
-	}
+	set_float_prop(object, 'progress_ratio', ratio)
 }
 
 // position_of reads the position of a node.
 pub fn position_of(object voidptr) (f32, f32) {
-	$if script_guest ? {
-		mut x := f32(0)
-		mut y := f32(0)
-		C.godot_v_position_of(object, &x, &y)
-		return x, y
-	} $else {
-		return get_vector(object, 'position')
-	}
+	return get_vector(object, 'position')
 }
 
 // rotation_of reads the rotation of a node.
 pub fn rotation_of(object voidptr) f64 {
-	$if script_guest ? {
-		return C.godot_v_rotation_of(object)
-	} $else {
-		return get_float(object, 'rotation')
-	}
+	return get_float(object, 'rotation')
 }
 
 // move_to sets the position of a node.
 pub fn move_to(object voidptr, x f32, y f32) {
-	$if script_guest ? {
-		C.godot_v_move_to(object, x, y)
-	} $else {
-		move_to_impl(object, x, y)
-	}
+	move_to_impl(object, x, y)
 }
 
 // set_rotation sets the rotation of a node.
 pub fn set_rotation(object voidptr, angle f64) {
-	$if script_guest ? {
-		C.godot_v_set_rotation(object, angle)
-	} $else {
-		set_float_prop(object, 'rotation', angle)
-	}
+	set_float_prop(object, 'rotation', angle)
 }
 
 // push_velocity sets the linear velocity of a rigid body.
 pub fn push_velocity(object voidptr, x f32, y f32) {
-	$if script_guest ? {
-		C.godot_v_push_velocity(object, x, y)
-	} $else {
-		push_velocity_impl(object, x, y)
-	}
+	push_velocity_impl(object, x, y)
 }
 
 // add_child adds child to parent.
 pub fn add_child(parent voidptr, child voidptr) {
-	$if script_guest ? {
-		C.godot_v_add_child(parent, child)
-	} $else {
-		add_child_impl(parent, child)
-	}
+	add_child_impl(parent, child)
 }
 
 // play_anim plays an animation, or the current one when name is empty.
 pub fn play_anim(object voidptr, name string) {
-	$if script_guest ? {
-		C.godot_v_play_anim(object, name.str, name.len)
-	} $else {
-		play_anim_impl(object, name)
-	}
+	play_anim_impl(object, name)
 }
 
 // stop_anim stops an animated sprite.
 pub fn stop_anim(object voidptr) {
-	$if script_guest ? {
-		C.godot_v_stop_anim(object)
-	} $else {
-		call_void(object, 'stop')
-	}
+	call_void(object, 'stop')
 }
 
 // viewport_size reads the visible size of the node's viewport.
 pub fn viewport_size(object voidptr) (f32, f32) {
-	$if script_guest ? {
-		mut x := f32(0)
-		mut y := f32(0)
-		C.godot_v_viewport_size(object, &x, &y)
-		return x, y
-	} $else {
-		return viewport_size_impl(object)
-	}
+	return viewport_size_impl(object)
 }
 
 // set_disabled sets the disabled property of a collision shape.
 pub fn set_disabled(object voidptr, disabled bool) {
-	$if script_guest ? {
-		C.godot_v_set_disabled(object, flag_of(disabled))
-	} $else {
-		set_bool_prop(object, 'disabled', disabled)
-	}
+	set_bool_prop(object, 'disabled', disabled)
 }
 
 // parent_of returns the parent of a node.
 pub fn parent_of(object voidptr) voidptr {
-	$if script_guest ? {
-		return C.godot_v_parent_of(object)
-	} $else {
-		return call_object(object, 'get_parent')
-	}
+	return call_object(object, 'get_parent')
 }
 
 // set_deferred_flag sets a bool property at the end of the frame.
 pub fn set_deferred_flag(object voidptr, prop string, value bool) {
-	$if script_guest ? {
-		C.godot_v_set_deferred_flag(object, prop.str, prop.len, flag_of(value))
-	} $else {
-		set_deferred_bool(object, prop, value)
-	}
+	set_deferred_bool(object, prop, value)
 }
 
 // action_down reports whether an input action is pressed.
 pub fn action_down(name string) bool {
-	$if script_guest ? {
-		return C.godot_v_action_down(name.str, name.len) != 0
-	} $else {
-		return action_down_impl(name)
-	}
+	return action_down_impl(name)
 }
 
 // delta_of reads the process delta of a node.
 pub fn delta_of(object voidptr) f64 {
-	$if script_guest ? {
-		return C.godot_v_delta_of(object)
-	} $else {
-		return delta_of_impl(object)
-	}
+	return delta_of_impl(object)
 }
 
 fn host_library() string {
@@ -1039,187 +859,185 @@ fn load_project_scripts() {
 	reload_script_sources(project)
 }
 
-$if !script_guest ? {
-	@[export: 'godot_v_report']
-	fn godot_v_report(ptr &u8, len int) {
-		report_impl(text_of(ptr, len))
-	}
+@[export: 'godot_v_report']
+fn godot_v_report(ptr &u8, len int) {
+	report_impl(text_of(ptr, len))
+}
 
-	@[export: 'godot_v_register_main']
-	fn godot_v_register_main(enter voidptr, signal voidptr) {
-		bind_script('main', enter, unsafe { nil }, signal)
-	}
+@[export: 'godot_v_register_main']
+fn godot_v_register_main(enter voidptr, signal voidptr) {
+	bind_script('main', enter, unsafe { nil }, signal)
+}
 
-	@[export: 'godot_v_register_player']
-	fn godot_v_register_player(enter voidptr, frame voidptr, signal voidptr) {
-		bind_script('player', enter, frame, signal)
-	}
+@[export: 'godot_v_register_player']
+fn godot_v_register_player(enter voidptr, frame voidptr, signal voidptr) {
+	bind_script('player', enter, frame, signal)
+}
 
-	@[export: 'godot_v_register_mob']
-	fn godot_v_register_mob(enter voidptr) {
-		bind_script('mob', enter, unsafe { nil }, unsafe { nil })
-	}
+@[export: 'godot_v_register_mob']
+fn godot_v_register_mob(enter voidptr) {
+	bind_script('mob', enter, unsafe { nil }, unsafe { nil })
+}
 
-	@[export: 'godot_v_live']
-	fn godot_v_live() voidptr {
-		return unsafe { &session }
-	}
+@[export: 'godot_v_live']
+fn godot_v_live() voidptr {
+	return unsafe { &session }
+}
 
-	@[export: 'godot_v_owner']
-	fn godot_v_owner() voidptr {
-		return bound_owner
-	}
+@[export: 'godot_v_owner']
+fn godot_v_owner() voidptr {
+	return bound_owner
+}
 
-	@[export: 'godot_v_call_group']
-	fn godot_v_call_group(object voidptr, group &u8, group_len int, method &u8, method_len int) {
-		call_group_impl(object, text_of(group, group_len), text_of(method, method_len))
-	}
+@[export: 'godot_v_call_group']
+fn godot_v_call_group(object voidptr, group &u8, group_len int, method &u8, method_len int) {
+	call_group_impl(object, text_of(group, group_len), text_of(method, method_len))
+}
 
-	@[export: 'godot_v_call_method']
-	fn godot_v_call_method(object voidptr, method &u8, len int) {
-		call_void(object, text_of(method, len))
-	}
+@[export: 'godot_v_call_method']
+fn godot_v_call_method(object voidptr, method &u8, len int) {
+	call_void(object, text_of(method, len))
+}
 
-	@[export: 'godot_v_node_at']
-	fn godot_v_node_at(object voidptr, path &u8, len int) voidptr {
-		return node_at_impl(object, text_of(path, len))
-	}
+@[export: 'godot_v_node_at']
+fn godot_v_node_at(object voidptr, path &u8, len int) voidptr {
+	return node_at_impl(object, text_of(path, len))
+}
 
-	@[export: 'godot_v_timer_start']
-	fn godot_v_timer_start(object voidptr) {
-		call_void(object, 'start')
-	}
+@[export: 'godot_v_timer_start']
+fn godot_v_timer_start(object voidptr) {
+	call_void(object, 'start')
+}
 
-	@[export: 'godot_v_timer_stop']
-	fn godot_v_timer_stop(object voidptr) {
-		call_void(object, 'stop')
-	}
+@[export: 'godot_v_timer_stop']
+fn godot_v_timer_stop(object voidptr) {
+	call_void(object, 'stop')
+}
 
-	@[export: 'godot_v_hide_node']
-	fn godot_v_hide_node(object voidptr) {
-		call_void(object, 'hide')
-	}
+@[export: 'godot_v_hide_node']
+fn godot_v_hide_node(object voidptr) {
+	call_void(object, 'hide')
+}
 
-	@[export: 'godot_v_show_node']
-	fn godot_v_show_node(object voidptr) {
-		call_void(object, 'show')
-	}
+@[export: 'godot_v_show_node']
+fn godot_v_show_node(object voidptr) {
+	call_void(object, 'show')
+}
 
-	@[export: 'godot_v_audio_play']
-	fn godot_v_audio_play(object voidptr) {
-		call_void(object, 'play')
-	}
+@[export: 'godot_v_audio_play']
+fn godot_v_audio_play(object voidptr) {
+	call_void(object, 'play')
+}
 
-	@[export: 'godot_v_audio_stop']
-	fn godot_v_audio_stop(object voidptr) {
-		call_void(object, 'stop')
-	}
+@[export: 'godot_v_audio_stop']
+fn godot_v_audio_stop(object voidptr) {
+	call_void(object, 'stop')
+}
 
-	@[export: 'godot_v_load_resource']
-	fn godot_v_load_resource(path &u8, len int) voidptr {
-		return load_resource_impl(text_of(path, len))
-	}
+@[export: 'godot_v_load_resource']
+fn godot_v_load_resource(path &u8, len int) voidptr {
+	return load_resource_impl(text_of(path, len))
+}
 
-	@[export: 'godot_v_feature']
-	fn godot_v_feature(name &u8, len int) u8 {
-		return flag_of(feature_impl(text_of(name, len)))
-	}
+@[export: 'godot_v_feature']
+fn godot_v_feature(name &u8, len int) u8 {
+	return flag_of(feature_impl(text_of(name, len)))
+}
 
-	@[export: 'godot_v_set_text_prop']
-	fn godot_v_set_text_prop(object voidptr, prop &u8, prop_len int, value &u8, value_len int) {
-		set_text_prop_impl(object, text_of(prop, prop_len), text_of(value, value_len))
-	}
+@[export: 'godot_v_set_text_prop']
+fn godot_v_set_text_prop(object voidptr, prop &u8, prop_len int, value &u8, value_len int) {
+	set_text_prop_impl(object, text_of(prop, prop_len), text_of(value, value_len))
+}
 
-	@[export: 'godot_v_set_flag_prop']
-	fn godot_v_set_flag_prop(object voidptr, prop &u8, prop_len int, value u8) {
-		set_bool_prop(object, text_of(prop, prop_len), value != 0)
-	}
+@[export: 'godot_v_set_flag_prop']
+fn godot_v_set_flag_prop(object voidptr, prop &u8, prop_len int, value u8) {
+	set_bool_prop(object, text_of(prop, prop_len), value != 0)
+}
 
-	@[export: 'godot_v_instance_scene']
-	fn godot_v_instance_scene(scene voidptr) voidptr {
-		return call_object(scene, 'instantiate')
-	}
+@[export: 'godot_v_instance_scene']
+fn godot_v_instance_scene(scene voidptr) voidptr {
+	return call_object(scene, 'instantiate')
+}
 
-	@[export: 'godot_v_set_progress_ratio']
-	fn godot_v_set_progress_ratio(object voidptr, ratio f64) {
-		set_float_prop(object, 'progress_ratio', ratio)
-	}
+@[export: 'godot_v_set_progress_ratio']
+fn godot_v_set_progress_ratio(object voidptr, ratio f64) {
+	set_float_prop(object, 'progress_ratio', ratio)
+}
 
-	@[export: 'godot_v_position_of']
-	fn godot_v_position_of(object voidptr, x &f32, y &f32) {
-		px, py := get_vector(object, 'position')
-		unsafe {
-			*x = px
-			*y = py
-		}
+@[export: 'godot_v_position_of']
+fn godot_v_position_of(object voidptr, x &f32, y &f32) {
+	px, py := get_vector(object, 'position')
+	unsafe {
+		*x = px
+		*y = py
 	}
+}
 
-	@[export: 'godot_v_rotation_of']
-	fn godot_v_rotation_of(object voidptr) f64 {
-		return get_float(object, 'rotation')
-	}
+@[export: 'godot_v_rotation_of']
+fn godot_v_rotation_of(object voidptr) f64 {
+	return get_float(object, 'rotation')
+}
 
-	@[export: 'godot_v_move_to']
-	fn godot_v_move_to(object voidptr, x f32, y f32) {
-		move_to_impl(object, x, y)
-	}
+@[export: 'godot_v_move_to']
+fn godot_v_move_to(object voidptr, x f32, y f32) {
+	move_to_impl(object, x, y)
+}
 
-	@[export: 'godot_v_set_rotation']
-	fn godot_v_set_rotation(object voidptr, angle f64) {
-		set_float_prop(object, 'rotation', angle)
-	}
+@[export: 'godot_v_set_rotation']
+fn godot_v_set_rotation(object voidptr, angle f64) {
+	set_float_prop(object, 'rotation', angle)
+}
 
-	@[export: 'godot_v_push_velocity']
-	fn godot_v_push_velocity(object voidptr, x f32, y f32) {
-		push_velocity_impl(object, x, y)
-	}
+@[export: 'godot_v_push_velocity']
+fn godot_v_push_velocity(object voidptr, x f32, y f32) {
+	push_velocity_impl(object, x, y)
+}
 
-	@[export: 'godot_v_add_child']
-	fn godot_v_add_child(parent voidptr, child voidptr) {
-		add_child_impl(parent, child)
-	}
+@[export: 'godot_v_add_child']
+fn godot_v_add_child(parent voidptr, child voidptr) {
+	add_child_impl(parent, child)
+}
 
-	@[export: 'godot_v_play_anim']
-	fn godot_v_play_anim(object voidptr, name &u8, len int) {
-		play_anim_impl(object, text_of(name, len))
-	}
+@[export: 'godot_v_play_anim']
+fn godot_v_play_anim(object voidptr, name &u8, len int) {
+	play_anim_impl(object, text_of(name, len))
+}
 
-	@[export: 'godot_v_stop_anim']
-	fn godot_v_stop_anim(object voidptr) {
-		call_void(object, 'stop')
-	}
+@[export: 'godot_v_stop_anim']
+fn godot_v_stop_anim(object voidptr) {
+	call_void(object, 'stop')
+}
 
-	@[export: 'godot_v_viewport_size']
-	fn godot_v_viewport_size(object voidptr, x &f32, y &f32) {
-		w, h := viewport_size_impl(object)
-		unsafe {
-			*x = w
-			*y = h
-		}
+@[export: 'godot_v_viewport_size']
+fn godot_v_viewport_size(object voidptr, x &f32, y &f32) {
+	w, h := viewport_size_impl(object)
+	unsafe {
+		*x = w
+		*y = h
 	}
+}
 
-	@[export: 'godot_v_set_disabled']
-	fn godot_v_set_disabled(object voidptr, disabled u8) {
-		set_bool_prop(object, 'disabled', disabled != 0)
-	}
+@[export: 'godot_v_set_disabled']
+fn godot_v_set_disabled(object voidptr, disabled u8) {
+	set_bool_prop(object, 'disabled', disabled != 0)
+}
 
-	@[export: 'godot_v_parent_of']
-	fn godot_v_parent_of(object voidptr) voidptr {
-		return call_object(object, 'get_parent')
-	}
+@[export: 'godot_v_parent_of']
+fn godot_v_parent_of(object voidptr) voidptr {
+	return call_object(object, 'get_parent')
+}
 
-	@[export: 'godot_v_set_deferred_flag']
-	fn godot_v_set_deferred_flag(object voidptr, prop &u8, len int, value u8) {
-		set_deferred_bool(object, text_of(prop, len), value != 0)
-	}
+@[export: 'godot_v_set_deferred_flag']
+fn godot_v_set_deferred_flag(object voidptr, prop &u8, len int, value u8) {
+	set_deferred_bool(object, text_of(prop, len), value != 0)
+}
 
-	@[export: 'godot_v_action_down']
-	fn godot_v_action_down(name &u8, len int) u8 {
-		return flag_of(action_down_impl(text_of(name, len)))
-	}
+@[export: 'godot_v_action_down']
+fn godot_v_action_down(name &u8, len int) u8 {
+	return flag_of(action_down_impl(text_of(name, len)))
+}
 
-	@[export: 'godot_v_delta_of']
-	fn godot_v_delta_of(object voidptr) f64 {
-		return delta_of_impl(object)
-	}
+@[export: 'godot_v_delta_of']
+fn godot_v_delta_of(object voidptr) f64 {
+	return delta_of_impl(object)
 }

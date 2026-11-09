@@ -274,7 +274,7 @@ fn interface_name(type InterfaceType, class_name string, method_name string) str
 	}
 	mut mname := method_name.capitalize()
 	for mname.contains('_') {
-		i := mname.index('_') or { panic(err) }
+		i := mname.index('_') or { break }
 		mname = '${mname[0..i]}${mname[i + 1..].capitalize()}'
 	}
 	return 'I${prefix}${class_name}${mname}'

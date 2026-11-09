@@ -12,12 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module gdext
+module bridge
 
-pub fn (s Object) obj() Object {
-	return s
-}
-
-pub struct VSignal[T] {
-	Signal
+fn base_type_from(source string) string {
+	key := 'godot.extends('
+	start := source.index(key) or { return 'Node' }
+	rest := source[start + key.len..]
+	if rest.len < 2 {
+		return 'Node'
+	}
+	quote := rest[0]
+	if quote != `'` && quote != `"` {
+		return 'Node'
+	}
+	body := rest[1..]
+	end := body.index(quote.ascii_str()) or { return 'Node' }
+	name := body[..end]
+	if name.len == 0 {
+		return 'Node'
+	}
+	return name
 }

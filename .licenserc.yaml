@@ -13,5 +13,4 @@ header:
     - "**/*.h"
   paths-ignore:
     - "**/.git/**"
-    - "src/generator/**"
-    - "src/generation.vsh"
+    - "generator/**"

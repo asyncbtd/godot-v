@@ -83,7 +83,7 @@ pub fn (mut g Generator) run() ! {
 
 fn (g &Generator) gen_bind_counts() ! {
 	os.write_file(g.file('__bind_count.v'), "
-		|module gdext
+		|module godot
 		|
 		|const class_bind_count = ${g.class_bind}
 		|const builtin_bind_count = ${g.builtin_bind}
@@ -127,10 +127,12 @@ fn (mut g Generator) setup() {
 
 fn (g &Generator) gen_gdext_info() ! {
 	mut buf := strings.new_builder(1024)
-	mod := vmod.decode(@VMOD_FILE) or { panic(err) }
+	manifest_path := os.join_path(os.dir(g.out_dir), 'v.mod')
+	manifest_text := os.read_file(manifest_path) or { panic(err) }
+	mod := vmod.decode(manifest_text) or { panic(err) }
 	version := mod.version.split('.')
 	buf.writeln("
-		|module gdext
+		|module godot
 		|
 		|import time
 		|
@@ -166,7 +168,7 @@ fn (g &Generator) gen_gdext_info() ! {
 
 fn (mut g Generator) gen_functions() ! {
 	mut buf := strings.new_builder(1024)
-	buf.writeln('module gdext')
+	buf.writeln('module godot')
 
 	for method in g.api.utility_functions {
 		has_args := method.arguments.len > 0
@@ -280,7 +282,7 @@ fn (mut g Generator) gen_functions() ! {
 
 fn (g &Generator) gen_enums() ! {
 	mut buf := strings.new_builder(1024)
-	buf.writeln('module gdext')
+	buf.writeln('module godot')
 
 	for enm in g.api.global_enums {
 		name := convert_type(enm.name)
@@ -307,7 +309,7 @@ fn (g &Generator) gen_enums() ! {
 // Generate signals for each class.
 fn (mut g Generator) gen_signals() ! {
 	mut buf := strings.new_builder(1024)
-	buf.writeln('module gdext')
+	buf.writeln('module godot')
 
 	mut sigs := map[string]bool{}
 	mut clauses := []string{}
@@ -391,7 +393,7 @@ fn (mut g Generator) gen_builtin_classes() ! {
 		mut buf := strings.new_builder(1024)
 
 		// module
-		buf.writeln('module gdext')
+		buf.writeln('module godot')
 
 		// enums
 		for enm in class.enums {
@@ -884,7 +886,7 @@ fn (mut g Generator) gen_classes() ! {
 		mut buf := strings.new_builder(1024)
 
 		// module
-		buf.writeln('module gdext')
+		buf.writeln('module godot')
 
 		// enums
 		for enm in class.enums {
@@ -1243,7 +1245,7 @@ fn (mut g Generator) gen_classes() ! {
 
 fn (g &Generator) gen_structs() ! {
 	mut buf := strings.new_builder(1024)
-	buf.writeln('module gdext')
+	buf.writeln('module godot')
 
 	for structure in g.api.native_structures {
 		structure_name := convert_type(structure.name)

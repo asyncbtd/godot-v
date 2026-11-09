@@ -12,18 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module godot
+module bridge
 
-import crypto.sha256
-import os
-
-#include "@VMODROOT/src/string_read.h"
+#include "@VMODROOT/src/bridge/string_read.h"
 
 fn C.godot_call_string_read(f voidptr, src voidptr, buf voidptr, n i64) i64
 
 const level_scene = u32(2)
 const level_editor = u32(3)
-const bind_ram_kb = 8388608
 
 const type_bool = 1
 const type_int = 2
@@ -440,11 +436,7 @@ fn singleton(name string) voidptr {
 
 // report writes a message to Godot's error output.
 pub fn report(message string) {
-	$if script_guest ? {
-		C.godot_v_report(message.str, message.len)
-	} $else {
-		report_impl(message)
-	}
+	report_impl(message)
 }
 
 fn report_impl(message string) {
@@ -452,7 +444,7 @@ fn report_impl(message string) {
 		return
 	}
 	f := unsafe { PrintError(api.print_error) }
-	f(message.str, c'godot_v', c'src/extension.v', 0, 1)
+	f(message.str, c'godot_v', c'src/bridge/entry.v', 0, 1)
 }
 
 fn (mut s GdString) set_text(text string) {
@@ -699,22 +691,6 @@ fn arg_bool(args voidptr, index int) bool {
 	return unsafe { *&u8(ptr) } != 0
 }
 
-fn sh_quote(path string) string {
-	mut out := [u8(39)]
-	for ch in path {
-		if ch == u8(39) {
-			out << u8(39)
-			out << u8(92)
-			out << u8(39)
-			out << u8(39)
-		} else {
-			out << ch
-		}
-	}
-	out << u8(39)
-	return out.bytestr()
-}
-
 fn editor_open() bool {
 	if api.editor_hint == unsafe { nil } || api.engine == unsafe { nil } {
 		return false
@@ -740,68 +716,6 @@ fn call_string(instance voidptr, class_name string, method string, hash i64, arg
 	return text
 }
 
-fn shell(command string) int {
-	unsafe {
-		return C.system(command.str)
-	}
-}
-
-fn dump_editor_api(editor string, dest string) bool {
-	if os.exists(dest) {
-		os.rm(dest) or { return false }
-	}
-	dir := os.dir(dest)
-	flags := ['--dump-extension-api-with-docs', '--dump-extension-api']
-	for flag in flags {
-		command := 'cd ' + sh_quote(dir) + ' && ' + sh_quote(editor) + ' --headless --quit ' + flag
-		shell(command)
-		if os.exists(dest) {
-			return true
-		}
-	}
-	return false
-}
-
-fn refresh_bindings() {
-	if !editor_open() {
-		return
-	}
-	project := call_string(singleton('ProjectSettings'), 'ProjectSettings', 'globalize_path',
-		3135753539, 'res://').trim_right('/')
-	godot_bin := call_string(singleton('OS'), 'OS', 'get_executable_path', 201670096, '')
-	if project.len == 0 || godot_bin.len == 0 {
-		report('binding cache skipped: project or editor path is empty')
-		return
-	}
-	cache := project + '/.godot/godot-v'
-	os.mkdir_all(cache) or {
-		report('binding cache directory failed')
-		return
-	}
-	dump_path := os.join_path(cache, 'extension_api.json')
-	dumped := dump_editor_api(godot_bin, dump_path)
-	if dumped == false {
-		report('extension API dump failed')
-		return
-	}
-	api_text := os.read_file(dump_path) or { return }
-	sum := sha256.hexhash(api_text)
-	hash_path := os.join_path(cache, 'extension_api.sha256')
-	previous := os.read_file(hash_path) or { '' }
-	mark := os.join_path(cache, 'gdext/__info.v')
-	if previous.trim_space() == sum && os.exists(mark) {
-		return
-	}
-	report('generating V bindings into ' + cache)
-	root := @VMODROOT
-	limit := bind_ram_kb.str()
-	command := 'cd ' + sh_quote(root) + ' && ulimit -v ' + limit + ' && GODOT_V_CACHE=' +
-		sh_quote(cache) + ' v run src/generation.vsh'
-	if shell(command) != 0 {
-		report('binding generation failed')
-	}
-}
-
 @[export: 'godot_v_init']
 fn godot_v_init(get_proc_address voidptr, library voidptr, initialization voidptr) u8 {
 	C._vinit(0, unsafe { nil })
@@ -822,7 +736,6 @@ fn initialize_level(_userdata voidptr, level u32) {
 	}
 	api.editor_hint = method_bind('Engine', 'is_editor_hint', 36873697)
 	api.engine = singleton('Engine')
-	refresh_bindings()
 	api.resource_loader = singleton('ResourceLoader')
 	api.resource_saver = singleton('ResourceSaver')
 	register_classes()
