@@ -23,6 +23,10 @@ fn C.dlsym(handle voidptr, name &u8) voidptr
 
 fn C.dlerror() &u8
 
+fn C.LoadLibraryA(name &u8) voidptr
+
+fn C.GetProcAddress(handle voidptr, name &u8) voidptr
+
 type VariantCall = fn (voidptr, voidptr, voidptr, i64, voidptr, voidptr)
 
 type HookSignal = fn (string) bool
@@ -144,24 +148,13 @@ fn run_script_method(data voidptr, name string) bool {
 	if box == unsafe { nil } {
 		return false
 	}
-	if source_has_method(box.source.text(), name) == false {
+	if answers(box.path.text(), box.source.text(), name) == false {
 		return false
 	}
 	previous := bound_owner
 	bound_owner = box.owner
 	hook := hook_for(box.path.text())
-	mut ok := call_signal(hook.signal, name)
-	if ok == false {
-		for slot in script_hooks {
-			if slot.signal == hook.signal {
-				continue
-			}
-			if call_signal(slot.signal, name) {
-				ok = true
-				break
-			}
-		}
-	}
+	ok := call_signal(hook.signal, name)
 	bound_owner = previous
 	return ok
 }
@@ -174,7 +167,7 @@ fn run_script_enter(data voidptr) {
 	if box == unsafe { nil } {
 		return
 	}
-	if source_has_method(box.source.text(), '_ready') {
+	if answers(box.path.text(), box.source.text(), '_ready') {
 		return
 	}
 	hook := hook_for(box.path.text())
@@ -784,23 +777,47 @@ fn host_library() string {
 }
 
 fn load_error() string {
-	ptr := C.dlerror()
-	if ptr == unsafe { nil } {
-		return ''
+	$if windows {
+		return 'LoadLibrary failed'
+	} $else {
+		ptr := C.dlerror()
+		if ptr == unsafe { nil } {
+			return ''
+		}
+		return unsafe { cstring_to_vstring(ptr) }
 	}
-	return unsafe { cstring_to_vstring(ptr) }
+}
+
+fn open_shared(path string) voidptr {
+	$if windows {
+		return C.LoadLibraryA(path.str)
+	} $else {
+		return C.dlopen(path.str, 10)
+	}
+}
+
+fn symbol_of(handle voidptr, name string) voidptr {
+	$if windows {
+		return C.GetProcAddress(handle, name.str)
+	} $else {
+		return C.dlsym(handle, name.str)
+	}
 }
 
 fn promote_host() {
-	path := host_library()
-	if path.len == 0 {
+	$if windows {
 		return
+	} $else {
+		path := host_library()
+		if path.len == 0 {
+			return
+		}
+		C.dlopen(path.str, 262)
 	}
-	C.dlopen(path.str, 262)
 }
 
 fn call_symbol(handle voidptr, name string) {
-	ptr := C.dlsym(handle, name.str)
+	ptr := symbol_of(handle, name)
 	if ptr == unsafe { nil } {
 		return
 	}
@@ -810,7 +827,7 @@ fn call_symbol(handle voidptr, name string) {
 
 fn open_script_library(path string) bool {
 	promote_host()
-	handle := C.dlopen(path.str, 10)
+	handle := open_shared(path)
 	if handle == unsafe { nil } {
 		report('script library failed to load: ' + load_error())
 		return false

@@ -33,6 +33,7 @@ fn dispatch(action int, instance voidptr, args voidptr, ret voidptr) {
 		action_script_has_method {
 			write_bool(ret, script_has_method(instance, read_name(arg(args, 0))))
 		}
+		action_script_methods { write_methods(instance, ret) }
 		action_script_reload_file { write_bool(ret, true) }
 		action_script_valid { write_bool(ret, true) }
 		action_script_reload {
@@ -72,7 +73,7 @@ fn write_template(args voidptr, ret voidptr) {
 fn template_source(class_name string, base string) string {
 	name := if class_name == '' { 'Script' } else { class_name }
 	parent := if base == '' { 'Node' } else { base }
-	return "@[godot.extends('${parent}')]\npub struct ${name} {\n}\n\npub fn (mut self ${name}) ready() {}\n"
+	return "@[godot.NodeClass('${parent}')]\npub struct ${name} {\n}\n\npub fn (mut self ${name}) ready() {}\n"
 }
 
 fn script_state(instance voidptr) &ScriptState {
@@ -88,12 +89,13 @@ fn write_script_base(instance voidptr, ret voidptr) {
 fn set_script_source(instance voidptr, source string) {
 	mut state := unsafe { &ScriptState(instance) }
 	state.source.set_text(source)
-	state.base.set_text(base_type_from(source))
+	refresh_base(mut state)
 }
 
 fn set_script_path(instance voidptr, path string) {
 	mut state := unsafe { &ScriptState(instance) }
 	state.path.set_text(path)
+	refresh_base(mut state)
 }
 
 fn write_placeholder(instance voidptr, args voidptr, ret voidptr) {

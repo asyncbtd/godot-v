@@ -84,6 +84,7 @@ const action_saver_save = 29
 const action_script_instance = 30
 const action_script_has_method = 31
 const action_scripts_refresh = 32
+const action_script_methods = 33
 
 struct Initialization {
 mut:
@@ -597,6 +598,38 @@ fn dictionary_bool(dest voidptr, key string, value bool) {
 		destroy(voidptr(&value_variant[0]))
 	}
 	key_string.clear()
+}
+
+fn dictionary_text(dest voidptr, key string, value string) {
+	write_dictionary(dest)
+	mut key_string := GdString{}
+	key_string.set_text(key)
+	mut value_string := GdString{}
+	value_string.set_text(value)
+	mut key_variant := [24]u8{}
+	mut value_variant := [24]u8{}
+	from_string := unsafe { TypeCtor(api.variant_from_string) }
+	unsafe {
+		from_string(voidptr(&key_variant[0]), voidptr(&key_string))
+		from_string(voidptr(&value_variant[0]), voidptr(&value_string))
+		set := KeyedSet(api.dict_set)
+		set(dest, voidptr(&key_variant[0]), voidptr(&value_variant[0]))
+		destroy := VariantDestroy(api.variant_destroy)
+		destroy(voidptr(&key_variant[0]))
+		destroy(voidptr(&value_variant[0]))
+	}
+	key_string.clear()
+	value_string.clear()
+}
+
+fn push_array(array voidptr, item voidptr) {
+	name := string_name('push_back')
+	method := builtin_method_of(type_array, voidptr(&name), 3316032543)
+	if method == unsafe { nil } {
+		return
+	}
+	call := unsafe { BuiltinCall(method) }
+	call(array, voidptr(&item), unsafe { nil }, 1)
 }
 
 fn variant_object(dest voidptr, object voidptr) {
@@ -1134,7 +1167,7 @@ fn method_specs() []Spec {
 		Spec{kind_script, '_has_property_default_value', action_stub, ret_bool},
 		Spec{kind_script, '_get_property_default_value', action_stub, ret_variant},
 		Spec{kind_script, '_update_exports', action_stub, ret_none},
-		Spec{kind_script, '_get_script_method_list', action_stub, ret_array},
+		Spec{kind_script, '_get_script_method_list', action_script_methods, ret_array},
 		Spec{kind_script, '_get_script_property_list', action_stub, ret_array},
 		Spec{kind_script, '_get_member_line', action_stub, ret_number},
 		Spec{kind_script, '_get_constants', action_stub, ret_dictionary},
