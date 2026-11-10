@@ -43,8 +43,9 @@ fn main() {
 	} else {
 		os.join_path(launched, 'extension_api.json')
 	})
-	os.chdir(@VMODROOT) or { panic(err) }
-	out_dir := os.real_path(os.join_path(@VMODROOT, '..', 'src'))
+	module_root := os.real_path(os.join_path(@VMODROOT, '..'))
+	os.chdir(module_root) or { panic(err) }
+	out_dir := os.join_path(module_root, 'extension')
 	body := os.read_file(dump_path) or { panic(err) }
 	label := json_field(body, 'version_full_name')
 	precision := json_field(body, 'precision')

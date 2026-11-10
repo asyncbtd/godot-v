@@ -4,7 +4,7 @@ V as a script language for Godot 4.5 and newer.
 
 There are two libraries.
 
-`libgodotv.so` is the `asyncbtd.godot` module. Godot loads it and calls `godot_v_init`. That registers V as a script language and opens the game library. The registration lives in `src/bridge_*.v`, in the same module as `godot.Node` and `godot.register_player`.
+`libgodotv.so` is the `asyncbtd.godot` module. Godot loads it and calls `godot_v_init`. That registers V as a script language and opens the game library. The registration lives in `bridge/*.v`, in the same `godot` module as `godot.Node` and `godot.register_player`. Sources are split with `subdirs` in `v.mod`: `bridge` (GDExtension script language) and `extension` (bindings and runtime).
 
 The game imports `asyncbtd.godot` and gets `godot.register_player` from that same module. It does not register the language a second time.
 
@@ -36,7 +36,7 @@ godots exec -- --headless --quit --dump-extension-api
 
 ## 4. Generate the V bindings
 
-The generator reads `extension_api.json` from the current directory, or the path you pass. It writes `src/_*.v` into this module and deletes only those files before writing. The generated files stay on disk and are not committed.
+The generator reads `extension_api.json` from the current directory, or the path you pass. It writes `extension/_*.v` into this module and deletes only those files before writing. The generated files stay on disk and are not committed.
 
 ```bash
 v run generator/generation.vsh
@@ -82,7 +82,7 @@ fn init() {
 }
 ```
 
-`godot.Node` comes from the generated files. `godot.register_player` is the hand-written function in `src/bridge_script_bind.v`.
+`godot.Node` comes from the generated files. `godot.register_player` is the hand-written function in `bridge/script_bind.v`.
 
 ## 7. Compile the game scripts
 

@@ -14,7 +14,7 @@
 
 module godot
 
-#include "@VMODROOT/src/bridge_string_read.h"
+#include "@VMODROOT/bridge/string_read.h"
 
 fn C.godot_call_string_read(f voidptr, src voidptr, buf voidptr, n i64) i64
 
@@ -122,6 +122,7 @@ struct ClassInfo {
 }
 
 struct BindingCallbacks {
+mut:
 	create_callback    voidptr
 	free_callback      voidptr
 	reference_callback voidptr
@@ -449,7 +450,7 @@ fn report_impl(message string) {
 		return
 	}
 	f := unsafe { PrintError(api.print_error) }
-	f(message.str, c'godot_v', c'src/bridge_entry.v', 0, 1)
+	f(message.str, c'godot_v', c'bridge/entry.v', 0, 1)
 }
 
 fn (mut s GdString) set_text(text string) {

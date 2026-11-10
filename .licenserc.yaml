@@ -14,4 +14,4 @@ header:
   paths-ignore:
     - "**/.git/**"
     - "generator/**"
-    - "src/_*.v"
+    - "extension/_*.v"

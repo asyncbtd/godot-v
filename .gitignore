@@ -2,7 +2,7 @@
 generator/extension_api.json
 
 ### V ###
-src/_*.v
+extension/_*.v
 *.exe
 *.exe~
 *.so
