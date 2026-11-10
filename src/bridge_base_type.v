@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module bridge
+module godot
 
 fn base_type_from(source string) string {
 	key := 'godot.extends('

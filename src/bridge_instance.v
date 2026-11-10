@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module bridge
+module godot
 
 struct InstanceInfo {
 mut:
@@ -48,6 +48,8 @@ struct Live {
 mut:
 	owner  voidptr
 	script voidptr
+	source GdString
+	path   GdString
 }
 
 __global script_info InstanceInfo
@@ -62,6 +64,7 @@ fn prepare_instance_info() {
 	script_info.get_script_func = voidptr(live_script)
 	script_info.get_language_func = voidptr(live_language)
 	script_info.is_placeholder_func = voidptr(live_placeholder)
+	script_info.refcount_decremented_func = voidptr(live_can_die)
 	script_info.free_func = voidptr(live_free)
 }
 
@@ -85,6 +88,8 @@ fn make_live(state &ScriptState, owner voidptr) voidptr {
 	mut box := unsafe { &Live(alloc(uint(sizeof(Live)))) }
 	box.owner = owner
 	box.script = state.object
+	box.source.set_text(state.source.text())
+	box.path.set_text(state.path.text())
 	ensure_project_scripts()
 	create := unsafe { ScriptCreate(api.script_instance) }
 	instance := create(voidptr(&script_info), voidptr(box))
@@ -94,19 +99,19 @@ fn make_live(state &ScriptState, owner voidptr) voidptr {
 	return instance
 }
 
-fn live_has_method(data voidptr, method voidptr) bool {
+fn live_box(data voidptr) &Live {
 	if data == unsafe { nil } {
+		return unsafe { nil }
+	}
+	return unsafe { &Live(data) }
+}
+
+fn live_has_method(data voidptr, method voidptr) bool {
+	box := live_box(data)
+	if box == unsafe { nil } {
 		return false
 	}
-	script := unsafe { &Live(data) }.script
-	if script == unsafe { nil } {
-		return false
-	}
-	state := script_state(binding_of(script))
-	if state == unsafe { nil } {
-		return false
-	}
-	return source_has_method(state.source.text(), read_name(method))
+	return source_has_method(box.source.text(), read_name(method))
 }
 
 fn live_call(data voidptr, method voidptr, _args voidptr, _count i64, ret voidptr, err voidptr) {
@@ -159,9 +164,16 @@ fn live_placeholder(_data voidptr) u8 {
 	return 0
 }
 
+fn live_can_die(_data voidptr) u8 {
+	return 1
+}
+
 fn live_free(data voidptr) {
-	if data == unsafe { nil } {
+	mut box := live_box(data)
+	if box == unsafe { nil } {
 		return
 	}
+	box.source.clear()
+	box.path.clear()
 	release(data)
 }

@@ -1,3 +1,6 @@
+### Other ###
+generator/extension_api.json
+
 ### V ###
 src/_*.v
 *.exe

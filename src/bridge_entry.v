@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module bridge
+module godot
 
-#include "@VMODROOT/src/bridge/string_read.h"
+#include "@VMODROOT/src/bridge_string_read.h"
 
 fn C.godot_call_string_read(f voidptr, src voidptr, buf voidptr, n i64) i64
 
@@ -30,6 +30,7 @@ const type_rect2 = 7
 const type_string_name = 21
 const type_node_path = 22
 const type_object = 24
+const type_callable = 25
 const type_dictionary = 27
 const type_array = 28
 const type_packed_string_array = 34
@@ -133,14 +134,17 @@ mut:
 
 struct ScriptState {
 mut:
+	kind   int
 	object voidptr
 	source GdString
 	base   GdString
 	path   GdString
+	owned  u8
 }
 
 struct PlainObject {
 mut:
+	kind   int
 	object voidptr
 }
 
@@ -303,6 +307,7 @@ fn proc(name string) voidptr {
 }
 
 fn load_api() {
+	prepare_binding()
 	api.string_new = proc('string_new_with_utf8_chars_and_len2')
 	api.string_read = proc('string_to_utf8_chars')
 	api.string_name_new = proc('string_name_new_with_latin1_chars')
@@ -444,7 +449,7 @@ fn report_impl(message string) {
 		return
 	}
 	f := unsafe { PrintError(api.print_error) }
-	f(message.str, c'godot_v', c'src/bridge/entry.v', 0, 1)
+	f(message.str, c'godot_v', c'src/bridge_entry.v', 0, 1)
 }
 
 fn (mut s GdString) set_text(text string) {
@@ -668,7 +673,42 @@ fn object_class(object voidptr) string {
 	return text
 }
 
+fn prepare_binding() {
+	binding.create_callback = voidptr(binding_create)
+	binding.free_callback = voidptr(binding_free)
+	binding.reference_callback = voidptr(binding_reference)
+}
+
+fn binding_create(_token voidptr, object voidptr) voidptr {
+	mut state := unsafe { &ScriptState(alloc(uint(sizeof(ScriptState)))) }
+	state.kind = kind_script
+	state.object = object
+	state.owned = 1
+	return voidptr(state)
+}
+
+fn binding_free(_token voidptr, _object voidptr, instance voidptr) {
+	if instance == unsafe { nil } {
+		return
+	}
+	mut state := unsafe { &ScriptState(instance) }
+	if state.kind != kind_script || state.owned == 0 {
+		return
+	}
+	state.source.clear()
+	state.base.clear()
+	state.path.clear()
+	release(instance)
+}
+
+fn binding_reference(_token voidptr, _binding voidptr, _reference u8) u8 {
+	return 1
+}
+
 fn binding_of(object voidptr) voidptr {
+	if object == unsafe { nil } || api.get_binding == unsafe { nil } {
+		return unsafe { nil }
+	}
 	f := unsafe { GetBinding(api.get_binding) }
 	return f(object, api.library, voidptr(&binding))
 }
@@ -932,10 +972,12 @@ fn create_instance(class_userdata voidptr, notify u8) voidptr {
 fn new_instance(kind int, object voidptr) voidptr {
 	if kind == kind_script {
 		mut state := unsafe { &ScriptState(alloc(uint(sizeof(ScriptState)))) }
+		state.kind = kind
 		state.object = object
 		return voidptr(state)
 	}
 	mut plain := unsafe { &PlainObject(alloc(uint(sizeof(PlainObject)))) }
+	plain.kind = kind
 	plain.object = object
 	return voidptr(plain)
 }
@@ -946,12 +988,24 @@ fn free_instance(class_userdata voidptr, instance voidptr) {
 	}
 	kind := pointer_kind(class_userdata)
 	if kind == kind_script {
+		if script_is_remembered(instance) {
+			return
+		}
 		mut state := unsafe { &ScriptState(instance) }
 		state.source.clear()
 		state.base.clear()
 		state.path.clear()
 	}
 	release(instance)
+}
+
+fn script_is_remembered(state voidptr) bool {
+	for item in script_resources {
+		if item == state {
+			return true
+		}
+	}
+	return false
 }
 
 fn virtual_data(class_userdata voidptr, name voidptr, _hash u32) voidptr {

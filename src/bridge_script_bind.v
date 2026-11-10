@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module bridge
+module godot
 
 import os
+import v.vmod
 
 fn C.dlopen(filename &u8, flags int) voidptr
 
@@ -24,7 +25,7 @@ fn C.dlerror() &u8
 
 type VariantCall = fn (voidptr, voidptr, voidptr, i64, voidptr, voidptr)
 
-type SignalFn = fn (string) bool
+type HookSignal = fn (string) bool
 
 type EnterFn = fn ()
 
@@ -53,25 +54,15 @@ struct CachedName {
 	name GdString
 }
 
-pub struct Session {
-pub mut:
-	score     int
-	phase     int
-	mob_scene voidptr
-	screen_w  f32
-	screen_h  f32
-}
-
 __global script_hooks = []ScriptHook{}
 __global name_cache = []CachedName{}
 __global bound_owner = unsafe { nil }
-__global session Session
-__global active_session = unsafe { &Session(nil) }
+__global host_session Session
 __global script_library = unsafe { nil }
 __global script_resources = []voidptr{}
 
 fn init() {
-	active_session = unsafe { &session }
+	active_session = unsafe { &host_session }
 }
 
 fn text_of(ptr &u8, len int) string {
@@ -140,7 +131,7 @@ fn call_signal(signal voidptr, name string) bool {
 	if signal == unsafe { nil } {
 		return false
 	}
-	f := unsafe { SignalFn(signal) }
+	f := unsafe { HookSignal(signal) }
 	return f(name)
 }
 
@@ -149,20 +140,16 @@ fn run_script_method(data voidptr, name string) bool {
 		return false
 	}
 	ensure_project_scripts()
-	box := unsafe { &Live(data) }
-	if box.script == unsafe { nil } {
+	box := live_box(data)
+	if box == unsafe { nil } {
 		return false
 	}
-	state := script_state(binding_of(box.script))
-	if state == unsafe { nil } {
-		return false
-	}
-	if source_has_method(state.source.text(), name) == false {
+	if source_has_method(box.source.text(), name) == false {
 		return false
 	}
 	previous := bound_owner
 	bound_owner = box.owner
-	hook := hook_for(state.path.text())
+	hook := hook_for(box.path.text())
 	mut ok := call_signal(hook.signal, name)
 	if ok == false {
 		for slot in script_hooks {
@@ -183,18 +170,14 @@ fn run_script_enter(data voidptr) {
 	if data == unsafe { nil } {
 		return
 	}
-	box := unsafe { &Live(data) }
-	if box.script == unsafe { nil } {
+	box := live_box(data)
+	if box == unsafe { nil } {
 		return
 	}
-	state := script_state(binding_of(box.script))
-	if state == unsafe { nil } {
+	if source_has_method(box.source.text(), '_ready') {
 		return
 	}
-	if source_has_method(state.source.text(), '_ready') {
-		return
-	}
-	hook := hook_for(state.path.text())
+	hook := hook_for(box.path.text())
 	if hook.enter == unsafe { nil } {
 		return
 	}
@@ -623,6 +606,36 @@ pub fn call_method(object voidptr, method string) {
 	call_void(object, method)
 }
 
+// connect binds signal on source to method on target.
+pub fn connect(source voidptr, signal_name string, target voidptr, method string) {
+	if source == unsafe { nil } || target == unsafe { nil } || signal_name == '' || method == '' {
+		return
+	}
+	method_name := cached_name(method)
+	callable := alloc(24)
+	mut ctor_args := [2]voidptr{}
+	ctor_args[0] = voidptr(&target)
+	ctor_args[1] = voidptr(&method_name)
+	build := unsafe { TypeCtor(constructor_of(type_callable, 2)) }
+	build(callable, voidptr(&ctor_args[0]))
+	signal := cached_name(signal_name)
+	flags := i64(0)
+	mut args := [3]voidptr{}
+	args[0] = voidptr(&signal)
+	args[1] = callable
+	args[2] = voidptr(&flags)
+	mut err := i64(0)
+	bind := method_bind('Object', 'connect', 1518946055)
+	call := unsafe { Ptrcall(api.ptrcall) }
+	call(bind, source, voidptr(&args[0]), voidptr(&err))
+	drop := unsafe { TypeCtor(destructor_of(type_callable)) }
+	drop(callable, unsafe { nil })
+	release(callable)
+	if err != 0 {
+		report('connect ${signal_name} -> ${method} failed: ${err}')
+	}
+}
+
 // node_at returns the node at path, or nil when it is missing.
 pub fn node_at(object voidptr, path string) voidptr {
 	return node_at_impl(object, path)
@@ -843,14 +856,52 @@ fn ensure_project_scripts() {
 	load_project_scripts()
 }
 
+fn script_library_suffix() string {
+	$if windows {
+		return '.dll'
+	} $else $if macos {
+		return '.dylib'
+	} $else {
+		return '.so'
+	}
+}
+
+fn script_library_path(project string) string {
+	mod_path := os.join_path(project, 'v.mod')
+	text := os.read_file(mod_path) or { panic('game v.mod not found at ${mod_path}') }
+	manifest := vmod.decode(text) or { panic('game v.mod at ${mod_path} is invalid: ${err}') }
+	if manifest.name.len == 0 {
+		panic('game v.mod at ${mod_path} has no name')
+	}
+	file_name := manifest.name + script_library_suffix()
+	mut found := []string{}
+	for dir in ['', 'bin', 'bins', 'build', 'builds', 'lib', 'libs', 'target', 'targets'] {
+		path := if dir.len == 0 {
+			os.join_path(project, file_name)
+		} else {
+			os.join_path(project, dir, file_name)
+		}
+		if os.exists(path) {
+			found << path
+		}
+	}
+	if found.len == 0 {
+		return ''
+	}
+	if found.len > 1 {
+		panic('found more than one ${file_name}:\n' + found.join('\n'))
+	}
+	return found[0]
+}
+
 fn load_project_scripts() {
 	project := call_string(singleton('ProjectSettings'), 'ProjectSettings', 'globalize_path',
 		3135753539, 'res://').trim_right('/')
 	if project.len == 0 {
 		return
 	}
-	so_path := os.join_path(project, 'script', 'script.so')
-	if os.exists(so_path) == false || script_library != unsafe { nil } {
+	so_path := script_library_path(project)
+	if so_path.len == 0 || script_library != unsafe { nil } {
 		return
 	}
 	if open_script_library(so_path) == false {
@@ -881,7 +932,7 @@ fn godot_v_register_mob(enter voidptr) {
 
 @[export: 'godot_v_live']
 fn godot_v_live() voidptr {
-	return unsafe { &session }
+	return unsafe { &host_session }
 }
 
 @[export: 'godot_v_owner']

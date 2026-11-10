@@ -4,9 +4,9 @@ V as a script language for Godot 4.5 and newer.
 
 There are two libraries.
 
-`libgodotv.so` is `asyncbtd.godot.bridge`. Godot loads it and calls `godot_v_init`. That registers V as a script language and opens the game library.
+`libgodotv.so` is the `asyncbtd.godot` module. Godot loads it and calls `godot_v_init`. That registers V as a script language and opens the game library. The registration lives in `src/bridge_*.v`, in the same module as `godot.Node` and `godot.register_player`.
 
-`script/script.so` is the game. Its code imports `asyncbtd.godot` and does not register the language. Calls such as `godot.register_player` and `godot.Node` go through the already loaded `libgodotv.so`.
+The game imports `asyncbtd.godot` and gets `godot.register_player` from that same module. It does not register the language a second time.
 
 ## 1. Install V
 
@@ -48,7 +48,7 @@ v run generator/generation.vsh /absolute/path/to/extension_api.json
 `godot_v_init` is compiled into this library. The built-in tcc does not set the non-executable stack flag, and Godot fails to load such a library on glibc 2.44. Use clang or gcc.
 
 ```bash
-v -cc clang -shared -enable-globals -o libgodotv.so src/bridge
+v -cc clang -shared -enable-globals -o libgodotv.so .
 ```
 
 Copy `libgodotv.so` into the Godot project and add `godot.gdextension` next to `project.godot`:
@@ -82,14 +82,14 @@ fn init() {
 }
 ```
 
-`godot.Node` comes from the generated files. `godot.register_player` is the hand-written call into `libgodotv.so`.
+`godot.Node` comes from the generated files. `godot.register_player` is the hand-written function in `src/bridge_script_bind.v`.
 
 ## 7. Compile the game scripts
 
-Put the game modules under `script/`. The game `v.mod` depends on `asyncbtd.godot`. From `script/`:
+The game `v.mod` depends on `asyncbtd.godot`. Its `name` is the library file name. From the game directory:
 
 ```bash
-v -cc clang -shared -enable-globals .
+v -cc clang -shared -enable-globals -o game.so .
 ```
 
-V writes `script/script.so`. Rebuild it and start Godot again after script changes. Godot does not load this file as a second GDExtension.
+`game` is the `name` from the game `v.mod`, and `.so` is `.dylib` on macOS and `.dll` on Windows. Put the library in the game root or in one of `bin`, `bins`, `build`, `builds`, `lib`, `libs`, `target`, `targets`. One copy only: if several are found, the language library stops. Rebuild it and start Godot again after script changes. Godot does not load this file as a second GDExtension.

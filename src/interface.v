@@ -779,7 +779,7 @@ pub type GDExtensionInterfaceDictionaryOperatorIndex = fn (GDExtensionTypePtr, &
 
 pub type GDExtensionInterfaceDictionaryOperatorIndexConst = fn (GDExtensionConstTypePtr, &Variant) &Variant
 
-pub type GDExtensionInterfaceObjectMethodBindCall = fn (GDExtensionMethodBindPtr, &Object, &&Variant, GDExtensionInt, GDExtensionUninitializedVariantPtr, &GDExtensionCallError)
+pub type GDExtensionInterfaceObjectMethodBindCall = fn (GDExtensionMethodBindPtr, &Object, voidptr, GDExtensionInt, GDExtensionUninitializedVariantPtr, &GDExtensionCallError)
 
 pub type GDExtensionInterfaceObjectMethodBindPtrcall = fn (GDExtensionMethodBindPtr, &Object, &GDExtensionConstTypePtr, GDExtensionTypePtr)
 
