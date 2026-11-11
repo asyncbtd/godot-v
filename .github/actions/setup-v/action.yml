@@ -11,10 +11,10 @@ runs:
   steps:
     - name: Restore V compiler
       id: v-cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/vlang/v
-        key: v-${{ inputs.v-commit }}-ubuntu-latest
+        key: v-${{ inputs.v-commit }}-ubuntu-24.04
 
     - name: Build V ${{ inputs.v-commit }}
       if: steps.v-cache.outputs.cache-hit != 'true'
