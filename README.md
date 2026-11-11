@@ -90,13 +90,13 @@ v install asyncbtd.godot
 Run this with the Godot editor you ship the game on. It writes `extension_api.json` in the current directory.
 
 ```bash
-godot --headless --quit --dump-extension-api
+godot --headless --quit --dump-extension-api-with-docs
 ```
 
 With [godots](https://github.com/MakovWait/godots), from a directory that contains `project.godot` or `.godot-version`:
 
 ```bash
-godots exec -- --headless --quit --dump-extension-api
+godots exec -- --headless --quit --dump-extension-api-with-docs
 ```
 
 ### 4. Generate the V bindings
