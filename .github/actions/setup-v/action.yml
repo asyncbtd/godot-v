@@ -1,0 +1,39 @@
+name: 'Setup V'
+description: 'Restore the pinned V compiler from the cache or build it from the vlang/v repository'
+
+inputs:
+  v-commit:
+    description: 'Pinned vlang/v commit to build'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Restore V compiler
+      id: v-cache
+      uses: actions/cache@v4
+      with:
+        path: ~/vlang/v
+        key: v-${{ inputs.v-commit }}-ubuntu-latest
+
+    - name: Build V ${{ inputs.v-commit }}
+      if: steps.v-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        git clone --filter=blob:none https://github.com/vlang/v ~/vlang/v
+        git -C ~/vlang/v -c advice.detachedHead=false checkout "${{ inputs.v-commit }}"
+        make -C ~/vlang/v
+
+    - name: Add V to PATH
+      shell: bash
+      run: echo "$HOME/vlang/v" >> "$GITHUB_PATH"
+
+    - name: Check V commit
+      shell: bash
+      run: |
+        installed="$(v version)"
+        echo "$installed"
+        grep -q "${{ inputs.v-commit }}" <<< "$installed" || {
+          echo "::error::V compiler is not at the pinned commit ${{ inputs.v-commit }}."
+          exit 1
+        }

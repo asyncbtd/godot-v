@@ -1,0 +1,42 @@
+name: 'Setup Godot'
+description: 'Restore a Godot release binary from the cache or download it from the official Godot releases'
+
+inputs:
+  godot-version:
+    description: 'Godot minor version to install'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Restore Godot ${{ inputs.godot-version }}
+      id: godot-cache
+      uses: actions/cache@v4
+      with:
+        path: ~/bin/godot
+        key: godot-${{ inputs.godot-version }}-stable-linux
+
+    - name: Download Godot ${{ inputs.godot-version }}
+      if: steps.godot-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        curl -fsSL --retry 3 -o /tmp/godot.zip \
+          "https://github.com/godotengine/godot/releases/download/${{ inputs.godot-version }}-stable/Godot_v${{ inputs.godot-version }}-stable_linux.x86_64.zip"
+        mkdir -p "$HOME/bin"
+        unzip -j /tmp/godot.zip "Godot_v${{ inputs.godot-version }}-stable_linux.x86_64" -d "$HOME/bin"
+        mv "$HOME/bin/Godot_v${{ inputs.godot-version }}-stable_linux.x86_64" "$HOME/bin/godot"
+        chmod +x "$HOME/bin/godot"
+
+    - name: Add Godot to PATH
+      shell: bash
+      run: echo "$HOME/bin" >> "$GITHUB_PATH"
+
+    - name: Check Godot version
+      shell: bash
+      run: |
+        installed="$(godot --version)"
+        echo "$installed"
+        grep -q "^${{ inputs.godot-version }}[.]" <<< "$installed" || {
+          echo "::error::godot in PATH is not version ${{ inputs.godot-version }}."
+          exit 1
+        }

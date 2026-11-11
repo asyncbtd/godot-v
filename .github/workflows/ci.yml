@@ -1,0 +1,131 @@
+name: 'CI'
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  V_COMMIT: fda4e4b
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      godot-versions: ${{ steps.versions.outputs.list }}
+    steps:
+      - name: List supported Godot versions
+        id: versions
+        run: echo 'list=["4.5", "4.6", "4.7"]' >> "$GITHUB_OUTPUT"
+
+  setup-v:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-v
+        with:
+          v-commit: ${{ env.V_COMMIT }}
+
+  setup-godot:
+    name: Setup Godot ${{ matrix.godot }}
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        godot: ${{ fromJSON(needs.prepare.outputs.godot-versions) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-godot
+        with:
+          godot-version: ${{ matrix.godot }}
+
+  lint:
+    needs: setup-v
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-v
+        with:
+          v-commit: ${{ env.V_COMMIT }}
+
+      - name: V fmt
+        run: git ls-files -z '*.v' '*.vsh' | xargs -0 -r v fmt -verify
+
+      - name: V vet
+        run: git ls-files -z '*.v' '*.vsh' | xargs -0 -r v vet -W
+
+  test:
+    name: Test Godot ${{ matrix.godot }}
+    needs: [prepare, setup-v, setup-godot]
+    strategy:
+      fail-fast: false
+      matrix:
+        godot: ${{ fromJSON(needs.prepare.outputs.godot-versions) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-v
+        with:
+          v-commit: ${{ env.V_COMMIT }}
+
+      - uses: ./.github/actions/setup-godot
+        with:
+          godot-version: ${{ matrix.godot }}
+
+      - name: Dump extension API
+        run: godot --headless --quit --dump-extension-api
+
+      - name: Generate bindings
+        run: v run generator/generation.vsh
+
+      - name: Unit tests
+        env:
+          GODOT_EXTENSION_API: ${{ github.workspace }}/extension_api.json
+        run: v -enable-globals test .
+
+  build:
+    name: Build Godot ${{ matrix.godot }}
+    needs: [prepare, setup-v, setup-godot]
+    strategy:
+      fail-fast: false
+      matrix:
+        godot: ${{ fromJSON(needs.prepare.outputs.godot-versions) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-v
+        with:
+          v-commit: ${{ env.V_COMMIT }}
+
+      - uses: ./.github/actions/setup-godot
+        with:
+          godot-version: ${{ matrix.godot }}
+
+      - name: Dump extension API
+        run: godot --headless --quit --dump-extension-api
+
+      - name: Generate bindings
+        run: v run generator/generation.vsh
+
+      - name: Build
+        run: v -cc clang -shared -enable-globals -o libgodotv.so .
