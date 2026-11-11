@@ -91,6 +91,13 @@ fn gen_operator(mut buf strings.Builder, class_name string, op_name string, op_t
 	}
 
 	// use $tmpl which will have access to all the variables we've defined
+	right_type_variant := if right_type_lower == 'i64' {
+		'int'
+	} else if right_type_lower == 'f64' {
+		'float'
+	} else {
+		right_type_lower
+	}
 	code := $tmpl('./templates/operator.vtmpl').trim_space_right()
 	buf.writeln('')
 	buf.write_string(docstring(op.description, after: '\n'))

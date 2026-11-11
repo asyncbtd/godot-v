@@ -108,7 +108,7 @@ fn (mut g Generator) setup() {
 			} else {
 				'${class.name}${class_enum.name}'
 			}
-			g.enum_defaults[key] = convert_name(class_enum.values.first().name)
+			g.enum_defaults[avoid_interface_clash(key)] = convert_name(class_enum.values.first().name)
 		}
 	}
 	for class in g.api.builtin_classes {
@@ -895,6 +895,7 @@ fn (mut g Generator) gen_classes() ! {
 			if !enm.name.starts_with(class.name) {
 				enum_name = '${class.name}${enm.name}'
 			}
+			enum_name = avoid_interface_clash(enum_name)
 			buf.writeln('')
 			buf.writeln('pub enum ${enum_name} as i64 {')
 
@@ -1210,7 +1211,8 @@ fn (mut g Generator) gen_classes() ! {
 			}
 			if method.is_vararg {
 				buf.writeln('\tmut err := GDExtensionCallError{}')
-				buf.writeln('\tgdf.object_method_bind_call(mb, ${ptr}, voidptr(${arg_ptr}), total_args, ${ret_ptr}, &err)')
+				buf.writeln('\tvariant_args := unsafe { &&Variant(if args.len > 0 { voidptr(&args[0]) } else { nil }) }')
+				buf.writeln('\tgdf.object_method_bind_call(mb, ${ptr}, variant_args, total_args, ${ret_ptr}, &err)')
 			} else {
 				buf.writeln('\tgdf.object_method_bind_ptrcall(mb, ${ptr}, ${arg_ptr}, ${ret_ptr})')
 			}

@@ -100,6 +100,17 @@ fn convert_name(_name string) string {
 	return name
 }
 
+// avoid_interface_clash renames API types that share a name with a C type of
+// the GDExtension interface. The interface enum is a 32-bit C enum, the API
+// one is passed through ptrcall as a 64-bit integer, so they must stay apart.
+fn avoid_interface_clash(name string) string {
+	return if name == 'GDExtensionInitializationLevel' {
+		'GDExtensionLibraryInitializationLevel'
+	} else {
+		name
+	}
+}
+
 @[params]
 struct ConvertCfg {
 	ns string // namespace module
@@ -150,6 +161,7 @@ fn convert_type(_type string, cfg ConvertCfg) string {
 		type = 'Array'
 	}
 	type = type.replace('::', '')
+	type = avoid_interface_clash(type)
 
 	for type.ends_with('*') {
 		type = '&${type[..type.len - 1]}'.trim_space_right()

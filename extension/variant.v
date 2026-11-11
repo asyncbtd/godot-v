@@ -61,7 +61,7 @@ pub fn (s &Variant) from_bool(src bool) {
 
 // to_int reads this variant as an int.
 pub fn (s &Variant) to_int() int {
-	var_to_type := gdf.get_variant_to_type_constructor(GDExtensionVariantType.type_i64)
+	var_to_type := gdf.get_variant_to_type_constructor(GDExtensionVariantType.type_int)
 	t := 0
 	var_to_type(voidptr(&t), s)
 	return t
@@ -69,7 +69,7 @@ pub fn (s &Variant) to_int() int {
 
 // to_i64 reads this variant as an i64.
 pub fn (s &Variant) to_i64() i64 {
-	var_to_type := gdf.get_variant_to_type_constructor(GDExtensionVariantType.type_i64)
+	var_to_type := gdf.get_variant_to_type_constructor(GDExtensionVariantType.type_int)
 	t := 0
 	var_to_type(voidptr(&t), s)
 	return t
@@ -77,7 +77,7 @@ pub fn (s &Variant) to_i64() i64 {
 
 // to_f64 reads this variant as an f64.
 pub fn (s &Variant) to_f64() f64 {
-	var_to_type := gdf.get_variant_to_type_constructor(GDExtensionVariantType.type_f64)
+	var_to_type := gdf.get_variant_to_type_constructor(GDExtensionVariantType.type_float)
 	t := f64(0)
 	var_to_type(voidptr(&t), s)
 	return t
@@ -85,7 +85,7 @@ pub fn (s &Variant) to_f64() f64 {
 
 // from_int stores src in this variant.
 pub fn (s &Variant) from_int(src int) {
-	to_variant := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_i64)
+	to_variant := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_int)
 	to_variant(GDExtensionUninitializedVariantPtr(s), GDExtensionTypePtr(&src))
 }
 
@@ -106,7 +106,7 @@ pub fn Variant.from_bool(src bool) Variant {
 
 // Variant.from_i64 builds a variant that holds src.
 pub fn Variant.from_i64(src i64) Variant {
-	to_variant := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_i64)
+	to_variant := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_int)
 	result := Variant{}
 	to_variant(GDExtensionUninitializedVariantPtr(&result), GDExtensionTypePtr(&src))
 	return result
@@ -119,7 +119,7 @@ pub fn Variant.from_int(src int) Variant {
 
 // Variant.from_f64 builds a variant that holds src.
 pub fn Variant.from_f64(src f64) Variant {
-	to_variant := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_f64)
+	to_variant := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_float)
 	result := Variant{}
 	to_variant(GDExtensionUninitializedVariantPtr(&result), GDExtensionTypePtr(&src))
 	return result

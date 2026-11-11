@@ -26,7 +26,7 @@
 module main
 
 import os
-import generator { Generator }
+import generator { Generator, InterfaceGen }
 
 fn json_field(body string, key string) string {
 	needle := '"${key}": "'
@@ -44,9 +44,15 @@ fn main() {
 		os.join_path(launched, 'extension_api.json')
 	})
 	module_root := os.real_path(os.join_path(@VMODROOT, '..'))
+	interface_path := os.abs_path(if os.args.len > 2 {
+		os.args[2]
+	} else {
+		os.join_path(module_root, 'gdextension_interface.json')
+	})
 	os.chdir(module_root) or { panic(err) }
 	out_dir := os.join_path(module_root, 'extension')
 	body := os.read_file(dump_path) or { panic(err) }
+	interface_body := os.read_file(interface_path) or { panic(err) }
 	label := json_field(body, 'version_full_name')
 	precision := json_field(body, 'precision')
 	println('API ${label} precision ${precision}')
@@ -54,6 +60,16 @@ fn main() {
 	for name in os.ls(out_dir) or { panic(err) } {
 		if name.starts_with('_') && name.ends_with('.v') {
 			os.rm(os.join_path(out_dir, name)) or { panic(err) }
+		}
+	}
+	mut interface_gen := InterfaceGen.new(interface_body, out_dir) or {
+		panic('Failed to read ${interface_path}: ${err}')
+	}
+	interface_gen.run() or { panic('Failed to generate GDExtension interface: ${err}') }
+	for name in ['interface.v', 'runtime.v'] {
+		res := os.exec([@VEXE, 'fmt', '-w', os.join_path(out_dir, name)])
+		if res.exit_code != 0 {
+			panic('Failed to format ${name}: ${res.output}')
 		}
 	}
 	mut gen := Generator.new(body, out_dir)

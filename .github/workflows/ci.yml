@@ -125,7 +125,7 @@ jobs:
       - name: Unit tests
         env:
           GODOT_EXTENSION_API: ${{ github.workspace }}/extension_api.json
-        run: v -enable-globals test .
+        run: v -enable-globals -d godot_${{ replace(matrix.godot, '.', '_') }} test .
 
   build:
     name: Build Godot ${{ matrix.godot }}
@@ -154,4 +154,4 @@ jobs:
         run: v run generator/generation.vsh
 
       - name: Build
-        run: v -cc clang -shared -enable-globals -o libgodotv.so .
+        run: v -cc clang -shared -enable-globals -d godot_${{ replace(matrix.godot, '.', '_') }} -o libgodotv.so .

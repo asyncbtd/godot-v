@@ -14,106 +14,136 @@
 
 module godot
 
-// TODO: use the enums generated from api dump
+// Generated from gdextension_interface.json — do not edit.
+
+// GDWideChar is the C `wchar_t`: 16 bits on Windows, 32 bits elsewhere.
+$if windows {
+	pub type GDWideChar = u16
+} $else {
+	pub type GDWideChar = u32
+}
+
+// GDSize is the C `size_t`: pointer-sized.
+$if x64 {
+	pub type GDSize = u64
+} $else {
+	pub type GDSize = u32
+}
 
 pub enum GDExtensionVariantType {
-	type_nil
-	type_bool
-	type_i64
-	type_f64
-	type_string
-	type_vector2
-	type_vector2i
-	type_rect2
-	type_rect2i
-	type_vector3
-	type_vector3i
-	type_transform2d
-	type_vector4
-	type_vector4i
-	type_plane
-	type_quaternion
-	type_aabb
-	type_basis
-	type_transform3d
-	type_projection
-	type_color
-	type_stringname
-	type_nodepath
-	type_rid
-	type_object
-	type_callable
-	type_signal
-	type_dictionary
-	type_array
-	type_packedbytearray
-	type_packedint32array
-	type_packedint64array
-	type_packedfloat32array
-	type_packedfloat64array
-	type_packedstringarray
-	type_packedvector2array
-	type_packedvector3array
-	type_packedcolorarray
-	type_packedvector4array
-	type_variantmax
+	type_nil                = 0
+	type_bool               = 1
+	type_int                = 2
+	type_float              = 3
+	type_string             = 4
+	type_vector2            = 5
+	type_vector2i           = 6
+	type_rect2              = 7
+	type_rect2i             = 8
+	type_vector3            = 9
+	type_vector3i           = 10
+	type_transform2d        = 11
+	type_vector4            = 12
+	type_vector4i           = 13
+	type_plane              = 14
+	type_quaternion         = 15
+	type_aabb               = 16
+	type_basis              = 17
+	type_transform3d        = 18
+	type_projection         = 19
+	type_color              = 20
+	type_stringname         = 21
+	type_nodepath           = 22
+	type_rid                = 23
+	type_object             = 24
+	type_callable           = 25
+	type_signal             = 26
+	type_dictionary         = 27
+	type_array              = 28
+	type_packedbytearray    = 29
+	type_packedint32array   = 30
+	type_packedint64array   = 31
+	type_packedfloat32array = 32
+	type_packedfloat64array = 33
+	type_packedstringarray  = 34
+	type_packedvector2array = 35
+	type_packedvector3array = 36
+	type_packedcolorarray   = 37
+	type_packedvector4array = 38
+	type_variantmax         = 39
 }
 
 pub enum GDExtensionVariantOperator {
-	op_equal
-	op_not_equal
-	op_less
-	op_less_equal
-	op_greater
-	op_greater_equal
-	op_add
-	op_subtract
-	op_multiply
-	op_divide
-	op_negate
-	op_positive
-	op_module
-	op_power
-	op_shift_left
-	op_shift_right
-	op_bit_and
-	op_bit_or
-	op_bit_xor
-	op_bit_negate
-	op_and
-	op_or
-	op_xor
-	op_not
-	op_in
-	op_max
+	op_equal         = 0
+	op_not_equal     = 1
+	op_less          = 2
+	op_less_equal    = 3
+	op_greater       = 4
+	op_greater_equal = 5
+	op_add           = 6
+	op_subtract      = 7
+	op_multiply      = 8
+	op_divide        = 9
+	op_negate        = 10
+	op_positive      = 11
+	op_module        = 12
+	op_power         = 13
+	op_shift_left    = 14
+	op_shift_right   = 15
+	op_bit_and       = 16
+	op_bit_or        = 17
+	op_bit_xor       = 18
+	op_bit_negate    = 19
+	op_and           = 20
+	op_or            = 21
+	op_xor           = 22
+	op_not           = 23
+	op_in            = 24
+	op_max           = 25
 }
 
 pub type GDExtensionUninitializedVariantPtr = voidptr
+
 pub type GDExtensionUninitializedStringNamePtr = voidptr
+
 pub type GDExtensionUninitializedStringPtr = voidptr
+
+pub type GDExtensionObjectPtr = voidptr
+
+pub type GDExtensionConstObjectPtr = voidptr
+
 pub type GDExtensionUninitializedObjectPtr = voidptr
+
 pub type GDExtensionTypePtr = voidptr
-pub type GDExtensionConstStringPtr = voidptr
+
 pub type GDExtensionConstTypePtr = voidptr
+
 pub type GDExtensionUninitializedTypePtr = voidptr
+
 pub type GDExtensionMethodBindPtr = voidptr
+
 pub type GDExtensionInt = i64
+
 pub type GDExtensionBool = u8
+
 pub type GDObjectInstanceID = u64
+
 pub type GDExtensionRefPtr = voidptr
+
 pub type GDExtensionConstRefPtr = voidptr
 
 pub enum GDExtensionCallErrorType {
-	gdextension_call_ok
-	gdextension_call_error_invalid_method
-	gdextension_call_error_invalid_argument
-	gdextension_call_error_too_many_arguments
-	gdextension_call_error_too_few_arguments
-	gdextension_call_error_instance_is_null
-	gdextension_call_error_method_not_const
+	gdextension_call_ok                       = 0
+	gdextension_call_error_invalid_method     = 1
+	gdextension_call_error_invalid_argument   = 2
+	gdextension_call_error_too_many_arguments = 3
+	gdextension_call_error_too_few_arguments  = 4
+	gdextension_call_error_instance_is_null   = 5
+	gdextension_call_error_method_not_const   = 6
 }
 
 pub struct GDExtensionCallError {
+pub mut:
 	error    GDExtensionCallErrorType
 	argument int
 	expected int
@@ -123,116 +153,130 @@ pub type GDExtensionVariantFromTypeConstructorFunc = fn (GDExtensionUninitialize
 
 pub type GDExtensionTypeFromVariantConstructorFunc = fn (GDExtensionUninitializedTypePtr, &Variant)
 
-pub type GDExtensionPtrOperatorEvaluator = fn (GDExtensionConstTypePtr, GDExtensionConstTypePtr, GDExtensionTypePtr)
+pub type GDExtensionVariantGetInternalPtrFunc = fn (&Variant) voidptr
 
-pub type GDExtensionPtrBuiltInMethod = fn (GDExtensionTypePtr, &GDExtensionConstTypePtr, GDExtensionTypePtr, int)
+pub type GDExtensionPtrOperatorEvaluator = fn (p_left GDExtensionConstTypePtr, p_right GDExtensionConstTypePtr, r_result GDExtensionTypePtr)
 
-pub type GDExtensionPtrConstructor = fn (GDExtensionUninitializedTypePtr, &GDExtensionConstTypePtr)
+pub type GDExtensionPtrBuiltInMethod = fn (p_base GDExtensionTypePtr, p_args &GDExtensionConstTypePtr, r_return GDExtensionTypePtr, p_argument_count int)
 
-pub type GDExtensionPtrDestructor = fn (GDExtensionTypePtr)
+pub type GDExtensionPtrConstructor = fn (p_base GDExtensionUninitializedTypePtr, p_args &GDExtensionConstTypePtr)
 
-pub type GDExtensionPtrSetter = fn (GDExtensionTypePtr, GDExtensionConstTypePtr)
+pub type GDExtensionPtrDestructor = fn (p_base GDExtensionTypePtr)
 
-pub type GDExtensionPtrGetter = fn (GDExtensionConstTypePtr, GDExtensionTypePtr)
+pub type GDExtensionPtrSetter = fn (p_base GDExtensionTypePtr, p_value GDExtensionConstTypePtr)
 
-pub type GDExtensionPtrIndexedSetter = fn (GDExtensionTypePtr, GDExtensionInt, GDExtensionConstTypePtr)
+pub type GDExtensionPtrGetter = fn (p_base GDExtensionConstTypePtr, r_value GDExtensionTypePtr)
 
-pub type GDExtensionPtrIndexedGetter = fn (GDExtensionConstTypePtr, GDExtensionInt, GDExtensionTypePtr)
+pub type GDExtensionPtrIndexedSetter = fn (p_base GDExtensionTypePtr, p_index GDExtensionInt, p_value GDExtensionConstTypePtr)
 
-pub type GDExtensionPtrKeyedSetter = fn (GDExtensionTypePtr, GDExtensionConstTypePtr, GDExtensionConstTypePtr)
+pub type GDExtensionPtrIndexedGetter = fn (p_base GDExtensionConstTypePtr, p_index GDExtensionInt, r_value GDExtensionTypePtr)
 
-pub type GDExtensionPtrKeyedGetter = fn (GDExtensionConstTypePtr, GDExtensionConstTypePtr, GDExtensionTypePtr)
+pub type GDExtensionPtrKeyedSetter = fn (p_base GDExtensionTypePtr, p_key GDExtensionConstTypePtr, p_value GDExtensionConstTypePtr)
 
-pub type GDExtensionPtrKeyedChecker = fn (&Variant, &Variant) u32
+pub type GDExtensionPtrKeyedGetter = fn (p_base GDExtensionConstTypePtr, p_key GDExtensionConstTypePtr, r_value GDExtensionTypePtr)
 
-pub type GDExtensionPtrUtilityFunction = fn (GDExtensionTypePtr, &GDExtensionConstTypePtr, int)
+pub type GDExtensionPtrKeyedChecker = fn (p_base &Variant, p_key &Variant) u32
 
-pub type GDExtensionClassConstructor = fn () &Object
+pub type GDExtensionPtrUtilityFunction = fn (r_return GDExtensionTypePtr, p_args &GDExtensionConstTypePtr, p_argument_count int)
 
-pub type GDExtensionInstanceBindingCreateCallback = fn (voidptr, voidptr) voidptr
+pub type GDExtensionClassConstructor = fn () GDExtensionObjectPtr
 
-pub type GDExtensionInstanceBindingFreeCallback = fn (voidptr, voidptr, voidptr)
+pub type GDExtensionInstanceBindingCreateCallback = fn (p_token voidptr, p_instance voidptr) voidptr
 
-pub type GDExtensionInstanceBindingReferenceCallback = fn (voidptr, voidptr, GDExtensionBool) GDExtensionBool
+pub type GDExtensionInstanceBindingFreeCallback = fn (p_token voidptr, p_instance voidptr, p_binding voidptr)
+
+pub type GDExtensionInstanceBindingReferenceCallback = fn (p_token voidptr, p_binding voidptr, p_reference GDExtensionBool) GDExtensionBool
 
 pub struct GDExtensionInstanceBindingCallbacks {
+pub mut:
 	create_callback    GDExtensionInstanceBindingCreateCallback    = unsafe { nil }
 	free_callback      GDExtensionInstanceBindingFreeCallback      = unsafe { nil }
 	reference_callback GDExtensionInstanceBindingReferenceCallback = unsafe { nil }
 }
 
 pub type GDExtensionClassInstancePtr = voidptr
-pub type GDExtensionClassSet = fn (GDExtensionClassInstancePtr, &StringName, &Variant) GDExtensionBool
 
-pub type GDExtensionClassGet = fn (GDExtensionClassInstancePtr, &StringName, &Variant) GDExtensionBool
+pub type GDExtensionClassSet = fn (p_instance GDExtensionClassInstancePtr, p_name &StringName, p_value &Variant) GDExtensionBool
 
-pub type GDExtensionClassGetRID = fn (GDExtensionClassInstancePtr) u64
+pub type GDExtensionClassGet = fn (p_instance GDExtensionClassInstancePtr, p_name &StringName, r_ret &Variant) GDExtensionBool
+
+pub type GDExtensionClassGetRID = fn (p_instance GDExtensionClassInstancePtr) u64
 
 pub struct GDExtensionPropertyInfo {
-	// TEMP
-pub:
+pub mut:
 	type_       GDExtensionVariantType
 	name        &StringName = unsafe { nil }
 	class_name  &StringName = unsafe { nil }
-	hint        PropertyHint
+	hint        u32
 	hint_string &String = unsafe { nil }
-	usage       PropertyUsageFlags
+	usage       u32
 }
 
 pub struct GDExtensionMethodInfo {
-	// TEMP
-pub:
-	name                   &StringName
+pub mut:
+	name                   &StringName = unsafe { nil }
 	return_value           GDExtensionPropertyInfo
 	flags                  u32
 	id                     int
 	argument_count         u32
-	arguments              &GDExtensionPropertyInfo
+	arguments              &GDExtensionPropertyInfo = unsafe { nil }
 	default_argument_count u32
-	default_arguments      &&Variant
+	default_arguments      &&Variant = unsafe { nil }
 }
 
-pub type GDExtensionClassGetPropertyList = fn (GDExtensionClassInstancePtr, &u32) &GDExtensionPropertyInfo
+pub type GDExtensionClassGetPropertyList = fn (p_instance GDExtensionClassInstancePtr, r_count &u32) &GDExtensionPropertyInfo
 
-pub type GDExtensionClassFreePropertyList = fn (GDExtensionClassInstancePtr, &GDExtensionPropertyInfo)
+// Deprecated since 4.3, use GDExtensionClassFreePropertyList2
+pub type GDExtensionClassFreePropertyList = fn (p_instance GDExtensionClassInstancePtr, p_list &GDExtensionPropertyInfo)
 
-pub type GDExtensionClassPropertyCanRevert = fn (GDExtensionClassInstancePtr, &StringName) GDExtensionBool
+pub type GDExtensionClassFreePropertyList2 = fn (p_instance GDExtensionClassInstancePtr, p_list &GDExtensionPropertyInfo, p_count u32)
 
-pub type GDExtensionClassPropertyGetRevert = fn (GDExtensionClassInstancePtr, &StringName, &Variant) GDExtensionBool
+pub type GDExtensionClassPropertyCanRevert = fn (p_instance GDExtensionClassInstancePtr, p_name &StringName) GDExtensionBool
 
-pub type GDExtensionClassValidateProperty = fn (GDExtensionClassInstancePtr, &GDExtensionPropertyInfo) GDExtensionBool
+pub type GDExtensionClassPropertyGetRevert = fn (p_instance GDExtensionClassInstancePtr, p_name &StringName, r_ret &Variant) GDExtensionBool
 
-pub type GDExtensionClassNotification = fn (GDExtensionClassInstancePtr, int)
+pub type GDExtensionClassValidateProperty = fn (p_instance GDExtensionClassInstancePtr, p_property &GDExtensionPropertyInfo) GDExtensionBool
 
-pub type GDExtensionClassNotification2 = fn (GDExtensionClassInstancePtr, int, &GDExtensionBool)
+// Deprecated since 4.2, use GDExtensionClassNotification2
+pub type GDExtensionClassNotification = fn (p_instance GDExtensionClassInstancePtr, p_what int)
 
-pub type GDExtensionClassToString = fn (GDExtensionClassInstancePtr, &GDExtensionBool, &String)
+pub type GDExtensionClassNotification2 = fn (p_instance GDExtensionClassInstancePtr, p_what int, p_reversed GDExtensionBool)
 
-pub type GDExtensionClassReference = fn (GDExtensionClassInstancePtr)
+pub type GDExtensionClassToString = fn (p_instance GDExtensionClassInstancePtr, r_is_valid &GDExtensionBool, p_out &String)
 
-pub type GDExtensionClassUnreference = fn (GDExtensionClassInstancePtr)
+pub type GDExtensionClassReference = fn (p_instance GDExtensionClassInstancePtr)
 
-pub type GDExtensionClassCallVirtual = fn (GDExtensionClassInstancePtr, &GDExtensionConstTypePtr, GDExtensionTypePtr)
+pub type GDExtensionClassUnreference = fn (p_instance GDExtensionClassInstancePtr)
 
-pub type GDExtensionClassCreateInstance = fn (voidptr) &Object
+pub type GDExtensionClassCallVirtual = fn (p_instance GDExtensionClassInstancePtr, p_args &GDExtensionConstTypePtr, r_ret GDExtensionTypePtr)
 
-pub type GDExtensionClassCreateInstance2 = fn (voidptr, &GDExtensionBool) &Object
+// Deprecated since 4.4, use GDExtensionClassCreateInstance3
+pub type GDExtensionClassCreateInstance = fn (p_class_userdata voidptr) GDExtensionObjectPtr
 
-pub type GDExtensionClassFreeInstance = fn (voidptr, GDExtensionClassInstancePtr)
+// Deprecated since 4.7, use GDExtensionClassCreateInstance3
+pub type GDExtensionClassCreateInstance2 = fn (p_class_userdata voidptr, p_notify_postinitialize GDExtensionBool) GDExtensionObjectPtr
 
-pub type GDExtensionClassRecreateInstance = fn (voidptr, &Object) GDExtensionClassInstancePtr
+pub type GDExtensionClassCreateInstance3 = fn (p_class_userdata voidptr, p_notify_postinitialize GDExtensionBool) GDExtensionObjectPtr
 
-pub type GDExtensionClassGetVirtual = fn (voidptr, &StringName) GDExtensionClassCallVirtual
+pub type GDExtensionClassFreeInstance = fn (p_class_userdata voidptr, p_instance GDExtensionClassInstancePtr)
 
-pub type GDExtensionClassGetVirtual2 = fn (voidptr, &StringName, int) GDExtensionClassCallVirtual
+pub type GDExtensionClassRecreateInstance = fn (p_class_userdata voidptr, p_object GDExtensionObjectPtr) GDExtensionClassInstancePtr
 
-pub type GDExtensionClassGetVirtualCallData = fn (voidptr, &StringName)
+// Deprecated since 4.4, use GDExtensionClassGetVirtual2
+pub type GDExtensionClassGetVirtual = fn (p_class_userdata voidptr, p_name &StringName) GDExtensionClassCallVirtual
 
-pub type GDExtensionClassGetVirtualCallData2 = fn (voidptr, &StringName, int)
+pub type GDExtensionClassGetVirtual2 = fn (p_class_userdata voidptr, p_name &StringName, p_hash u32) GDExtensionClassCallVirtual
 
-pub type GDExtensionClassCallVirtualWithData = fn (GDExtensionClassInstancePtr, &StringName, voidptr, &GDExtensionConstTypePtr, GDExtensionTypePtr)
+// Deprecated since 4.4, use GDExtensionClassGetVirtualCallData2
+pub type GDExtensionClassGetVirtualCallData = fn (p_class_userdata voidptr, p_name &StringName) voidptr
 
+pub type GDExtensionClassGetVirtualCallData2 = fn (p_class_userdata voidptr, p_name &StringName, p_hash u32) voidptr
+
+pub type GDExtensionClassCallVirtualWithData = fn (p_instance GDExtensionClassInstancePtr, p_name &StringName, p_virtual_call_userdata voidptr, p_args &GDExtensionConstTypePtr, r_ret GDExtensionTypePtr)
+
+// Deprecated since 4.2, use GDExtensionClassCreationInfo6
 pub struct GDExtensionClassCreationInfo {
+pub mut:
 	is_virtual               GDExtensionBool
 	is_abstract              GDExtensionBool
 	set_func                 GDExtensionClassSet               = unsafe { nil }
@@ -252,7 +296,9 @@ pub struct GDExtensionClassCreationInfo {
 	class_userdata           voidptr
 }
 
+// Deprecated since 4.3, use GDExtensionClassCreationInfo6
 pub struct GDExtensionClassCreationInfo2 {
+pub mut:
 	is_virtual                  GDExtensionBool
 	is_abstract                 GDExtensionBool
 	is_exposed                  GDExtensionBool
@@ -277,16 +323,17 @@ pub struct GDExtensionClassCreationInfo2 {
 	class_userdata              voidptr
 }
 
+// Deprecated since 4.4, use GDExtensionClassCreationInfo6
 pub struct GDExtensionClassCreationInfo3 {
+pub mut:
 	is_virtual                  GDExtensionBool
 	is_abstract                 GDExtensionBool
 	is_exposed                  GDExtensionBool
 	is_runtime                  GDExtensionBool
-	icon_path                   GDExtensionConstStringPtr
 	set_func                    GDExtensionClassSet                 = unsafe { nil }
 	get_func                    GDExtensionClassGet                 = unsafe { nil }
 	get_property_list_func      GDExtensionClassGetPropertyList     = unsafe { nil }
-	free_property_list_func     GDExtensionClassFreePropertyList    = unsafe { nil }
+	free_property_list_func     GDExtensionClassFreePropertyList2   = unsafe { nil }
 	property_can_revert_func    GDExtensionClassPropertyCanRevert   = unsafe { nil }
 	property_get_revert_func    GDExtensionClassPropertyGetRevert   = unsafe { nil }
 	validate_property_func      GDExtensionClassValidateProperty    = unsafe { nil }
@@ -304,18 +351,18 @@ pub struct GDExtensionClassCreationInfo3 {
 	class_userdata              voidptr
 }
 
+// Deprecated since 4.5, use GDExtensionClassCreationInfo6
 pub struct GDExtensionClassCreationInfo4 {
-	// TEMP
-pub:
+pub mut:
 	is_virtual                  GDExtensionBool
 	is_abstract                 GDExtensionBool
 	is_exposed                  GDExtensionBool
 	is_runtime                  GDExtensionBool
-	icon_path                   GDExtensionConstStringPtr
+	icon_path                   &String                             = unsafe { nil }
 	set_func                    GDExtensionClassSet                 = unsafe { nil }
 	get_func                    GDExtensionClassGet                 = unsafe { nil }
 	get_property_list_func      GDExtensionClassGetPropertyList     = unsafe { nil }
-	free_property_list_func     GDExtensionClassFreePropertyList    = unsafe { nil }
+	free_property_list_func     GDExtensionClassFreePropertyList2   = unsafe { nil }
 	property_can_revert_func    GDExtensionClassPropertyCanRevert   = unsafe { nil }
 	property_get_revert_func    GDExtensionClassPropertyGetRevert   = unsafe { nil }
 	validate_property_func      GDExtensionClassValidateProperty    = unsafe { nil }
@@ -332,146 +379,217 @@ pub:
 	class_userdata              voidptr
 }
 
+// Deprecated since 4.7, use GDExtensionClassCreationInfo6
+pub type GDExtensionClassCreationInfo5 = GDExtensionClassCreationInfo4
+
+pub struct GDExtensionClassCreationInfo6 {
+pub mut:
+	is_virtual                  GDExtensionBool
+	is_abstract                 GDExtensionBool
+	is_exposed                  GDExtensionBool
+	is_runtime                  GDExtensionBool
+	icon_path                   &String                             = unsafe { nil }
+	set_func                    GDExtensionClassSet                 = unsafe { nil }
+	get_func                    GDExtensionClassGet                 = unsafe { nil }
+	get_property_list_func      GDExtensionClassGetPropertyList     = unsafe { nil }
+	free_property_list_func     GDExtensionClassFreePropertyList2   = unsafe { nil }
+	property_can_revert_func    GDExtensionClassPropertyCanRevert   = unsafe { nil }
+	property_get_revert_func    GDExtensionClassPropertyGetRevert   = unsafe { nil }
+	validate_property_func      GDExtensionClassValidateProperty    = unsafe { nil }
+	notification_func           GDExtensionClassNotification2       = unsafe { nil }
+	to_string_func              GDExtensionClassToString            = unsafe { nil }
+	reference_func              GDExtensionClassReference           = unsafe { nil }
+	unreference_func            GDExtensionClassUnreference         = unsafe { nil }
+	create_instance_func        GDExtensionClassCreateInstance3     = unsafe { nil }
+	free_instance_func          GDExtensionClassFreeInstance        = unsafe { nil }
+	recreate_instance_func      GDExtensionClassRecreateInstance    = unsafe { nil }
+	get_virtual_func            GDExtensionClassGetVirtual2         = unsafe { nil }
+	get_virtual_call_data_func  GDExtensionClassGetVirtualCallData2 = unsafe { nil }
+	call_virtual_with_data_func GDExtensionClassCallVirtualWithData = unsafe { nil }
+	class_userdata              voidptr
+}
+
 pub type GDExtensionClassLibraryPtr = voidptr
 
+pub type GDExtensionEditorGetClassesUsedCallback = fn (p_packed_string_array GDExtensionTypePtr)
+
+@[_allow_multiple_values]
 pub enum GDExtensionClassMethodFlags {
-	gdextension_method_flag_normal  = 1
-	gdextension_method_flag_editor  = 2
-	gdextension_method_flag_const   = 4
-	gdextension_method_flag_virtual = 8
-	gdextension_method_flag_vararg  = 16
-	gdextension_method_flag_static  = 32
+	gdextension_method_flag_normal           = 1
+	gdextension_method_flag_editor           = 2
+	gdextension_method_flag_const            = 4
+	gdextension_method_flag_virtual          = 8
+	gdextension_method_flag_vararg           = 16
+	gdextension_method_flag_static           = 32
+	gdextension_method_flag_virtual_required = 128
+	gdextension_method_flags_default         = 1
 }
 
 pub enum GDExtensionClassMethodArgumentMetadata {
-	gdextension_method_argument_metadata_none
-	gdextension_method_argument_metadata_int_is_int8
-	gdextension_method_argument_metadata_int_is_int16
-	gdextension_method_argument_metadata_int_is_int32
-	gdextension_method_argument_metadata_int_is_int64
-	gdextension_method_argument_metadata_int_is_uint8
-	gdextension_method_argument_metadata_int_is_uint16
-	gdextension_method_argument_metadata_int_is_uint32
-	gdextension_method_argument_metadata_int_is_uint64
-	gdextension_method_argument_metadata_real_is_float
-	gdextension_method_argument_metadata_real_is_double
+	gdextension_method_argument_metadata_none               = 0
+	gdextension_method_argument_metadata_int_is_int8        = 1
+	gdextension_method_argument_metadata_int_is_int16       = 2
+	gdextension_method_argument_metadata_int_is_int32       = 3
+	gdextension_method_argument_metadata_int_is_int64       = 4
+	gdextension_method_argument_metadata_int_is_uint8       = 5
+	gdextension_method_argument_metadata_int_is_uint16      = 6
+	gdextension_method_argument_metadata_int_is_uint32      = 7
+	gdextension_method_argument_metadata_int_is_uint64      = 8
+	gdextension_method_argument_metadata_real_is_float      = 9
+	gdextension_method_argument_metadata_real_is_double     = 10
+	gdextension_method_argument_metadata_int_is_char16      = 11
+	gdextension_method_argument_metadata_int_is_char32      = 12
+	gdextension_method_argument_metadata_object_is_required = 13
 }
 
-pub type GDExtensionClassMethodCall = fn (voidptr, GDExtensionClassInstancePtr, &&Variant, GDExtensionInt, &Variant, &GDExtensionCallError)
+pub type GDExtensionClassMethodCall = fn (method_userdata voidptr, p_instance GDExtensionClassInstancePtr, p_args &&Variant, p_argument_count GDExtensionInt, r_return &Variant, r_error &GDExtensionCallError)
 
-pub type GDExtensionClassMethodValidatedCall = fn (voidptr, GDExtensionClassInstancePtr, &&Variant, &Variant)
+pub type GDExtensionClassMethodValidatedCall = fn (method_userdata voidptr, p_instance GDExtensionClassInstancePtr, p_args &&Variant, r_return &Variant)
 
-pub type GDExtensionClassMethodPtrCall = fn (voidptr, GDExtensionClassInstancePtr, &GDExtensionConstTypePtr, GDExtensionTypePtr)
+pub type GDExtensionClassMethodPtrCall = fn (method_userdata voidptr, p_instance GDExtensionClassInstancePtr, p_args &GDExtensionConstTypePtr, r_ret GDExtensionTypePtr)
 
 pub struct GDExtensionClassMethodInfo {
-	// TEMP
-pub:
-	name                   &StringName
+pub mut:
+	name                   &StringName = unsafe { nil }
 	method_userdata        voidptr
 	call_func              GDExtensionClassMethodCall    = unsafe { nil }
 	ptrcall_func           GDExtensionClassMethodPtrCall = unsafe { nil }
-	method_flags           GDExtensionClassMethodFlags
+	method_flags           u32
 	has_return_value       GDExtensionBool
-	return_value_info      &GDExtensionPropertyInfo
+	return_value_info      &GDExtensionPropertyInfo = unsafe { nil }
 	return_value_metadata  GDExtensionClassMethodArgumentMetadata
 	argument_count         u32
-	arguments_info         &GDExtensionPropertyInfo
-	arguments_metadata     &GDExtensionClassMethodArgumentMetadata
+	arguments_info         &GDExtensionPropertyInfo                = unsafe { nil }
+	arguments_metadata     &GDExtensionClassMethodArgumentMetadata = unsafe { nil }
 	default_argument_count u32
-	default_arguments      &&Variant
+	default_arguments      &&Variant = unsafe { nil }
+}
+
+pub struct GDExtensionClassVirtualMethodInfo {
+pub mut:
+	name                  &StringName = unsafe { nil }
+	method_flags          u32
+	return_value          GDExtensionPropertyInfo
+	return_value_metadata GDExtensionClassMethodArgumentMetadata
+	argument_count        u32
+	arguments             &GDExtensionPropertyInfo                = unsafe { nil }
+	arguments_metadata    &GDExtensionClassMethodArgumentMetadata = unsafe { nil }
+}
+
+pub type GDExtensionCallableCustomCall = fn (callable_userdata voidptr, p_args &&Variant, p_argument_count GDExtensionInt, r_return &Variant, r_error &GDExtensionCallError)
+
+pub type GDExtensionCallableCustomIsValid = fn (callable_userdata voidptr) GDExtensionBool
+
+pub type GDExtensionCallableCustomFree = fn (callable_userdata voidptr)
+
+pub type GDExtensionCallableCustomHash = fn (callable_userdata voidptr) u32
+
+pub type GDExtensionCallableCustomEqual = fn (callable_userdata_a voidptr, callable_userdata_b voidptr) GDExtensionBool
+
+pub type GDExtensionCallableCustomLessThan = fn (callable_userdata_a voidptr, callable_userdata_b voidptr) GDExtensionBool
+
+pub type GDExtensionCallableCustomToString = fn (callable_userdata voidptr, r_is_valid &GDExtensionBool, r_out &String)
+
+pub type GDExtensionCallableCustomGetArgumentCount = fn (callable_userdata voidptr, r_is_valid &GDExtensionBool) GDExtensionInt
+
+// Deprecated since 4.3, use GDExtensionCallableCustomInfo2
+pub struct GDExtensionCallableCustomInfo {
+pub mut:
+	callable_userdata voidptr
+	token             voidptr
+	object_id         GDObjectInstanceID
+	call_func         GDExtensionCallableCustomCall     = unsafe { nil }
+	is_valid_func     GDExtensionCallableCustomIsValid  = unsafe { nil }
+	free_func         GDExtensionCallableCustomFree     = unsafe { nil }
+	hash_func         GDExtensionCallableCustomHash     = unsafe { nil }
+	equal_func        GDExtensionCallableCustomEqual    = unsafe { nil }
+	less_than_func    GDExtensionCallableCustomLessThan = unsafe { nil }
+	to_string_func    GDExtensionCallableCustomToString = unsafe { nil }
 }
 
 pub struct GDExtensionCallableCustomInfo2 {
+pub mut:
 	callable_userdata       voidptr
-	token                   GDExtensionClassLibraryPtr
+	token                   voidptr
 	object_id               GDObjectInstanceID
-	call_func               CallableCustomCall             = unsafe { nil }
-	is_valid_func           CallableCustomIsValid          = unsafe { nil }
-	free_func               CallableCustomFree             = unsafe { nil }
-	hash_func               CallableCustomHash             = unsafe { nil }
-	equal_func              CallableCustomEqual            = unsafe { nil }
-	less_than_func          CallableCustomLessThan         = unsafe { nil }
-	to_string_func          CallableCustomToString         = unsafe { nil }
-	get_argument_count_func CallableCustomGetArgumentCount = unsafe { nil }
+	call_func               GDExtensionCallableCustomCall             = unsafe { nil }
+	is_valid_func           GDExtensionCallableCustomIsValid          = unsafe { nil }
+	free_func               GDExtensionCallableCustomFree             = unsafe { nil }
+	hash_func               GDExtensionCallableCustomHash             = unsafe { nil }
+	equal_func              GDExtensionCallableCustomEqual            = unsafe { nil }
+	less_than_func          GDExtensionCallableCustomLessThan         = unsafe { nil }
+	to_string_func          GDExtensionCallableCustomToString         = unsafe { nil }
+	get_argument_count_func GDExtensionCallableCustomGetArgumentCount = unsafe { nil }
 }
 
-pub type CallableCustomCall = fn (voidptr, &&Variant, GDExtensionInt, &Variant, &GDExtensionCallError)
+pub type GDExtensionScriptInstanceDataPtr = voidptr
 
-pub type CallableCustomIsValid = fn (voidptr) GDExtensionBool
+pub type GDExtensionScriptInstanceSet = fn (p_instance GDExtensionScriptInstanceDataPtr, p_name &StringName, p_value &Variant) GDExtensionBool
 
-pub type CallableCustomFree = fn (voidptr)
+pub type GDExtensionScriptInstanceGet = fn (p_instance GDExtensionScriptInstanceDataPtr, p_name &StringName, r_ret &Variant) GDExtensionBool
 
-pub type CallableCustomHash = fn (voidptr) u32
+pub type GDExtensionScriptInstanceGetPropertyList = fn (p_instance GDExtensionScriptInstanceDataPtr, r_count &u32) &GDExtensionPropertyInfo
 
-pub type CallableCustomEqual = fn (voidptr, voidptr) GDExtensionBool
+// Deprecated since 4.3, use GDExtensionScriptInstanceFreePropertyList2
+pub type GDExtensionScriptInstanceFreePropertyList = fn (p_instance GDExtensionScriptInstanceDataPtr, p_list &GDExtensionPropertyInfo)
 
-pub type CallableCustomLessThan = fn (voidptr, voidptr) GDExtensionBool
+pub type GDExtensionScriptInstanceFreePropertyList2 = fn (p_instance GDExtensionScriptInstanceDataPtr, p_list &GDExtensionPropertyInfo, p_count u32)
 
-pub type CallableCustomToString = fn (voidptr, &GDExtensionBool, GDExtensionUninitializedStringPtr)
+pub type GDExtensionScriptInstanceGetClassCategory = fn (p_instance GDExtensionScriptInstanceDataPtr, p_class_category &GDExtensionPropertyInfo) GDExtensionBool
 
-pub type CallableCustomGetArgumentCount = fn (voidptr, &GDExtensionBool) GDExtensionInt
+pub type GDExtensionScriptInstanceGetPropertyType = fn (p_instance GDExtensionScriptInstanceDataPtr, p_name &StringName, r_is_valid &GDExtensionBool) GDExtensionVariantType
 
-pub type GDExtensionScriptInstanceDataPtr = usize
-pub type GDExtensionScriptInstanceSet = fn (GDExtensionScriptInstanceDataPtr, &StringName, &Variant) GDExtensionBool
+pub type GDExtensionScriptInstanceValidateProperty = fn (p_instance GDExtensionScriptInstanceDataPtr, p_property &GDExtensionPropertyInfo) GDExtensionBool
 
-pub type GDExtensionScriptInstanceGet = fn (GDExtensionScriptInstanceDataPtr, &StringName, &Variant) GDExtensionBool
+pub type GDExtensionScriptInstancePropertyCanRevert = fn (p_instance GDExtensionScriptInstanceDataPtr, p_name &StringName) GDExtensionBool
 
-pub type GDExtensionScriptInstanceGetPropertyList = fn (GDExtensionScriptInstanceDataPtr, &u32) &GDExtensionPropertyInfo
+pub type GDExtensionScriptInstancePropertyGetRevert = fn (p_instance GDExtensionScriptInstanceDataPtr, p_name &StringName, r_ret &Variant) GDExtensionBool
 
-pub type GDExtensionScriptInstanceFreePropertyList = fn (GDExtensionScriptInstanceDataPtr, &GDExtensionPropertyInfo)
+pub type GDExtensionScriptInstanceGetOwner = fn (p_instance GDExtensionScriptInstanceDataPtr) GDExtensionObjectPtr
 
-pub type GDExtensionScriptInstanceFreePropertyList2 = fn (GDExtensionScriptInstanceDataPtr, &GDExtensionPropertyInfo, &u32)
+pub type GDExtensionScriptInstancePropertyStateAdd = fn (p_name &StringName, p_value &Variant, p_userdata voidptr)
 
-pub type GDExtensionScriptInstanceGetClassCategory = fn (GDExtensionScriptInstanceDataPtr, &GDExtensionPropertyInfo) GDExtensionBool
+pub type GDExtensionScriptInstanceGetPropertyState = fn (p_instance GDExtensionScriptInstanceDataPtr, p_add_func GDExtensionScriptInstancePropertyStateAdd, p_userdata voidptr)
 
-pub type GDExtensionScriptInstanceGetPropertyType = fn (GDExtensionScriptInstanceDataPtr, &StringName, &GDExtensionBool) GDExtensionVariantType
+pub type GDExtensionScriptInstanceGetMethodList = fn (p_instance GDExtensionScriptInstanceDataPtr, r_count &u32) &GDExtensionMethodInfo
 
-pub type GDExtensionScriptInstanceValidateProperty = fn (GDExtensionScriptInstanceDataPtr, &GDExtensionPropertyInfo) GDExtensionBool
+// Deprecated since 4.3, use GDExtensionScriptInstanceFreeMethodList2
+pub type GDExtensionScriptInstanceFreeMethodList = fn (p_instance GDExtensionScriptInstanceDataPtr, p_list &GDExtensionMethodInfo)
 
-pub type GDExtensionScriptInstancePropertyCanRevert = fn (GDExtensionScriptInstanceDataPtr, &StringName) GDExtensionBool
+pub type GDExtensionScriptInstanceFreeMethodList2 = fn (p_instance GDExtensionScriptInstanceDataPtr, p_list &GDExtensionMethodInfo, p_count u32)
 
-pub type GDExtensionScriptInstancePropertyGetRevert = fn (GDExtensionScriptInstanceDataPtr, &StringName, &Variant) GDExtensionBool
+pub type GDExtensionScriptInstanceHasMethod = fn (p_instance GDExtensionScriptInstanceDataPtr, p_name &StringName) GDExtensionBool
 
-pub type GDExtensionScriptInstanceGetOwner = fn (GDExtensionScriptInstanceDataPtr) &Object
+pub type GDExtensionScriptInstanceGetMethodArgumentCount = fn (p_instance GDExtensionScriptInstanceDataPtr, p_name &StringName, r_is_valid &GDExtensionBool) GDExtensionInt
 
-pub type GDExtensionScriptInstancePropertyStateAdd = fn (&StringName, &Variant, voidptr)
+pub type GDExtensionScriptInstanceCall = fn (p_self GDExtensionScriptInstanceDataPtr, p_method &StringName, p_args &&Variant, p_argument_count GDExtensionInt, r_return &Variant, r_error &GDExtensionCallError)
 
-pub type GDExtensionScriptInstanceGetPropertyState = fn (GDExtensionScriptInstanceDataPtr, GDExtensionScriptInstancePropertyStateAdd, voidptr)
+// Deprecated since 4.2, use GDExtensionScriptInstanceNotification2
+pub type GDExtensionScriptInstanceNotification = fn (p_instance GDExtensionScriptInstanceDataPtr, p_what int)
 
-pub type GDExtensionScriptInstanceGetMethodList = fn (GDExtensionScriptInstanceDataPtr, &u32) &GDExtensionMethodInfo
+pub type GDExtensionScriptInstanceNotification2 = fn (p_instance GDExtensionScriptInstanceDataPtr, p_what int, p_reversed GDExtensionBool)
 
-pub type GDExtensionScriptInstanceFreeMethodList = fn (GDExtensionScriptInstanceDataPtr, &GDExtensionMethodInfo)
+pub type GDExtensionScriptInstanceToString = fn (p_instance GDExtensionScriptInstanceDataPtr, r_is_valid &GDExtensionBool, r_out &String)
 
-pub type GDExtensionScriptInstanceFreeMethodList2 = fn (GDExtensionScriptInstanceDataPtr, &GDExtensionMethodInfo, &u32)
+pub type GDExtensionScriptInstanceRefCountIncremented = fn (p_instance GDExtensionScriptInstanceDataPtr)
 
-pub type GDExtensionScriptInstanceHasMethod = fn (GDExtensionScriptInstanceDataPtr, &StringName) GDExtensionBool
+pub type GDExtensionScriptInstanceRefCountDecremented = fn (p_instance GDExtensionScriptInstanceDataPtr) GDExtensionBool
 
-pub type GDExtensionScriptInstanceGetMethodArgumentCount = fn (GDExtensionScriptInstanceDataPtr, &StringName, &GDExtensionBool) GDExtensionInt
+pub type GDExtensionScriptInstanceGetScript = fn (p_instance GDExtensionScriptInstanceDataPtr) GDExtensionObjectPtr
 
-pub type GDExtensionScriptInstanceCall = fn (GDExtensionScriptInstanceDataPtr, &StringName, &&Variant, GDExtensionInt, &Variant, &GDExtensionCallError)
-
-pub type GDExtensionScriptInstanceNotification = fn (GDExtensionScriptInstanceDataPtr, int)
-
-pub type GDExtensionScriptInstanceNotification2 = fn (GDExtensionScriptInstanceDataPtr, int, &GDExtensionBool)
-
-pub type GDExtensionScriptInstanceToString = fn (GDExtensionScriptInstanceDataPtr, &GDExtensionBool, &String)
-
-pub type GDExtensionScriptInstanceRefCountIncremented = fn (GDExtensionScriptInstanceDataPtr)
-
-pub type GDExtensionScriptInstanceRefCountDecremented = fn (GDExtensionScriptInstanceDataPtr) GDExtensionBool
-
-pub type GDExtensionScriptInstanceGetScript = fn (GDExtensionScriptInstanceDataPtr) &Object
-
-pub type GDExtensionScriptInstanceIsPlaceholder = fn (GDExtensionScriptInstanceDataPtr) GDExtensionBool
+pub type GDExtensionScriptInstanceIsPlaceholder = fn (p_instance GDExtensionScriptInstanceDataPtr) GDExtensionBool
 
 pub type GDExtensionScriptLanguagePtr = voidptr
-pub type GDExtensionScriptInstanceGetLanguage = fn (GDExtensionScriptInstanceDataPtr) GDExtensionScriptLanguagePtr
 
-pub type GDExtensionScriptInstanceFree = fn (GDExtensionScriptInstanceDataPtr)
+pub type GDExtensionScriptInstanceGetLanguage = fn (p_instance GDExtensionScriptInstanceDataPtr) GDExtensionScriptLanguagePtr
+
+pub type GDExtensionScriptInstanceFree = fn (p_instance GDExtensionScriptInstanceDataPtr)
 
 pub type GDExtensionScriptInstancePtr = voidptr
 
+// Deprecated since 4.2, use GDExtensionScriptInstanceInfo3
 pub struct GDExtensionScriptInstanceInfo {
+pub mut:
 	set_func                  GDExtensionScriptInstanceSet                 = unsafe { nil }
 	get_func                  GDExtensionScriptInstanceGet                 = unsafe { nil }
 	get_property_list_func    GDExtensionScriptInstanceGetPropertyList     = unsafe { nil }
@@ -497,7 +615,38 @@ pub struct GDExtensionScriptInstanceInfo {
 	free_func                 GDExtensionScriptInstanceFree                = unsafe { nil }
 }
 
+// Deprecated since 4.3, use GDExtensionScriptInstanceInfo3
+pub struct GDExtensionScriptInstanceInfo2 {
+pub mut:
+	set_func                  GDExtensionScriptInstanceSet                 = unsafe { nil }
+	get_func                  GDExtensionScriptInstanceGet                 = unsafe { nil }
+	get_property_list_func    GDExtensionScriptInstanceGetPropertyList     = unsafe { nil }
+	free_property_list_func   GDExtensionScriptInstanceFreePropertyList    = unsafe { nil }
+	get_class_category_func   GDExtensionScriptInstanceGetClassCategory    = unsafe { nil }
+	property_can_revert_func  GDExtensionScriptInstancePropertyCanRevert   = unsafe { nil }
+	property_get_revert_func  GDExtensionScriptInstancePropertyGetRevert   = unsafe { nil }
+	get_owner_func            GDExtensionScriptInstanceGetOwner            = unsafe { nil }
+	get_property_state_func   GDExtensionScriptInstanceGetPropertyState    = unsafe { nil }
+	get_method_list_func      GDExtensionScriptInstanceGetMethodList       = unsafe { nil }
+	free_method_list_func     GDExtensionScriptInstanceFreeMethodList      = unsafe { nil }
+	get_property_type_func    GDExtensionScriptInstanceGetPropertyType     = unsafe { nil }
+	validate_property_func    GDExtensionScriptInstanceValidateProperty    = unsafe { nil }
+	has_method_func           GDExtensionScriptInstanceHasMethod           = unsafe { nil }
+	call_func                 GDExtensionScriptInstanceCall                = unsafe { nil }
+	notification_func         GDExtensionScriptInstanceNotification2       = unsafe { nil }
+	to_string_func            GDExtensionScriptInstanceToString            = unsafe { nil }
+	refcount_incremented_func GDExtensionScriptInstanceRefCountIncremented = unsafe { nil }
+	refcount_decremented_func GDExtensionScriptInstanceRefCountDecremented = unsafe { nil }
+	get_script_func           GDExtensionScriptInstanceGetScript           = unsafe { nil }
+	is_placeholder_func       GDExtensionScriptInstanceIsPlaceholder       = unsafe { nil }
+	set_fallback_func         GDExtensionScriptInstanceSet                 = unsafe { nil }
+	get_fallback_func         GDExtensionScriptInstanceGet                 = unsafe { nil }
+	get_language_func         GDExtensionScriptInstanceGetLanguage         = unsafe { nil }
+	free_func                 GDExtensionScriptInstanceFree                = unsafe { nil }
+}
+
 pub struct GDExtensionScriptInstanceInfo3 {
+pub mut:
 	set_func                       GDExtensionScriptInstanceSet                    = unsafe { nil }
 	get_func                       GDExtensionScriptInstanceGet                    = unsafe { nil }
 	get_property_list_func         GDExtensionScriptInstanceGetPropertyList        = unsafe { nil }
@@ -526,22 +675,37 @@ pub struct GDExtensionScriptInstanceInfo3 {
 	free_func                      GDExtensionScriptInstanceFree                   = unsafe { nil }
 }
 
-pub type GDExtensionInitFn = fn (voidptr, GDExtensionInitializationLevel)
+pub type GDExtensionWorkerThreadPoolGroupTask = fn (voidptr, u32)
+
+pub type GDExtensionWorkerThreadPoolTask = fn (voidptr)
+
+pub enum GDExtensionInitializationLevel {
+	gdextension_initialization_core      = 0
+	gdextension_initialization_servers   = 1
+	gdextension_initialization_scene     = 2
+	gdextension_initialization_editor    = 3
+	gdextension_max_initialization_level = 4
+}
+
+pub type GDExtensionInitializeCallback = fn (p_userdata voidptr, p_level GDExtensionInitializationLevel)
+
+pub type GDExtensionDeinitializeCallback = fn (p_userdata voidptr, p_level GDExtensionInitializationLevel)
 
 pub struct GDExtensionInitialization {
+pub mut:
 	minimum_initialization_level GDExtensionInitializationLevel
 	userdata                     voidptr
-pub mut:
-	initialize   GDExtensionInitFn = unsafe { nil }
-	deinitialize GDExtensionInitFn = unsafe { nil }
+	initialize                   GDExtensionInitializeCallback   = unsafe { nil }
+	deinitialize                 GDExtensionDeinitializeCallback = unsafe { nil }
 }
 
 pub type GDExtensionInterfaceFunctionPtr = fn ()
 
-pub type GDExtensionInterfaceGetProcAddress = fn (&i8) GDExtensionInterfaceFunctionPtr
+pub type GDExtensionInterfaceGetProcAddress = fn (p_function_name &i8) GDExtensionInterfaceFunctionPtr
 
-pub type GDExtensionInitializationFunction = fn (GDExtensionInterfaceGetProcAddress, GDExtensionClassLibraryPtr, &GDExtensionInitialization) GDExtensionBool
+pub type GDExtensionInitializationFunction = fn (p_get_proc_address GDExtensionInterfaceGetProcAddress, p_library GDExtensionClassLibraryPtr, r_initialization &GDExtensionInitialization) GDExtensionBool
 
+// Deprecated since 4.5, use GDExtensionGodotVersion2
 pub struct GDExtensionGodotVersion {
 pub mut:
 	major   u32
@@ -556,444 +720,590 @@ pub mut:
 	minor     u32
 	patch     u32
 	hex       u32
-	status    &i8
-	build     &i8
-	hash      &i8
+	status    &i8 = unsafe { nil }
+	build     &i8 = unsafe { nil }
+	hash      &i8 = unsafe { nil }
 	timestamp u64
 	string_   &i8 = unsafe { nil }
 }
 
-pub type GDExtensionInterfaceGetGodotVersion = fn (&GDExtensionGodotVersion)
+pub type GDExtensionMainLoopStartupCallback = fn ()
 
-pub type GDExtensionInterfaceGetGodotVersion2 = fn (&GDExtensionGodotVersion2)
+pub type GDExtensionMainLoopShutdownCallback = fn ()
 
-pub type GDExtensionInterfaceMemAlloc = fn (usize) voidptr
+pub type GDExtensionMainLoopFrameCallback = fn ()
 
-pub type GDExtensionInterfaceMemRealloc = fn (voidptr, usize) voidptr
+pub struct GDExtensionMainLoopCallbacks {
+pub mut:
+	startup_func  GDExtensionMainLoopStartupCallback  = unsafe { nil }
+	shutdown_func GDExtensionMainLoopShutdownCallback = unsafe { nil }
+	frame_func    GDExtensionMainLoopFrameCallback    = unsafe { nil }
+}
 
-pub type GDExtensionInterfaceMemFree = fn (voidptr)
+// Deprecated since 4.5, use get_godot_version2
+pub type GDExtensionInterfaceGetGodotVersion = fn (r_godot_version &GDExtensionGodotVersion)
 
-pub type GDExtensionInterfacePrintError = fn (&i8, &i8, &i8, int, GDExtensionBool)
+pub type GDExtensionInterfaceGetGodotVersion2 = fn (r_godot_version &GDExtensionGodotVersion2)
 
-pub type GDExtensionInterfacePrintErrorWithMessage = fn (&i8, &i8, &i8, &i8, int, GDExtensionBool)
+// Deprecated since 4.6, use mem_alloc2. Does not allow explicitly requesting padding.
+pub type GDExtensionInterfaceMemAlloc = fn (p_bytes GDSize) voidptr
 
-pub type GDExtensionInterfacePrintWarning = fn (&i8, &i8, &i8, int, GDExtensionBool)
+// Deprecated since 4.6, use mem_realloc2. Does not allow explicitly requesting padding.
+pub type GDExtensionInterfaceMemRealloc = fn (p_ptr voidptr, p_bytes GDSize) voidptr
 
-pub type GDExtensionInterfacePrintWarningWithMessage = fn (&i8, &i8, &i8, &i8, int, GDExtensionBool)
+// Deprecated since 4.6, use mem_free2. Does not allow explicitly requesting padding.
+pub type GDExtensionInterfaceMemFree = fn (p_ptr voidptr)
 
-pub type GDExtensionInterfacePrintScriptError = fn (&i8, &i8, &i8, int, GDExtensionBool)
+pub type GDExtensionInterfaceMemAlloc2 = fn (p_bytes GDSize, p_pad_align GDExtensionBool) voidptr
 
-pub type GDExtensionInterfacePrintScriptErrorWithMessage = fn (&i8, &i8, &i8, &i8, int, GDExtensionBool)
+pub type GDExtensionInterfaceMemRealloc2 = fn (p_ptr voidptr, p_bytes GDSize, p_pad_align GDExtensionBool) voidptr
 
-pub type GDExtensionInterfaceGetNativeStructSize = fn (&StringName) u64
+pub type GDExtensionInterfaceMemFree2 = fn (p_ptr voidptr, p_pad_align GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantNewCopy = fn (GDExtensionUninitializedVariantPtr, &Variant)
+pub type GDExtensionInterfacePrintError = fn (p_description &i8, p_function &i8, p_file &i8, p_line int, p_editor_notify GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantNewNil = fn (GDExtensionUninitializedVariantPtr)
+pub type GDExtensionInterfacePrintErrorWithMessage = fn (p_description &i8, p_message &i8, p_function &i8, p_file &i8, p_line int, p_editor_notify GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantDestroy = fn (&Variant)
+pub type GDExtensionInterfacePrintWarning = fn (p_description &i8, p_function &i8, p_file &i8, p_line int, p_editor_notify GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantCall = fn (&Variant, &StringName, &&Variant, GDExtensionInt, GDExtensionUninitializedVariantPtr, &GDExtensionCallError)
+pub type GDExtensionInterfacePrintWarningWithMessage = fn (p_description &i8, p_message &i8, p_function &i8, p_file &i8, p_line int, p_editor_notify GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantCallStatic = fn (GDExtensionVariantType, &StringName, &&Variant, GDExtensionInt, GDExtensionUninitializedVariantPtr, &GDExtensionCallError)
+pub type GDExtensionInterfacePrintScriptError = fn (p_description &i8, p_function &i8, p_file &i8, p_line int, p_editor_notify GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantEvaluate = fn (GDExtensionVariantOperator, &Variant, &Variant, GDExtensionUninitializedVariantPtr, &GDExtensionBool)
+pub type GDExtensionInterfacePrintScriptErrorWithMessage = fn (p_description &i8, p_message &i8, p_function &i8, p_file &i8, p_line int, p_editor_notify GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantSet = fn (&Variant, &Variant, &Variant, &GDExtensionBool)
+pub type GDExtensionInterfaceGetNativeStructSize = fn (p_name &StringName) u64
 
-pub type GDExtensionInterfaceVariantSetNamed = fn (&Variant, &StringName, &Variant, &GDExtensionBool)
+pub type GDExtensionInterfaceVariantNewCopy = fn (r_dest GDExtensionUninitializedVariantPtr, p_src &Variant)
 
-pub type GDExtensionInterfaceVariantSetKeyed = fn (&Variant, &Variant, &Variant, &GDExtensionBool)
+pub type GDExtensionInterfaceVariantNewNil = fn (r_dest GDExtensionUninitializedVariantPtr)
 
-pub type GDExtensionInterfaceVariantSetIndexed = fn (&Variant, GDExtensionInt, &Variant, &GDExtensionBool, &GDExtensionBool)
+pub type GDExtensionInterfaceVariantDestroy = fn (p_self &Variant)
 
-pub type GDExtensionInterfaceVariantGet = fn (&Variant, &Variant, GDExtensionUninitializedVariantPtr, &GDExtensionBool)
+pub type GDExtensionInterfaceVariantCall = fn (p_self &Variant, p_method &StringName, p_args &&Variant, p_argument_count GDExtensionInt, r_return GDExtensionUninitializedVariantPtr, r_error &GDExtensionCallError)
 
-pub type GDExtensionInterfaceVariantGetNamed = fn (&Variant, &StringName, GDExtensionUninitializedVariantPtr, &GDExtensionBool)
+pub type GDExtensionInterfaceVariantCallStatic = fn (p_type GDExtensionVariantType, p_method &StringName, p_args &&Variant, p_argument_count GDExtensionInt, r_return GDExtensionUninitializedVariantPtr, r_error &GDExtensionCallError)
 
-pub type GDExtensionInterfaceVariantGetKeyed = fn (&Variant, &Variant, GDExtensionUninitializedVariantPtr, &GDExtensionBool)
+pub type GDExtensionInterfaceVariantEvaluate = fn (p_op GDExtensionVariantOperator, p_a &Variant, p_b &Variant, r_return GDExtensionUninitializedVariantPtr, r_valid &GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantGetIndexed = fn (&Variant, GDExtensionInt, GDExtensionUninitializedVariantPtr, &GDExtensionBool, &GDExtensionBool)
+pub type GDExtensionInterfaceVariantSet = fn (p_self &Variant, p_key &Variant, p_value &Variant, r_valid &GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantIterInit = fn (&Variant, GDExtensionUninitializedVariantPtr, &GDExtensionBool) GDExtensionBool
+pub type GDExtensionInterfaceVariantSetNamed = fn (p_self &Variant, p_key &StringName, p_value &Variant, r_valid &GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantIterNext = fn (&Variant, &Variant, &GDExtensionBool) GDExtensionBool
+pub type GDExtensionInterfaceVariantSetKeyed = fn (p_self &Variant, p_key &Variant, p_value &Variant, r_valid &GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantIterGet = fn (&Variant, &Variant, GDExtensionUninitializedVariantPtr, &GDExtensionBool)
+pub type GDExtensionInterfaceVariantSetIndexed = fn (p_self &Variant, p_index GDExtensionInt, p_value &Variant, r_valid &GDExtensionBool, r_oob &GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantHash = fn (&Variant) GDExtensionInt
+pub type GDExtensionInterfaceVariantGet = fn (p_self &Variant, p_key &Variant, r_ret GDExtensionUninitializedVariantPtr, r_valid &GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantRecursiveHash = fn (&Variant, GDExtensionInt) GDExtensionInt
+pub type GDExtensionInterfaceVariantGetNamed = fn (p_self &Variant, p_key &StringName, r_ret GDExtensionUninitializedVariantPtr, r_valid &GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantHashCompare = fn (&Variant, &Variant) GDExtensionBool
+pub type GDExtensionInterfaceVariantGetKeyed = fn (p_self &Variant, p_key &Variant, r_ret GDExtensionUninitializedVariantPtr, r_valid &GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantBooleanize = fn (&Variant) GDExtensionBool
+pub type GDExtensionInterfaceVariantGetIndexed = fn (p_self &Variant, p_index GDExtensionInt, r_ret GDExtensionUninitializedVariantPtr, r_valid &GDExtensionBool, r_oob &GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantDuplicate = fn (&Variant, &Variant, GDExtensionBool)
+pub type GDExtensionInterfaceVariantIterInit = fn (p_self &Variant, r_iter GDExtensionUninitializedVariantPtr, r_valid &GDExtensionBool) GDExtensionBool
 
-pub type GDExtensionInterfaceVariantStringify = fn (&Variant, &String)
+pub type GDExtensionInterfaceVariantIterNext = fn (p_self &Variant, r_iter &Variant, r_valid &GDExtensionBool) GDExtensionBool
 
-pub type GDExtensionInterfaceVariantGetType = fn (&Variant) GDExtensionVariantType
+pub type GDExtensionInterfaceVariantIterGet = fn (p_self &Variant, r_iter &Variant, r_ret GDExtensionUninitializedVariantPtr, r_valid &GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantHasMethod = fn (&Variant, &StringName) GDExtensionBool
+pub type GDExtensionInterfaceVariantHash = fn (p_self &Variant) GDExtensionInt
 
-pub type GDExtensionInterfaceVariantHasMember = fn (GDExtensionVariantType, &StringName) GDExtensionBool
+pub type GDExtensionInterfaceVariantRecursiveHash = fn (p_self &Variant, p_recursion_count GDExtensionInt) GDExtensionInt
 
-pub type GDExtensionInterfaceVariantHasKey = fn (&Variant, &Variant, &GDExtensionBool) GDExtensionBool
+pub type GDExtensionInterfaceVariantHashCompare = fn (p_self &Variant, p_other &Variant) GDExtensionBool
 
-pub type GDExtensionInterfaceVariantGetTypeName = fn (GDExtensionVariantType, GDExtensionUninitializedStringPtr)
+pub type GDExtensionInterfaceVariantBooleanize = fn (p_self &Variant) GDExtensionBool
 
-pub type GDExtensionInterfaceVariantCanConvert = fn (GDExtensionVariantType, GDExtensionVariantType) GDExtensionBool
+pub type GDExtensionInterfaceVariantDuplicate = fn (p_self &Variant, r_ret &Variant, p_deep GDExtensionBool)
 
-pub type GDExtensionInterfaceVariantCanConvertStrict = fn (GDExtensionVariantType, GDExtensionVariantType) GDExtensionBool
+pub type GDExtensionInterfaceVariantStringify = fn (p_self &Variant, r_ret &String)
 
-pub type GDExtensionInterfaceGetVariantFromTypeConstructor = fn (GDExtensionVariantType) GDExtensionVariantFromTypeConstructorFunc
+pub type GDExtensionInterfaceVariantGetType = fn (p_self &Variant) GDExtensionVariantType
 
-pub type GDExtensionInterfaceGetVariantToTypeConstructor = fn (GDExtensionVariantType) GDExtensionTypeFromVariantConstructorFunc
+pub type GDExtensionInterfaceVariantHasMethod = fn (p_self &Variant, p_method &StringName) GDExtensionBool
 
-pub type GDExtensionInterfaceVariantGetPtrOperatorEvaluator = fn (GDExtensionVariantOperator, GDExtensionVariantType, GDExtensionVariantType) GDExtensionPtrOperatorEvaluator
+pub type GDExtensionInterfaceVariantHasMember = fn (p_type GDExtensionVariantType, p_member &StringName) GDExtensionBool
 
-pub type GDExtensionInterfaceVariantGetPtrBuiltinMethod = fn (GDExtensionVariantType, &StringName, GDExtensionInt) GDExtensionPtrBuiltInMethod
+pub type GDExtensionInterfaceVariantHasKey = fn (p_self &Variant, p_key &Variant, r_valid &GDExtensionBool) GDExtensionBool
 
-pub type GDExtensionInterfaceVariantGetPtrConstructor = fn (GDExtensionVariantType, int) GDExtensionPtrConstructor
+pub type GDExtensionInterfaceVariantGetObjectInstanceId = fn (p_self &Variant) GDObjectInstanceID
 
-pub type GDExtensionInterfaceVariantGetPtrDestructor = fn (GDExtensionVariantType) GDExtensionPtrDestructor
+pub type GDExtensionInterfaceVariantGetTypeName = fn (p_type GDExtensionVariantType, r_name GDExtensionUninitializedStringPtr)
 
-pub type GDExtensionInterfaceVariantConstruct = fn (GDExtensionVariantType, GDExtensionUninitializedVariantPtr, &&Variant, int, &GDExtensionCallError)
+pub type GDExtensionInterfaceVariantGetTypeByName = fn (p_type_name &String) GDExtensionVariantType
 
-pub type GDExtensionInterfaceVariantGetPtrSetter = fn (GDExtensionVariantType, &StringName) GDExtensionPtrSetter
+pub type GDExtensionInterfaceVariantCanConvert = fn (p_from GDExtensionVariantType, p_to GDExtensionVariantType) GDExtensionBool
 
-pub type GDExtensionInterfaceVariantGetPtrGetter = fn (GDExtensionVariantType, &StringName) GDExtensionPtrGetter
+pub type GDExtensionInterfaceVariantCanConvertStrict = fn (p_from GDExtensionVariantType, p_to GDExtensionVariantType) GDExtensionBool
 
-pub type GDExtensionInterfaceVariantGetPtrIndexedSetter = fn (GDExtensionVariantType) GDExtensionPtrIndexedSetter
+pub type GDExtensionInterfaceGetVariantFromTypeConstructor = fn (p_type GDExtensionVariantType) GDExtensionVariantFromTypeConstructorFunc
 
-pub type GDExtensionInterfaceVariantGetPtrIndexedGetter = fn (GDExtensionVariantType) GDExtensionPtrIndexedGetter
+pub type GDExtensionInterfaceGetVariantToTypeConstructor = fn (p_type GDExtensionVariantType) GDExtensionTypeFromVariantConstructorFunc
 
-pub type GDExtensionInterfaceVariantGetPtrKeyedSetter = fn (GDExtensionVariantType) GDExtensionPtrKeyedSetter
+pub type GDExtensionInterfaceVariantGetPtrInternalGetter = fn (p_type GDExtensionVariantType) GDExtensionVariantGetInternalPtrFunc
 
-pub type GDExtensionInterfaceVariantGetPtrKeyedGetter = fn (GDExtensionVariantType) GDExtensionPtrKeyedGetter
+pub type GDExtensionInterfaceVariantGetPtrOperatorEvaluator = fn (p_operator GDExtensionVariantOperator, p_type_a GDExtensionVariantType, p_type_b GDExtensionVariantType) GDExtensionPtrOperatorEvaluator
 
-pub type GDExtensionInterfaceVariantGetPtrKeyedChecker = fn (GDExtensionVariantType) GDExtensionPtrKeyedChecker
+pub type GDExtensionInterfaceVariantGetPtrBuiltinMethod = fn (p_type GDExtensionVariantType, p_method &StringName, p_hash GDExtensionInt) GDExtensionPtrBuiltInMethod
 
-pub type GDExtensionInterfaceVariantGetConstantValue = fn (GDExtensionVariantType, &StringName, GDExtensionUninitializedVariantPtr)
+pub type GDExtensionInterfaceVariantGetPtrConstructor = fn (p_type GDExtensionVariantType, p_constructor int) GDExtensionPtrConstructor
 
-pub type GDExtensionInterfaceVariantGetPtrUtilityFunction = fn (&StringName, GDExtensionInt) GDExtensionPtrUtilityFunction
+pub type GDExtensionInterfaceVariantGetPtrDestructor = fn (p_type GDExtensionVariantType) GDExtensionPtrDestructor
 
-pub type GDExtensionInterfaceStringNewWithLatin1Chars = fn (GDExtensionUninitializedStringPtr, &i8)
+pub type GDExtensionInterfaceVariantConstruct = fn (p_type GDExtensionVariantType, r_base GDExtensionUninitializedVariantPtr, p_args &&Variant, p_argument_count int, r_error &GDExtensionCallError)
 
-pub type GDExtensionInterfaceStringNewWithUtf8Chars = fn (GDExtensionUninitializedStringPtr, &i8)
+pub type GDExtensionInterfaceVariantGetPtrSetter = fn (p_type GDExtensionVariantType, p_member &StringName) GDExtensionPtrSetter
 
-pub type GDExtensionInterfaceStringNewWithUtf16Chars = fn (GDExtensionUninitializedStringPtr, &i16)
+pub type GDExtensionInterfaceVariantGetPtrGetter = fn (p_type GDExtensionVariantType, p_member &StringName) GDExtensionPtrGetter
 
-pub type GDExtensionInterfaceStringNewWithUtf32Chars = fn (GDExtensionUninitializedStringPtr, &i32)
+pub type GDExtensionInterfaceVariantGetPtrIndexedSetter = fn (p_type GDExtensionVariantType) GDExtensionPtrIndexedSetter
 
-pub type GDExtensionInterfaceStringNewWithWideChars = fn (GDExtensionUninitializedStringPtr, &u16)
+pub type GDExtensionInterfaceVariantGetPtrIndexedGetter = fn (p_type GDExtensionVariantType) GDExtensionPtrIndexedGetter
 
-pub type GDExtensionInterfaceStringNewWithLatin1CharsAndLen = fn (GDExtensionUninitializedStringPtr, &i8, GDExtensionInt)
+pub type GDExtensionInterfaceVariantGetPtrKeyedSetter = fn (p_type GDExtensionVariantType) GDExtensionPtrKeyedSetter
 
-pub type GDExtensionInterfaceStringNewWithUtf8CharsAndLen = fn (GDExtensionUninitializedStringPtr, &i8, GDExtensionInt)
+pub type GDExtensionInterfaceVariantGetPtrKeyedGetter = fn (p_type GDExtensionVariantType) GDExtensionPtrKeyedGetter
 
-pub type GDExtensionInterfaceStringNewWithUtf8CharsAndLen2 = fn (GDExtensionUninitializedStringPtr, &i8, GDExtensionInt) GDExtensionInt
+pub type GDExtensionInterfaceVariantGetPtrKeyedChecker = fn (p_type GDExtensionVariantType) GDExtensionPtrKeyedChecker
 
-pub type GDExtensionInterfaceStringNewWithUtf16CharsAndLen = fn (GDExtensionUninitializedStringPtr, &u16, GDExtensionInt)
+pub type GDExtensionInterfaceVariantGetConstantValue = fn (p_type GDExtensionVariantType, p_constant &StringName, r_ret GDExtensionUninitializedVariantPtr)
 
-pub type GDExtensionInterfaceStringNewWithUtf16CharsAndLen2 = fn (GDExtensionUninitializedStringPtr, &u16, GDExtensionInt, GDExtensionBool) GDExtensionInt
+pub type GDExtensionInterfaceVariantGetPtrUtilityFunction = fn (p_function &StringName, p_hash GDExtensionInt) GDExtensionPtrUtilityFunction
 
-pub type GDExtensionInterfaceStringNewWithUtf32CharsAndLen = fn (GDExtensionUninitializedStringPtr, &u32, GDExtensionInt)
+pub type GDExtensionInterfaceStringNewWithLatin1Chars = fn (r_dest GDExtensionUninitializedStringPtr, p_contents &i8)
 
-pub type GDExtensionInterfaceStringNewWithWideCharsAndLen = fn (GDExtensionUninitializedStringPtr, &u16, GDExtensionInt)
+pub type GDExtensionInterfaceStringNewWithUtf8Chars = fn (r_dest GDExtensionUninitializedStringPtr, p_contents &i8)
 
-pub type GDExtensionInterfaceStringToLatin1Chars = fn (&String, &i8, GDExtensionInt) GDExtensionInt
+pub type GDExtensionInterfaceStringNewWithUtf16Chars = fn (r_dest GDExtensionUninitializedStringPtr, p_contents &u16)
 
-pub type GDExtensionInterfaceStringToUtf8Chars = fn (&String, &i8, GDExtensionInt) GDExtensionInt
+pub type GDExtensionInterfaceStringNewWithUtf32Chars = fn (r_dest GDExtensionUninitializedStringPtr, p_contents &u32)
 
-pub type GDExtensionInterfaceStringToUtf16Chars = fn (&String, &u16, GDExtensionInt) GDExtensionInt
+pub type GDExtensionInterfaceStringNewWithWideChars = fn (r_dest GDExtensionUninitializedStringPtr, p_contents &GDWideChar)
 
-pub type GDExtensionInterfaceStringToUtf32Chars = fn (&String, &u32, GDExtensionInt) GDExtensionInt
+pub type GDExtensionInterfaceStringNewWithLatin1CharsAndLen = fn (r_dest GDExtensionUninitializedStringPtr, p_contents &i8, p_size GDExtensionInt)
 
-pub type GDExtensionInterfaceStringToWideChars = fn (&String, &u16, GDExtensionInt) GDExtensionInt
+// Deprecated since 4.3, use string_new_with_utf8_chars_and_len2
+pub type GDExtensionInterfaceStringNewWithUtf8CharsAndLen = fn (r_dest GDExtensionUninitializedStringPtr, p_contents &i8, p_size GDExtensionInt)
 
-pub type GDExtensionInterfaceStringOperatorIndex = fn (&String, GDExtensionInt) &u32
+pub type GDExtensionInterfaceStringNewWithUtf8CharsAndLen2 = fn (r_dest GDExtensionUninitializedStringPtr, p_contents &i8, p_size GDExtensionInt) GDExtensionInt
 
-pub type GDExtensionInterfaceStringOperatorIndexConst = fn (&String, GDExtensionInt) &u32
+// Deprecated since 4.3, use string_new_with_utf16_chars_and_len2
+pub type GDExtensionInterfaceStringNewWithUtf16CharsAndLen = fn (r_dest GDExtensionUninitializedStringPtr, p_contents &u16, p_char_count GDExtensionInt)
 
-pub type GDExtensionInterfaceStringOperatorPlusEqString = fn (&String, &String)
+pub type GDExtensionInterfaceStringNewWithUtf16CharsAndLen2 = fn (r_dest GDExtensionUninitializedStringPtr, p_contents &u16, p_char_count GDExtensionInt, p_default_little_endian GDExtensionBool) GDExtensionInt
 
-pub type GDExtensionInterfaceStringOperatorPlusEqChar = fn (&String, u32)
+pub type GDExtensionInterfaceStringNewWithUtf32CharsAndLen = fn (r_dest GDExtensionUninitializedStringPtr, p_contents &u32, p_char_count GDExtensionInt)
 
-pub type GDExtensionInterfaceStringOperatorPlusEqCstr = fn (&String, &i8)
+pub type GDExtensionInterfaceStringNewWithWideCharsAndLen = fn (r_dest GDExtensionUninitializedStringPtr, p_contents &GDWideChar, p_char_count GDExtensionInt)
 
-pub type GDExtensionInterfaceStringOperatorPlusEqWcstr = fn (&String, &u16)
+pub type GDExtensionInterfaceStringToLatin1Chars = fn (p_self &String, r_text &i8, p_max_write_length GDExtensionInt) GDExtensionInt
 
-pub type GDExtensionInterfaceStringOperatorPlusEqC32str = fn (&String, &u32)
+pub type GDExtensionInterfaceStringToUtf8Chars = fn (p_self &String, r_text &i8, p_max_write_length GDExtensionInt) GDExtensionInt
 
-pub type GDExtensionInterfaceXmlParserOpenBuffer = fn (&Object, &u8, usize) GDExtensionInt
+pub type GDExtensionInterfaceStringToUtf16Chars = fn (p_self &String, r_text &u16, p_max_write_length GDExtensionInt) GDExtensionInt
 
-pub type GDExtensionInterfaceFileAccessStoreBuffer = fn (&Object, &u8, u64)
+pub type GDExtensionInterfaceStringToUtf32Chars = fn (p_self &String, r_text &u32, p_max_write_length GDExtensionInt) GDExtensionInt
 
-pub type GDExtensionInterfaceFileAccessGetBuffer = fn (&Object, &u8, u64) u64
+pub type GDExtensionInterfaceStringToWideChars = fn (p_self &String, r_text &GDWideChar, p_max_write_length GDExtensionInt) GDExtensionInt
 
-pub type GDExtensionInterfacePackedByteArrayOperatorIndexConst = fn (GDExtensionConstTypePtr, GDExtensionInt) &u8
+pub type GDExtensionInterfaceStringOperatorIndex = fn (p_self &String, p_index GDExtensionInt) &u32
 
-pub type GDExtensionInterfacePackedColorArrayOperatorIndex = fn (GDExtensionTypePtr, GDExtensionInt) GDExtensionTypePtr
+pub type GDExtensionInterfaceStringOperatorIndexConst = fn (p_self &String, p_index GDExtensionInt) &u32
 
-pub type GDExtensionInterfacePackedColorArrayOperatorIndexConst = fn (GDExtensionConstTypePtr, GDExtensionInt) GDExtensionTypePtr
+pub type GDExtensionInterfaceStringOperatorPlusEqString = fn (p_self &String, p_b &String)
 
-pub type GDExtensionInterfacePackedFloat32ArrayOperatorIndex = fn (GDExtensionTypePtr, GDExtensionInt) &f32
+pub type GDExtensionInterfaceStringOperatorPlusEqChar = fn (p_self &String, p_b u32)
 
-pub type GDExtensionInterfacePackedFloat32ArrayOperatorIndexConst = fn (GDExtensionConstTypePtr, GDExtensionInt) &f32
+pub type GDExtensionInterfaceStringOperatorPlusEqCstr = fn (p_self &String, p_b &i8)
 
-pub type GDExtensionInterfacePackedFloat64ArrayOperatorIndex = fn (GDExtensionTypePtr, GDExtensionInt) &f64
+pub type GDExtensionInterfaceStringOperatorPlusEqWcstr = fn (p_self &String, p_b &GDWideChar)
 
-pub type GDExtensionInterfacePackedFloat64ArrayOperatorIndexConst = fn (GDExtensionConstTypePtr, GDExtensionInt) &f64
+pub type GDExtensionInterfaceStringOperatorPlusEqC32str = fn (p_self &String, p_b &u32)
 
-pub type GDExtensionInterfacePackedInt32ArrayOperatorIndex = fn (GDExtensionTypePtr, GDExtensionInt) &int
+pub type GDExtensionInterfaceStringResize = fn (p_self &String, p_resize GDExtensionInt) GDExtensionInt
 
-pub type GDExtensionInterfacePackedInt32ArrayOperatorIndexConst = fn (GDExtensionConstTypePtr, GDExtensionInt) &int
+pub type GDExtensionInterfaceStringNameNewWithLatin1Chars = fn (r_dest GDExtensionUninitializedStringNamePtr, p_contents &i8, p_is_static GDExtensionBool)
 
-pub type GDExtensionInterfacePackedInt64ArrayOperatorIndex = fn (GDExtensionTypePtr, GDExtensionInt) &i64
+pub type GDExtensionInterfaceStringNameNewWithUtf8Chars = fn (r_dest GDExtensionUninitializedStringNamePtr, p_contents &i8)
 
-pub type GDExtensionInterfacePackedInt64ArrayOperatorIndexConst = fn (GDExtensionConstTypePtr, GDExtensionInt) &i64
+pub type GDExtensionInterfaceStringNameNewWithUtf8CharsAndLen = fn (r_dest GDExtensionUninitializedStringNamePtr, p_contents &i8, p_size GDExtensionInt)
 
-pub type GDExtensionInterfacePackedStringArrayOperatorIndex = fn (GDExtensionTypePtr, GDExtensionInt) &String
+pub type GDExtensionInterfaceXmlParserOpenBuffer = fn (p_instance GDExtensionObjectPtr, p_buffer &u8, p_size GDSize) GDExtensionInt
 
-pub type GDExtensionInterfacePackedStringArrayOperatorIndexConst = fn (GDExtensionConstTypePtr, GDExtensionInt) &String
+pub type GDExtensionInterfaceFileAccessStoreBuffer = fn (p_instance GDExtensionObjectPtr, p_src &u8, p_length u64)
 
-pub type GDExtensionInterfacePackedVector2ArrayOperatorIndex = fn (GDExtensionTypePtr, GDExtensionInt) GDExtensionTypePtr
+pub type GDExtensionInterfaceFileAccessGetBuffer = fn (p_instance GDExtensionConstObjectPtr, p_dst &u8, p_length u64) u64
 
-pub type GDExtensionInterfacePackedVector2ArrayOperatorIndexConst = fn (GDExtensionConstTypePtr, GDExtensionInt) GDExtensionTypePtr
+pub type GDExtensionInterfaceImagePtrw = fn (p_instance GDExtensionObjectPtr) &u8
 
-pub type GDExtensionInterfacePackedVector3ArrayOperatorIndex = fn (GDExtensionTypePtr, GDExtensionInt) GDExtensionTypePtr
+pub type GDExtensionInterfaceImagePtr = fn (p_instance GDExtensionObjectPtr) &u8
 
-pub type GDExtensionInterfacePackedVector3ArrayOperatorIndexConst = fn (GDExtensionConstTypePtr, GDExtensionInt) GDExtensionTypePtr
+pub type GDExtensionInterfaceWorkerThreadPoolAddNativeGroupTask = fn (p_instance GDExtensionObjectPtr, p_func GDExtensionWorkerThreadPoolGroupTask, p_userdata voidptr, p_elements int, p_tasks int, p_high_priority GDExtensionBool, p_description &String) i64
 
-pub type GDExtensionInterfaceArrayOperatorIndex = fn (GDExtensionTypePtr, GDExtensionInt) &Variant
+pub type GDExtensionInterfaceWorkerThreadPoolAddNativeTask = fn (p_instance GDExtensionObjectPtr, p_func GDExtensionWorkerThreadPoolTask, p_userdata voidptr, p_high_priority GDExtensionBool, p_description &String) i64
 
-pub type GDExtensionInterfaceArrayOperatorIndexConst = fn (GDExtensionConstTypePtr, GDExtensionInt) &Variant
+pub type GDExtensionInterfacePackedByteArrayOperatorIndex = fn (p_self GDExtensionTypePtr, p_index GDExtensionInt) &u8
 
-pub type GDExtensionInterfaceArrayRef = fn (GDExtensionTypePtr, GDExtensionConstTypePtr)
+pub type GDExtensionInterfacePackedByteArrayOperatorIndexConst = fn (p_self GDExtensionConstTypePtr, p_index GDExtensionInt) &u8
 
-pub type GDExtensionInterfaceArraySetTyped = fn (GDExtensionTypePtr, GDExtensionVariantType, &StringName, &Variant)
+pub type GDExtensionInterfacePackedFloat32ArrayOperatorIndex = fn (p_self GDExtensionTypePtr, p_index GDExtensionInt) &f32
 
-pub type GDExtensionInterfaceDictionaryOperatorIndex = fn (GDExtensionTypePtr, &Variant) &Variant
+pub type GDExtensionInterfacePackedFloat32ArrayOperatorIndexConst = fn (p_self GDExtensionConstTypePtr, p_index GDExtensionInt) &f32
 
-pub type GDExtensionInterfaceDictionaryOperatorIndexConst = fn (GDExtensionConstTypePtr, &Variant) &Variant
+pub type GDExtensionInterfacePackedFloat64ArrayOperatorIndex = fn (p_self GDExtensionTypePtr, p_index GDExtensionInt) &f64
 
-pub type GDExtensionInterfaceObjectMethodBindCall = fn (GDExtensionMethodBindPtr, &Object, voidptr, GDExtensionInt, GDExtensionUninitializedVariantPtr, &GDExtensionCallError)
+pub type GDExtensionInterfacePackedFloat64ArrayOperatorIndexConst = fn (p_self GDExtensionConstTypePtr, p_index GDExtensionInt) &f64
 
-pub type GDExtensionInterfaceObjectMethodBindPtrcall = fn (GDExtensionMethodBindPtr, &Object, &GDExtensionConstTypePtr, GDExtensionTypePtr)
+pub type GDExtensionInterfacePackedInt32ArrayOperatorIndex = fn (p_self GDExtensionTypePtr, p_index GDExtensionInt) &int
 
-pub type GDExtensionInterfaceObjectDestroy = fn (&Object)
+pub type GDExtensionInterfacePackedInt32ArrayOperatorIndexConst = fn (p_self GDExtensionConstTypePtr, p_index GDExtensionInt) &int
 
-pub type GDExtensionInterfaceGlobalGetSingleton = fn (&StringName) &Object
+pub type GDExtensionInterfacePackedInt64ArrayOperatorIndex = fn (p_self GDExtensionTypePtr, p_index GDExtensionInt) &i64
 
-pub type GDExtensionInterfaceObjectGetInstanceBinding = fn (&Object, voidptr, &GDExtensionInstanceBindingCallbacks) voidptr
+pub type GDExtensionInterfacePackedInt64ArrayOperatorIndexConst = fn (p_self GDExtensionConstTypePtr, p_index GDExtensionInt) &i64
 
-pub type GDExtensionInterfaceObjectSetInstanceBinding = fn (&Object, voidptr, voidptr, &GDExtensionInstanceBindingCallbacks)
+pub type GDExtensionInterfacePackedStringArrayOperatorIndex = fn (p_self GDExtensionTypePtr, p_index GDExtensionInt) &String
 
-pub type GDExtensionInterfaceObjectSetInstance = fn (&Object, &StringName, GDExtensionClassInstancePtr)
+pub type GDExtensionInterfacePackedStringArrayOperatorIndexConst = fn (p_self GDExtensionConstTypePtr, p_index GDExtensionInt) &String
 
-pub type GDExtensionInterfaceObjectGetClassName = fn (&Object, GDExtensionClassLibraryPtr, GDExtensionUninitializedStringNamePtr) GDExtensionBool
+pub type GDExtensionInterfacePackedVector2ArrayOperatorIndex = fn (p_self GDExtensionTypePtr, p_index GDExtensionInt) GDExtensionTypePtr
 
-pub type GDExtensionInterfaceObjectCastTo = fn (&Object, voidptr) &Object
+pub type GDExtensionInterfacePackedVector2ArrayOperatorIndexConst = fn (p_self GDExtensionConstTypePtr, p_index GDExtensionInt) GDExtensionTypePtr
 
-pub type GDExtensionInterfaceObjectGetInstanceFromId = fn (GDObjectInstanceID) &Object
+pub type GDExtensionInterfacePackedVector3ArrayOperatorIndex = fn (p_self GDExtensionTypePtr, p_index GDExtensionInt) GDExtensionTypePtr
 
-pub type GDExtensionInterfaceObjectGetInstanceId = fn (&Object) GDObjectInstanceID
+pub type GDExtensionInterfacePackedVector3ArrayOperatorIndexConst = fn (p_self GDExtensionConstTypePtr, p_index GDExtensionInt) GDExtensionTypePtr
 
-pub type GDExtensionInterfaceRefGetObject = fn (GDExtensionConstRefPtr) &Object
+pub type GDExtensionInterfacePackedVector4ArrayOperatorIndex = fn (p_self GDExtensionTypePtr, p_index GDExtensionInt) GDExtensionTypePtr
 
-pub type GDExtensionInterfaceRefSetObject = fn (GDExtensionRefPtr, &Object)
+pub type GDExtensionInterfacePackedVector4ArrayOperatorIndexConst = fn (p_self GDExtensionConstTypePtr, p_index GDExtensionInt) GDExtensionTypePtr
 
-pub type GDExtensionInterfaceScriptInstanceCreate = fn (&GDExtensionScriptInstanceInfo, GDExtensionScriptInstanceDataPtr) GDExtensionScriptInstancePtr
+pub type GDExtensionInterfacePackedColorArrayOperatorIndex = fn (p_self GDExtensionTypePtr, p_index GDExtensionInt) GDExtensionTypePtr
 
-pub type GDExtensionInterfaceScriptInstanceCreate3 = fn (&GDExtensionScriptInstanceInfo3, GDExtensionScriptInstanceDataPtr) GDExtensionScriptInstancePtr
+pub type GDExtensionInterfacePackedColorArrayOperatorIndexConst = fn (p_self GDExtensionConstTypePtr, p_index GDExtensionInt) GDExtensionTypePtr
 
-pub type GDExtensionInterfaceCallableCustomCreate2 = fn (GDExtensionUninitializedTypePtr, &GDExtensionCallableCustomInfo2)
+pub type GDExtensionInterfaceArrayOperatorIndex = fn (p_self GDExtensionTypePtr, p_index GDExtensionInt) &Variant
 
-pub type GDExtensionInterfaceClassdbConstructObject = fn (&StringName) &Object
+pub type GDExtensionInterfaceArrayOperatorIndexConst = fn (p_self GDExtensionConstTypePtr, p_index GDExtensionInt) &Variant
 
-pub type GDExtensionInterfaceClassdbConstructObject2 = fn (&StringName) &Object
+// Deprecated since 4.5. Removed from interface. Use copy constructor instead.
+pub type GDExtensionInterfaceArrayRef = fn (p_self GDExtensionTypePtr, p_from GDExtensionConstTypePtr)
 
-pub type GDExtensionInterfaceClassdbGetMethodBind = fn (&StringName, &StringName, GDExtensionInt) GDExtensionMethodBindPtr
+pub type GDExtensionInterfaceArraySetTyped = fn (p_self GDExtensionTypePtr, p_type GDExtensionVariantType, p_class_name &StringName, p_script &Variant)
 
-pub type GDExtensionInterfaceClassdbGetClassTag = fn (&StringName) voidptr
+pub type GDExtensionInterfaceDictionaryOperatorIndex = fn (p_self GDExtensionTypePtr, p_key &Variant) &Variant
 
-pub type GDExtensionInterfaceClassdbRegisterExtensionClass = fn (GDExtensionClassLibraryPtr, &StringName, &StringName, &GDExtensionClassCreationInfo)
+pub type GDExtensionInterfaceDictionaryOperatorIndexConst = fn (p_self GDExtensionConstTypePtr, p_key &Variant) &Variant
 
-pub type GDExtensionInterfaceClassdbRegisterExtensionClass2 = fn (GDExtensionClassLibraryPtr, &StringName, &StringName, &GDExtensionClassCreationInfo2)
+pub type GDExtensionInterfaceDictionarySetTyped = fn (p_self GDExtensionTypePtr, p_key_type GDExtensionVariantType, p_key_class_name &StringName, p_key_script &Variant, p_value_type GDExtensionVariantType, p_value_class_name &StringName, p_value_script &Variant)
 
-pub type GDExtensionInterfaceClassdbRegisterExtensionClass3 = fn (GDExtensionClassLibraryPtr, &StringName, &StringName, &GDExtensionClassCreationInfo3)
+pub type GDExtensionInterfaceObjectMethodBindCall = fn (p_method_bind GDExtensionMethodBindPtr, p_instance GDExtensionObjectPtr, p_args &&Variant, p_arg_count GDExtensionInt, r_ret GDExtensionUninitializedVariantPtr, r_error &GDExtensionCallError)
 
-pub type GDExtensionInterfaceClassdbRegisterExtensionClass4 = fn (GDExtensionClassLibraryPtr, &StringName, &StringName, &GDExtensionClassCreationInfo4)
+pub type GDExtensionInterfaceObjectMethodBindPtrcall = fn (p_method_bind GDExtensionMethodBindPtr, p_instance GDExtensionObjectPtr, p_args &GDExtensionConstTypePtr, r_ret GDExtensionTypePtr)
 
-pub type GDExtensionInterfaceClassdbRegisterExtensionClassMethod = fn (GDExtensionClassLibraryPtr, &StringName, &GDExtensionClassMethodInfo)
+pub type GDExtensionInterfaceObjectDestroy = fn (p_o GDExtensionObjectPtr)
 
-pub type GDExtensionInterfaceClassdbRegisterExtensionClassIntegerConstant = fn (GDExtensionClassLibraryPtr, &StringName, &StringName, &StringName, GDExtensionInt, GDExtensionBool)
+pub type GDExtensionInterfaceGlobalGetSingleton = fn (p_name &StringName) GDExtensionObjectPtr
 
-pub type GDExtensionInterfaceClassdbRegisterExtensionClassProperty = fn (GDExtensionClassLibraryPtr, &StringName, &GDExtensionPropertyInfo, &StringName, &StringName)
+pub type GDExtensionInterfaceObjectGetInstanceBinding = fn (p_o GDExtensionObjectPtr, p_token voidptr, p_callbacks &GDExtensionInstanceBindingCallbacks) voidptr
 
-pub type GDExtensionInterfaceClassdbRegisterExtensionClassPropertyGroup = fn (GDExtensionClassLibraryPtr, &StringName, &String, &String)
+pub type GDExtensionInterfaceObjectSetInstanceBinding = fn (p_o GDExtensionObjectPtr, p_token voidptr, p_binding voidptr, p_callbacks &GDExtensionInstanceBindingCallbacks)
 
-pub type GDExtensionInterfaceClassdbRegisterExtensionClassPropertySubgroup = fn (GDExtensionClassLibraryPtr, &StringName, &String, &String)
+pub type GDExtensionInterfaceObjectFreeInstanceBinding = fn (p_o GDExtensionObjectPtr, p_token voidptr)
 
-pub type GDExtensionInterfaceClassdbRegisterExtensionClassSignal = fn (GDExtensionClassLibraryPtr, &StringName, &StringName, &GDExtensionPropertyInfo, GDExtensionInt)
+pub type GDExtensionInterfaceObjectSetInstance = fn (p_o GDExtensionObjectPtr, p_classname &StringName, p_instance GDExtensionClassInstancePtr)
 
-pub type GDExtensionInterfaceClassdbUnregisterExtensionClass = fn (GDExtensionClassLibraryPtr, &StringName)
+pub type GDExtensionInterfaceObjectGetClassName = fn (p_object GDExtensionConstObjectPtr, p_library GDExtensionClassLibraryPtr, r_class_name GDExtensionUninitializedStringNamePtr) GDExtensionBool
 
-pub type GDExtensionInterfaceGetLibraryPath = fn (GDExtensionClassLibraryPtr, GDExtensionUninitializedStringPtr)
+// Deprecated since 4.7. Use the `is_class` method on `Object` to check if an object can be cast instead. If true, the previous pointer can be reinterpreted as a pointer to the target type.
+pub type GDExtensionInterfaceObjectCastTo = fn (p_object GDExtensionConstObjectPtr, p_class_tag voidptr) GDExtensionObjectPtr
 
-pub type GDExtensionInterfaceEditorAddPlugin = fn (&StringName)
+pub type GDExtensionInterfaceObjectGetInstanceFromId = fn (p_instance_id GDObjectInstanceID) GDExtensionObjectPtr
 
-pub type GDExtensionInterfaceEditorRemovePlugin = fn (&StringName)
+pub type GDExtensionInterfaceObjectGetInstanceId = fn (p_object GDExtensionConstObjectPtr) GDObjectInstanceID
 
+pub type GDExtensionInterfaceObjectHasScriptMethod = fn (p_object GDExtensionConstObjectPtr, p_method &StringName) GDExtensionBool
+
+pub type GDExtensionInterfaceObjectCallScriptMethod = fn (p_object GDExtensionObjectPtr, p_method &StringName, p_args &&Variant, p_argument_count GDExtensionInt, r_return GDExtensionUninitializedVariantPtr, r_error &GDExtensionCallError)
+
+pub type GDExtensionInterfaceRefGetObject = fn (p_ref GDExtensionConstRefPtr) GDExtensionObjectPtr
+
+pub type GDExtensionInterfaceRefSetObject = fn (p_ref GDExtensionRefPtr, p_object GDExtensionObjectPtr)
+
+// Deprecated since 4.2, use script_instance_create3
+pub type GDExtensionInterfaceScriptInstanceCreate = fn (p_info &GDExtensionScriptInstanceInfo, p_instance_data GDExtensionScriptInstanceDataPtr) GDExtensionScriptInstancePtr
+
+// Deprecated since 4.3, use script_instance_create3
+pub type GDExtensionInterfaceScriptInstanceCreate2 = fn (p_info &GDExtensionScriptInstanceInfo2, p_instance_data GDExtensionScriptInstanceDataPtr) GDExtensionScriptInstancePtr
+
+pub type GDExtensionInterfaceScriptInstanceCreate3 = fn (p_info &GDExtensionScriptInstanceInfo3, p_instance_data GDExtensionScriptInstanceDataPtr) GDExtensionScriptInstancePtr
+
+pub type GDExtensionInterfacePlaceholderScriptInstanceCreate = fn (p_language GDExtensionObjectPtr, p_script GDExtensionObjectPtr, p_owner GDExtensionObjectPtr) GDExtensionScriptInstancePtr
+
+pub type GDExtensionInterfacePlaceholderScriptInstanceUpdate = fn (p_placeholder GDExtensionScriptInstancePtr, p_properties GDExtensionConstTypePtr, p_values GDExtensionConstTypePtr)
+
+pub type GDExtensionInterfaceObjectGetScriptInstance = fn (p_object GDExtensionConstObjectPtr, p_language GDExtensionObjectPtr) GDExtensionScriptInstanceDataPtr
+
+pub type GDExtensionInterfaceObjectSetScriptInstance = fn (p_object GDExtensionObjectPtr, p_script_instance GDExtensionScriptInstanceDataPtr)
+
+// Deprecated since 4.3, use callable_custom_create2
+pub type GDExtensionInterfaceCallableCustomCreate = fn (r_callable GDExtensionUninitializedTypePtr, p_callable_custom_info &GDExtensionCallableCustomInfo)
+
+pub type GDExtensionInterfaceCallableCustomCreate2 = fn (r_callable GDExtensionUninitializedTypePtr, p_callable_custom_info &GDExtensionCallableCustomInfo2)
+
+pub type GDExtensionInterfaceCallableCustomGetUserdata = fn (p_callable GDExtensionConstTypePtr, p_token voidptr) voidptr
+
+// Deprecated since 4.4, use classdb_construct_object3
+pub type GDExtensionInterfaceClassdbConstructObject = fn (p_classname &StringName) GDExtensionObjectPtr
+
+// Deprecated since 4.7, use classdb_construct_object3
+pub type GDExtensionInterfaceClassdbConstructObject2 = fn (p_classname &StringName) GDExtensionObjectPtr
+
+pub type GDExtensionInterfaceClassdbConstructObject3 = fn (p_classname &StringName) GDExtensionObjectPtr
+
+pub type GDExtensionInterfaceClassdbGetMethodBind = fn (p_classname &StringName, p_methodname &StringName, p_hash GDExtensionInt) GDExtensionMethodBindPtr
+
+// Deprecated since 4.7. No longer needed. Use the `is_class` method on `Object` instead.
+pub type GDExtensionInterfaceClassdbGetClassTag = fn (p_classname &StringName) voidptr
+
+// Deprecated since 4.2, use classdb_register_extension_class6
+pub type GDExtensionInterfaceClassdbRegisterExtensionClass = fn (p_library GDExtensionClassLibraryPtr, p_class_name &StringName, p_parent_class_name &StringName, p_extension_funcs &GDExtensionClassCreationInfo)
+
+// Deprecated since 4.3, use classdb_register_extension_class6
+pub type GDExtensionInterfaceClassdbRegisterExtensionClass2 = fn (p_library GDExtensionClassLibraryPtr, p_class_name &StringName, p_parent_class_name &StringName, p_extension_funcs &GDExtensionClassCreationInfo2)
+
+// Deprecated since 4.4, use classdb_register_extension_class6
+pub type GDExtensionInterfaceClassdbRegisterExtensionClass3 = fn (p_library GDExtensionClassLibraryPtr, p_class_name &StringName, p_parent_class_name &StringName, p_extension_funcs &GDExtensionClassCreationInfo3)
+
+// Deprecated since 4.5, use classdb_register_extension_class6
+pub type GDExtensionInterfaceClassdbRegisterExtensionClass4 = fn (p_library GDExtensionClassLibraryPtr, p_class_name &StringName, p_parent_class_name &StringName, p_extension_funcs &GDExtensionClassCreationInfo4)
+
+// Deprecated since 4.7, use classdb_register_extension_class6
+pub type GDExtensionInterfaceClassdbRegisterExtensionClass5 = fn (p_library GDExtensionClassLibraryPtr, p_class_name &StringName, p_parent_class_name &StringName, p_extension_funcs &GDExtensionClassCreationInfo5)
+
+pub type GDExtensionInterfaceClassdbRegisterExtensionClass6 = fn (p_library GDExtensionClassLibraryPtr, p_class_name &StringName, p_parent_class_name &StringName, p_extension_funcs &GDExtensionClassCreationInfo6)
+
+pub type GDExtensionInterfaceClassdbRegisterExtensionClassMethod = fn (p_library GDExtensionClassLibraryPtr, p_class_name &StringName, p_method_info &GDExtensionClassMethodInfo)
+
+pub type GDExtensionInterfaceClassdbRegisterExtensionClassVirtualMethod = fn (p_library GDExtensionClassLibraryPtr, p_class_name &StringName, p_method_info &GDExtensionClassVirtualMethodInfo)
+
+pub type GDExtensionInterfaceClassdbRegisterExtensionClassIntegerConstant = fn (p_library GDExtensionClassLibraryPtr, p_class_name &StringName, p_enum_name &StringName, p_constant_name &StringName, p_constant_value GDExtensionInt, p_is_bitfield GDExtensionBool)
+
+pub type GDExtensionInterfaceClassdbRegisterExtensionClassProperty = fn (p_library GDExtensionClassLibraryPtr, p_class_name &StringName, p_info &GDExtensionPropertyInfo, p_setter &StringName, p_getter &StringName)
+
+pub type GDExtensionInterfaceClassdbRegisterExtensionClassPropertyIndexed = fn (p_library GDExtensionClassLibraryPtr, p_class_name &StringName, p_info &GDExtensionPropertyInfo, p_setter &StringName, p_getter &StringName, p_index GDExtensionInt)
+
+pub type GDExtensionInterfaceClassdbRegisterExtensionClassPropertyGroup = fn (p_library GDExtensionClassLibraryPtr, p_class_name &StringName, p_group_name &String, p_prefix &String)
+
+pub type GDExtensionInterfaceClassdbRegisterExtensionClassPropertySubgroup = fn (p_library GDExtensionClassLibraryPtr, p_class_name &StringName, p_subgroup_name &String, p_prefix &String)
+
+pub type GDExtensionInterfaceClassdbRegisterExtensionClassSignal = fn (p_library GDExtensionClassLibraryPtr, p_class_name &StringName, p_signal_name &StringName, p_argument_info &GDExtensionPropertyInfo, p_argument_count GDExtensionInt)
+
+pub type GDExtensionInterfaceClassdbUnregisterExtensionClass = fn (p_library GDExtensionClassLibraryPtr, p_class_name &StringName)
+
+pub type GDExtensionInterfaceGetLibraryPath = fn (p_library GDExtensionClassLibraryPtr, r_path GDExtensionUninitializedStringPtr)
+
+pub type GDExtensionInterfaceEditorAddPlugin = fn (p_class_name &StringName)
+
+pub type GDExtensionInterfaceEditorRemovePlugin = fn (p_class_name &StringName)
+
+pub type GDExtensionInterfaceEditorHelpLoadXmlFromUtf8Chars = fn (p_data &i8)
+
+pub type GDExtensionInterfaceEditorHelpLoadXmlFromUtf8CharsAndLen = fn (p_data &i8, p_size GDExtensionInt)
+
+pub type GDExtensionInterfaceEditorRegisterGetClassesUsedCallback = fn (p_library GDExtensionClassLibraryPtr, p_callback GDExtensionEditorGetClassesUsedCallback)
+
+pub type GDExtensionInterfaceRegisterMainLoopCallbacks = fn (p_library GDExtensionClassLibraryPtr, p_callbacks &GDExtensionMainLoopCallbacks)
+
+// GDExtensionInterfaceFunctions holds every entry point of the interface.
+// Entry points introduced after Godot 4.5 are resolved only when built with
+// `-d godot_4_N`, otherwise they stay nil. Deprecated ones may be nil on newer Godot.
 @[heap]
 pub struct GDExtensionInterfaceFunctions {
-pub:
-	gpaddr                                             fn (&i8) GDExtensionInterfaceFunctionPtr                 @[required]
-	clp                                                GDExtensionClassLibraryPtr                               @[required]
-	get_godot_version                                  GDExtensionInterfaceGetGodotVersion                      @[required]
-	get_godot_version2                                 GDExtensionInterfaceGetGodotVersion2                     @[required]
-	mem_alloc                                          GDExtensionInterfaceMemAlloc                             @[required]
-	mem_realloc                                        GDExtensionInterfaceMemRealloc                           @[required]
-	mem_free                                           GDExtensionInterfaceMemFree                              @[required]
-	print_error                                        GDExtensionInterfacePrintError                           @[required]
-	print_error_with_message                           GDExtensionInterfacePrintErrorWithMessage                @[required]
-	print_warning                                      GDExtensionInterfacePrintWarning                         @[required]
-	print_warning_with_message                         GDExtensionInterfacePrintWarningWithMessage              @[required]
-	print_script_error                                 GDExtensionInterfacePrintScriptError                     @[required]
-	print_script_error_with_message                    GDExtensionInterfacePrintScriptErrorWithMessage          @[required]
-	get_native_struct_size                             GDExtensionInterfaceGetNativeStructSize                  @[required]
-	variant_new_copy                                   GDExtensionInterfaceVariantNewCopy                       @[required]
-	variant_new_nil                                    GDExtensionInterfaceVariantNewNil                        @[required]
-	variant_destroy                                    GDExtensionInterfaceVariantDestroy                       @[required]
-	variant_call                                       GDExtensionInterfaceVariantCall                          @[required]
-	variant_call_static                                GDExtensionInterfaceVariantCallStatic                    @[required]
-	variant_evaluate                                   GDExtensionInterfaceVariantEvaluate                      @[required]
-	variant_set                                        GDExtensionInterfaceVariantSet                           @[required]
-	variant_set_named                                  GDExtensionInterfaceVariantSetNamed                      @[required]
-	variant_set_keyed                                  GDExtensionInterfaceVariantSetKeyed                      @[required]
-	variant_set_indexed                                GDExtensionInterfaceVariantSetIndexed                    @[required]
-	variant_get                                        GDExtensionInterfaceVariantGet                           @[required]
-	variant_get_named                                  GDExtensionInterfaceVariantGetNamed                      @[required]
-	variant_get_keyed                                  GDExtensionInterfaceVariantGetKeyed                      @[required]
-	variant_get_indexed                                GDExtensionInterfaceVariantGetIndexed                    @[required]
-	variant_iter_init                                  GDExtensionInterfaceVariantIterInit                      @[required]
-	variant_iter_next                                  GDExtensionInterfaceVariantIterNext                      @[required]
-	variant_iter_get                                   GDExtensionInterfaceVariantIterGet                       @[required]
-	variant_hash                                       GDExtensionInterfaceVariantHash                          @[required]
-	variant_recursive_hash                             GDExtensionInterfaceVariantRecursiveHash                 @[required]
-	variant_hash_compare                               GDExtensionInterfaceVariantHashCompare                   @[required]
-	variant_booleanize                                 GDExtensionInterfaceVariantBooleanize                    @[required]
-	variant_duplicate                                  GDExtensionInterfaceVariantDuplicate                     @[required]
-	variant_stringify                                  GDExtensionInterfaceVariantStringify                     @[required]
-	variant_get_type                                   GDExtensionInterfaceVariantGetType                       @[required]
-	variant_has_method                                 GDExtensionInterfaceVariantHasMethod                     @[required]
-	variant_has_member                                 GDExtensionInterfaceVariantHasMember                     @[required]
-	variant_has_key                                    GDExtensionInterfaceVariantHasKey                        @[required]
-	variant_get_type_name                              GDExtensionInterfaceVariantGetTypeName                   @[required]
-	variant_can_convert                                GDExtensionInterfaceVariantCanConvert                    @[required]
-	variant_can_convert_strict                         GDExtensionInterfaceVariantCanConvertStrict              @[required]
-	get_variant_from_type_constructor                  GDExtensionInterfaceGetVariantFromTypeConstructor        @[required]
-	get_variant_to_type_constructor                    GDExtensionInterfaceGetVariantToTypeConstructor          @[required]
-	variant_get_ptr_operator_evaluator                 GDExtensionInterfaceVariantGetPtrOperatorEvaluator       @[required]
-	variant_get_ptr_builtin_method                     GDExtensionInterfaceVariantGetPtrBuiltinMethod           @[required]
-	variant_get_ptr_constructor                        GDExtensionInterfaceVariantGetPtrConstructor             @[required]
-	variant_get_ptr_destructor                         GDExtensionInterfaceVariantGetPtrDestructor              @[required]
-	variant_construct                                  GDExtensionInterfaceVariantConstruct                     @[required]
-	variant_get_ptr_setter                             GDExtensionInterfaceVariantGetPtrSetter                  @[required]
-	variant_get_ptr_getter                             GDExtensionInterfaceVariantGetPtrGetter                  @[required]
-	variant_get_ptr_indexed_setter                     GDExtensionInterfaceVariantGetPtrIndexedSetter           @[required]
-	variant_get_ptr_indexed_getter                     GDExtensionInterfaceVariantGetPtrIndexedGetter           @[required]
-	variant_get_ptr_keyed_setter                       GDExtensionInterfaceVariantGetPtrKeyedSetter             @[required]
-	variant_get_ptr_keyed_getter                       GDExtensionInterfaceVariantGetPtrKeyedGetter             @[required]
-	variant_get_ptr_keyed_checker                      GDExtensionInterfaceVariantGetPtrKeyedChecker            @[required]
-	variant_get_constant_value                         GDExtensionInterfaceVariantGetConstantValue              @[required]
-	variant_get_ptr_utility_function                   GDExtensionInterfaceVariantGetPtrUtilityFunction         @[required]
-	string_new_with_latin1_chars                       GDExtensionInterfaceStringNewWithLatin1Chars             @[required]
-	string_new_with_utf8_chars                         GDExtensionInterfaceStringNewWithUtf8Chars               @[required]
-	string_new_with_utf16_chars                        GDExtensionInterfaceStringNewWithUtf16Chars              @[required]
-	string_new_with_utf32_chars                        GDExtensionInterfaceStringNewWithUtf32Chars              @[required]
-	string_new_with_wide_chars                         GDExtensionInterfaceStringNewWithWideChars               @[required]
-	string_new_with_latin1_chars_and_len               GDExtensionInterfaceStringNewWithLatin1CharsAndLen       @[required]
-	string_new_with_utf8_chars_and_len                 GDExtensionInterfaceStringNewWithUtf8CharsAndLen         @[required]
-	string_new_with_utf8_chars_and_len2                GDExtensionInterfaceStringNewWithUtf8CharsAndLen2        @[required]
-	string_new_with_utf16_chars_and_len                GDExtensionInterfaceStringNewWithUtf16CharsAndLen        @[required]
-	string_new_with_utf16_chars_and_len2               GDExtensionInterfaceStringNewWithUtf16CharsAndLen2       @[required]
-	string_new_with_utf32_chars_and_len                GDExtensionInterfaceStringNewWithUtf32CharsAndLen        @[required]
-	string_new_with_wide_chars_and_len                 GDExtensionInterfaceStringNewWithWideCharsAndLen         @[required]
-	string_to_latin1_chars                             GDExtensionInterfaceStringToLatin1Chars                  @[required]
-	string_to_utf8_chars                               GDExtensionInterfaceStringToUtf8Chars                    @[required]
-	string_to_utf16_chars                              GDExtensionInterfaceStringToUtf16Chars                   @[required]
-	string_to_utf32_chars                              GDExtensionInterfaceStringToUtf32Chars                   @[required]
-	string_to_wide_chars                               GDExtensionInterfaceStringToWideChars                    @[required]
-	string_operator_index                              GDExtensionInterfaceStringOperatorIndex                  @[required]
-	string_operator_index_const                        GDExtensionInterfaceStringOperatorIndexConst             @[required]
-	string_operator_plus_eq_string                     GDExtensionInterfaceStringOperatorPlusEqString           @[required]
-	string_operator_plus_eq_char                       GDExtensionInterfaceStringOperatorPlusEqChar             @[required]
-	string_operator_plus_eq_cstr                       GDExtensionInterfaceStringOperatorPlusEqCstr             @[required]
-	string_operator_plus_eq_wcstr                      GDExtensionInterfaceStringOperatorPlusEqWcstr            @[required]
-	string_operator_plus_eq_c32str                     GDExtensionInterfaceStringOperatorPlusEqC32str           @[required]
-	xml_parser_open_buffer                             GDExtensionInterfaceXmlParserOpenBuffer                  @[required]
-	file_access_store_buffer                           GDExtensionInterfaceFileAccessStoreBuffer                @[required]
-	file_access_get_buffer                             GDExtensionInterfaceFileAccessGetBuffer                  @[required]
-	packed_byte_array_operator_index_const             GDExtensionInterfacePackedByteArrayOperatorIndexConst    @[required]
-	packed_color_array_operator_index                  GDExtensionInterfacePackedColorArrayOperatorIndex        @[required]
-	packed_color_array_operator_index_const            GDExtensionInterfacePackedColorArrayOperatorIndexConst   @[required]
-	packed_float32_array_operator_index                GDExtensionInterfacePackedFloat32ArrayOperatorIndex      @[required]
-	packed_float32_array_operator_index_const          GDExtensionInterfacePackedFloat32ArrayOperatorIndexConst @[required]
-	packed_float64_array_operator_index                GDExtensionInterfacePackedFloat64ArrayOperatorIndex      @[required]
-	packed_float64_array_operator_index_const          GDExtensionInterfacePackedFloat64ArrayOperatorIndexConst @[required]
-	packed_int32_array_operator_index                  GDExtensionInterfacePackedInt32ArrayOperatorIndex        @[required]
-	packed_int32_array_operator_index_const            GDExtensionInterfacePackedInt32ArrayOperatorIndexConst   @[required]
-	packed_int64_array_operator_index                  GDExtensionInterfacePackedInt64ArrayOperatorIndex        @[required]
-	packed_int64_array_operator_index_const            GDExtensionInterfacePackedInt64ArrayOperatorIndexConst   @[required]
-	packed_string_array_operator_index                 GDExtensionInterfacePackedStringArrayOperatorIndex       @[required]
-	packed_string_array_operator_index_const           GDExtensionInterfacePackedStringArrayOperatorIndexConst  @[required]
-	packed_vector2_array_operator_index                GDExtensionInterfacePackedVector2ArrayOperatorIndex      @[required]
-	packed_vector2_array_operator_index_const          GDExtensionInterfacePackedVector2ArrayOperatorIndexConst @[required]
-	packed_vector3_array_operator_index                GDExtensionInterfacePackedVector3ArrayOperatorIndex      @[required]
-	packed_vector3_array_operator_index_const          GDExtensionInterfacePackedVector3ArrayOperatorIndexConst @[required]
-	array_operator_index                               GDExtensionInterfaceArrayOperatorIndex                   @[required]
-	array_operator_index_const                         GDExtensionInterfaceArrayOperatorIndexConst              @[required]
-	array_ref                                          GDExtensionInterfaceArrayRef                                      @[required]
-	array_set_typed                                    GDExtensionInterfaceArraySetTyped                                 @[required]
-	dictionary_operator_index                          GDExtensionInterfaceDictionaryOperatorIndex                       @[required]
-	dictionary_operator_index_const                    GDExtensionInterfaceDictionaryOperatorIndexConst                  @[required]
-	object_method_bind_call                            GDExtensionInterfaceObjectMethodBindCall                          @[required]
-	object_method_bind_ptrcall                         GDExtensionInterfaceObjectMethodBindPtrcall                       @[required]
-	object_destroy                                     GDExtensionInterfaceObjectDestroy                                 @[required]
-	global_get_singleton                               GDExtensionInterfaceGlobalGetSingleton                            @[required]
-	object_get_instance_binding                        GDExtensionInterfaceObjectGetInstanceBinding                      @[required]
-	object_set_instance_binding                        GDExtensionInterfaceObjectSetInstanceBinding                      @[required]
-	object_set_instance                                GDExtensionInterfaceObjectSetInstance                             @[required]
-	object_get_class_name                              GDExtensionInterfaceObjectGetClassName                            @[required]
-	object_cast_to                                     GDExtensionInterfaceObjectCastTo                                  @[required]
-	object_get_instance_from_id                        GDExtensionInterfaceObjectGetInstanceFromId                       @[required]
-	object_get_instance_id                             GDExtensionInterfaceObjectGetInstanceId                           @[required]
-	ref_get_object                                     GDExtensionInterfaceRefGetObject                                  @[required]
-	ref_set_object                                     GDExtensionInterfaceRefSetObject                                  @[required]
-	script_instance_create                             GDExtensionInterfaceScriptInstanceCreate                          @[required]
-	script_instance_create3                            GDExtensionInterfaceScriptInstanceCreate3                         @[required]
-	callable_custom_create2                            GDExtensionInterfaceCallableCustomCreate2                         @[required]
-	classdb_construct_object                           GDExtensionInterfaceClassdbConstructObject                        @[required]
-	classdb_construct_object2                          GDExtensionInterfaceClassdbConstructObject2                       @[required]
-	classdb_get_method_bind                            GDExtensionInterfaceClassdbGetMethodBind                          @[required]
-	classdb_get_class_tag                              GDExtensionInterfaceClassdbGetClassTag                            @[required]
-	classdb_register_extension_class                   GDExtensionInterfaceClassdbRegisterExtensionClass                 @[required]
-	classdb_register_extension_class2                  GDExtensionInterfaceClassdbRegisterExtensionClass2                @[required]
-	classdb_register_extension_class3                  GDExtensionInterfaceClassdbRegisterExtensionClass3                @[required]
-	classdb_register_extension_class4                  GDExtensionInterfaceClassdbRegisterExtensionClass4                @[required]
-	classdb_register_extension_class_method            GDExtensionInterfaceClassdbRegisterExtensionClassMethod           @[required]
-	classdb_register_extension_class_integer_constant  GDExtensionInterfaceClassdbRegisterExtensionClassIntegerConstant  @[required]
-	classdb_register_extension_class_property          GDExtensionInterfaceClassdbRegisterExtensionClassProperty         @[required]
-	classdb_register_extension_class_property_group    GDExtensionInterfaceClassdbRegisterExtensionClassPropertyGroup    @[required]
-	classdb_register_extension_class_property_subgroup GDExtensionInterfaceClassdbRegisterExtensionClassPropertySubgroup @[required]
-	classdb_register_extension_class_signal            GDExtensionInterfaceClassdbRegisterExtensionClassSignal           @[required]
-	classdb_unregister_extension_class                 GDExtensionInterfaceClassdbUnregisterExtensionClass               @[required]
-	get_library_path                                   GDExtensionInterfaceGetLibraryPath     @[required]
-	editor_add_plugin                                  GDExtensionInterfaceEditorAddPlugin    @[required]
-	editor_remove_plugin                               GDExtensionInterfaceEditorRemovePlugin @[required]
+pub mut:
+	gpaddr                                             fn (&i8) GDExtensionInterfaceFunctionPtr @[required]
+	clp                                                GDExtensionClassLibraryPtr               @[required]
+	get_godot_version                                  GDExtensionInterfaceGetGodotVersion                      = unsafe { nil } // since 4.1
+	get_godot_version2                                 GDExtensionInterfaceGetGodotVersion2                     = unsafe { nil } // since 4.5
+	mem_alloc                                          GDExtensionInterfaceMemAlloc                             = unsafe { nil } // since 4.1
+	mem_realloc                                        GDExtensionInterfaceMemRealloc                           = unsafe { nil } // since 4.1
+	mem_free                                           GDExtensionInterfaceMemFree                              = unsafe { nil } // since 4.1
+	mem_alloc2                                         GDExtensionInterfaceMemAlloc2                            = unsafe { nil } // since 4.6
+	mem_realloc2                                       GDExtensionInterfaceMemRealloc2                          = unsafe { nil } // since 4.6
+	mem_free2                                          GDExtensionInterfaceMemFree2                             = unsafe { nil } // since 4.6
+	print_error                                        GDExtensionInterfacePrintError                           = unsafe { nil } // since 4.1
+	print_error_with_message                           GDExtensionInterfacePrintErrorWithMessage                = unsafe { nil } // since 4.1
+	print_warning                                      GDExtensionInterfacePrintWarning                         = unsafe { nil } // since 4.1
+	print_warning_with_message                         GDExtensionInterfacePrintWarningWithMessage              = unsafe { nil } // since 4.1
+	print_script_error                                 GDExtensionInterfacePrintScriptError                     = unsafe { nil } // since 4.1
+	print_script_error_with_message                    GDExtensionInterfacePrintScriptErrorWithMessage          = unsafe { nil } // since 4.1
+	get_native_struct_size                             GDExtensionInterfaceGetNativeStructSize                  = unsafe { nil } // since 4.1
+	variant_new_copy                                   GDExtensionInterfaceVariantNewCopy                       = unsafe { nil } // since 4.1
+	variant_new_nil                                    GDExtensionInterfaceVariantNewNil                        = unsafe { nil } // since 4.1
+	variant_destroy                                    GDExtensionInterfaceVariantDestroy                       = unsafe { nil } // since 4.1
+	variant_call                                       GDExtensionInterfaceVariantCall                          = unsafe { nil } // since 4.1
+	variant_call_static                                GDExtensionInterfaceVariantCallStatic                    = unsafe { nil } // since 4.1
+	variant_evaluate                                   GDExtensionInterfaceVariantEvaluate                      = unsafe { nil } // since 4.1
+	variant_set                                        GDExtensionInterfaceVariantSet                           = unsafe { nil } // since 4.1
+	variant_set_named                                  GDExtensionInterfaceVariantSetNamed                      = unsafe { nil } // since 4.1
+	variant_set_keyed                                  GDExtensionInterfaceVariantSetKeyed                      = unsafe { nil } // since 4.1
+	variant_set_indexed                                GDExtensionInterfaceVariantSetIndexed                    = unsafe { nil } // since 4.1
+	variant_get                                        GDExtensionInterfaceVariantGet                           = unsafe { nil } // since 4.1
+	variant_get_named                                  GDExtensionInterfaceVariantGetNamed                      = unsafe { nil } // since 4.1
+	variant_get_keyed                                  GDExtensionInterfaceVariantGetKeyed                      = unsafe { nil } // since 4.1
+	variant_get_indexed                                GDExtensionInterfaceVariantGetIndexed                    = unsafe { nil } // since 4.1
+	variant_iter_init                                  GDExtensionInterfaceVariantIterInit                      = unsafe { nil } // since 4.1
+	variant_iter_next                                  GDExtensionInterfaceVariantIterNext                      = unsafe { nil } // since 4.1
+	variant_iter_get                                   GDExtensionInterfaceVariantIterGet                       = unsafe { nil } // since 4.1
+	variant_hash                                       GDExtensionInterfaceVariantHash                          = unsafe { nil } // since 4.1
+	variant_recursive_hash                             GDExtensionInterfaceVariantRecursiveHash                 = unsafe { nil } // since 4.1
+	variant_hash_compare                               GDExtensionInterfaceVariantHashCompare                   = unsafe { nil } // since 4.1
+	variant_booleanize                                 GDExtensionInterfaceVariantBooleanize                    = unsafe { nil } // since 4.1
+	variant_duplicate                                  GDExtensionInterfaceVariantDuplicate                     = unsafe { nil } // since 4.1
+	variant_stringify                                  GDExtensionInterfaceVariantStringify                     = unsafe { nil } // since 4.1
+	variant_get_type                                   GDExtensionInterfaceVariantGetType                       = unsafe { nil } // since 4.1
+	variant_has_method                                 GDExtensionInterfaceVariantHasMethod                     = unsafe { nil } // since 4.1
+	variant_has_member                                 GDExtensionInterfaceVariantHasMember                     = unsafe { nil } // since 4.1
+	variant_has_key                                    GDExtensionInterfaceVariantHasKey                        = unsafe { nil } // since 4.1
+	variant_get_object_instance_id                     GDExtensionInterfaceVariantGetObjectInstanceId           = unsafe { nil } // since 4.4
+	variant_get_type_name                              GDExtensionInterfaceVariantGetTypeName                   = unsafe { nil } // since 4.1
+	variant_get_type_by_name                           GDExtensionInterfaceVariantGetTypeByName                 = unsafe { nil } // since 4.7
+	variant_can_convert                                GDExtensionInterfaceVariantCanConvert                    = unsafe { nil } // since 4.1
+	variant_can_convert_strict                         GDExtensionInterfaceVariantCanConvertStrict              = unsafe { nil } // since 4.1
+	get_variant_from_type_constructor                  GDExtensionInterfaceGetVariantFromTypeConstructor        = unsafe { nil } // since 4.1
+	get_variant_to_type_constructor                    GDExtensionInterfaceGetVariantToTypeConstructor          = unsafe { nil } // since 4.1
+	variant_get_ptr_internal_getter                    GDExtensionInterfaceVariantGetPtrInternalGetter          = unsafe { nil } // since 4.4
+	variant_get_ptr_operator_evaluator                 GDExtensionInterfaceVariantGetPtrOperatorEvaluator       = unsafe { nil } // since 4.1
+	variant_get_ptr_builtin_method                     GDExtensionInterfaceVariantGetPtrBuiltinMethod           = unsafe { nil } // since 4.1
+	variant_get_ptr_constructor                        GDExtensionInterfaceVariantGetPtrConstructor             = unsafe { nil } // since 4.1
+	variant_get_ptr_destructor                         GDExtensionInterfaceVariantGetPtrDestructor              = unsafe { nil } // since 4.1
+	variant_construct                                  GDExtensionInterfaceVariantConstruct                     = unsafe { nil } // since 4.1
+	variant_get_ptr_setter                             GDExtensionInterfaceVariantGetPtrSetter                  = unsafe { nil } // since 4.1
+	variant_get_ptr_getter                             GDExtensionInterfaceVariantGetPtrGetter                  = unsafe { nil } // since 4.1
+	variant_get_ptr_indexed_setter                     GDExtensionInterfaceVariantGetPtrIndexedSetter           = unsafe { nil } // since 4.1
+	variant_get_ptr_indexed_getter                     GDExtensionInterfaceVariantGetPtrIndexedGetter           = unsafe { nil } // since 4.1
+	variant_get_ptr_keyed_setter                       GDExtensionInterfaceVariantGetPtrKeyedSetter             = unsafe { nil } // since 4.1
+	variant_get_ptr_keyed_getter                       GDExtensionInterfaceVariantGetPtrKeyedGetter             = unsafe { nil } // since 4.1
+	variant_get_ptr_keyed_checker                      GDExtensionInterfaceVariantGetPtrKeyedChecker            = unsafe { nil } // since 4.1
+	variant_get_constant_value                         GDExtensionInterfaceVariantGetConstantValue              = unsafe { nil } // since 4.1
+	variant_get_ptr_utility_function                   GDExtensionInterfaceVariantGetPtrUtilityFunction         = unsafe { nil } // since 4.1
+	string_new_with_latin1_chars                       GDExtensionInterfaceStringNewWithLatin1Chars             = unsafe { nil } // since 4.1
+	string_new_with_utf8_chars                         GDExtensionInterfaceStringNewWithUtf8Chars               = unsafe { nil } // since 4.1
+	string_new_with_utf16_chars                        GDExtensionInterfaceStringNewWithUtf16Chars              = unsafe { nil } // since 4.1
+	string_new_with_utf32_chars                        GDExtensionInterfaceStringNewWithUtf32Chars              = unsafe { nil } // since 4.1
+	string_new_with_wide_chars                         GDExtensionInterfaceStringNewWithWideChars               = unsafe { nil } // since 4.1
+	string_new_with_latin1_chars_and_len               GDExtensionInterfaceStringNewWithLatin1CharsAndLen       = unsafe { nil } // since 4.1
+	string_new_with_utf8_chars_and_len                 GDExtensionInterfaceStringNewWithUtf8CharsAndLen         = unsafe { nil } // since 4.1
+	string_new_with_utf8_chars_and_len2                GDExtensionInterfaceStringNewWithUtf8CharsAndLen2        = unsafe { nil } // since 4.3
+	string_new_with_utf16_chars_and_len                GDExtensionInterfaceStringNewWithUtf16CharsAndLen        = unsafe { nil } // since 4.1
+	string_new_with_utf16_chars_and_len2               GDExtensionInterfaceStringNewWithUtf16CharsAndLen2       = unsafe { nil } // since 4.3
+	string_new_with_utf32_chars_and_len                GDExtensionInterfaceStringNewWithUtf32CharsAndLen        = unsafe { nil } // since 4.1
+	string_new_with_wide_chars_and_len                 GDExtensionInterfaceStringNewWithWideCharsAndLen         = unsafe { nil } // since 4.1
+	string_to_latin1_chars                             GDExtensionInterfaceStringToLatin1Chars                  = unsafe { nil } // since 4.1
+	string_to_utf8_chars                               GDExtensionInterfaceStringToUtf8Chars                    = unsafe { nil } // since 4.1
+	string_to_utf16_chars                              GDExtensionInterfaceStringToUtf16Chars                   = unsafe { nil } // since 4.1
+	string_to_utf32_chars                              GDExtensionInterfaceStringToUtf32Chars                   = unsafe { nil } // since 4.1
+	string_to_wide_chars                               GDExtensionInterfaceStringToWideChars                    = unsafe { nil } // since 4.1
+	string_operator_index                              GDExtensionInterfaceStringOperatorIndex                  = unsafe { nil } // since 4.1
+	string_operator_index_const                        GDExtensionInterfaceStringOperatorIndexConst             = unsafe { nil } // since 4.1
+	string_operator_plus_eq_string                     GDExtensionInterfaceStringOperatorPlusEqString           = unsafe { nil } // since 4.1
+	string_operator_plus_eq_char                       GDExtensionInterfaceStringOperatorPlusEqChar             = unsafe { nil } // since 4.1
+	string_operator_plus_eq_cstr                       GDExtensionInterfaceStringOperatorPlusEqCstr             = unsafe { nil } // since 4.1
+	string_operator_plus_eq_wcstr                      GDExtensionInterfaceStringOperatorPlusEqWcstr            = unsafe { nil } // since 4.1
+	string_operator_plus_eq_c32str                     GDExtensionInterfaceStringOperatorPlusEqC32str           = unsafe { nil } // since 4.1
+	string_resize                                      GDExtensionInterfaceStringResize                         = unsafe { nil } // since 4.2
+	string_name_new_with_latin1_chars                  GDExtensionInterfaceStringNameNewWithLatin1Chars         = unsafe { nil } // since 4.2
+	string_name_new_with_utf8_chars                    GDExtensionInterfaceStringNameNewWithUtf8Chars           = unsafe { nil } // since 4.2
+	string_name_new_with_utf8_chars_and_len            GDExtensionInterfaceStringNameNewWithUtf8CharsAndLen     = unsafe { nil } // since 4.2
+	xml_parser_open_buffer                             GDExtensionInterfaceXmlParserOpenBuffer                  = unsafe { nil } // since 4.1
+	file_access_store_buffer                           GDExtensionInterfaceFileAccessStoreBuffer                = unsafe { nil } // since 4.1
+	file_access_get_buffer                             GDExtensionInterfaceFileAccessGetBuffer                  = unsafe { nil } // since 4.1
+	image_ptrw                                         GDExtensionInterfaceImagePtrw                            = unsafe { nil } // since 4.3
+	image_ptr                                          GDExtensionInterfaceImagePtr                             = unsafe { nil } // since 4.3
+	worker_thread_pool_add_native_group_task           GDExtensionInterfaceWorkerThreadPoolAddNativeGroupTask   = unsafe { nil } // since 4.1
+	worker_thread_pool_add_native_task                 GDExtensionInterfaceWorkerThreadPoolAddNativeTask        = unsafe { nil } // since 4.1
+	packed_byte_array_operator_index                   GDExtensionInterfacePackedByteArrayOperatorIndex         = unsafe { nil } // since 4.1
+	packed_byte_array_operator_index_const             GDExtensionInterfacePackedByteArrayOperatorIndexConst    = unsafe { nil } // since 4.1
+	packed_float32_array_operator_index                GDExtensionInterfacePackedFloat32ArrayOperatorIndex      = unsafe { nil } // since 4.1
+	packed_float32_array_operator_index_const          GDExtensionInterfacePackedFloat32ArrayOperatorIndexConst = unsafe { nil } // since 4.1
+	packed_float64_array_operator_index                GDExtensionInterfacePackedFloat64ArrayOperatorIndex      = unsafe { nil } // since 4.1
+	packed_float64_array_operator_index_const          GDExtensionInterfacePackedFloat64ArrayOperatorIndexConst = unsafe { nil } // since 4.1
+	packed_int32_array_operator_index                  GDExtensionInterfacePackedInt32ArrayOperatorIndex        = unsafe { nil } // since 4.1
+	packed_int32_array_operator_index_const            GDExtensionInterfacePackedInt32ArrayOperatorIndexConst   = unsafe { nil } // since 4.1
+	packed_int64_array_operator_index                  GDExtensionInterfacePackedInt64ArrayOperatorIndex        = unsafe { nil } // since 4.1
+	packed_int64_array_operator_index_const            GDExtensionInterfacePackedInt64ArrayOperatorIndexConst   = unsafe { nil } // since 4.1
+	packed_string_array_operator_index                 GDExtensionInterfacePackedStringArrayOperatorIndex       = unsafe { nil } // since 4.1
+	packed_string_array_operator_index_const           GDExtensionInterfacePackedStringArrayOperatorIndexConst  = unsafe { nil } // since 4.1
+	packed_vector2_array_operator_index                GDExtensionInterfacePackedVector2ArrayOperatorIndex      = unsafe { nil } // since 4.1
+	packed_vector2_array_operator_index_const          GDExtensionInterfacePackedVector2ArrayOperatorIndexConst = unsafe { nil } // since 4.1
+	packed_vector3_array_operator_index                GDExtensionInterfacePackedVector3ArrayOperatorIndex      = unsafe { nil } // since 4.1
+	packed_vector3_array_operator_index_const          GDExtensionInterfacePackedVector3ArrayOperatorIndexConst = unsafe { nil } // since 4.1
+	packed_vector4_array_operator_index                GDExtensionInterfacePackedVector4ArrayOperatorIndex      = unsafe { nil } // since 4.3
+	packed_vector4_array_operator_index_const          GDExtensionInterfacePackedVector4ArrayOperatorIndexConst = unsafe { nil } // since 4.3
+	packed_color_array_operator_index                  GDExtensionInterfacePackedColorArrayOperatorIndex        = unsafe { nil } // since 4.1
+	packed_color_array_operator_index_const            GDExtensionInterfacePackedColorArrayOperatorIndexConst   = unsafe { nil } // since 4.1
+	array_operator_index                               GDExtensionInterfaceArrayOperatorIndex                   = unsafe { nil } // since 4.1
+	array_operator_index_const                         GDExtensionInterfaceArrayOperatorIndexConst              = unsafe { nil } // since 4.1
+	array_ref                                          GDExtensionInterfaceArrayRef                                      = unsafe { nil } // since 4.1
+	array_set_typed                                    GDExtensionInterfaceArraySetTyped                                 = unsafe { nil } // since 4.1
+	dictionary_operator_index                          GDExtensionInterfaceDictionaryOperatorIndex                       = unsafe { nil } // since 4.1
+	dictionary_operator_index_const                    GDExtensionInterfaceDictionaryOperatorIndexConst                  = unsafe { nil } // since 4.1
+	dictionary_set_typed                               GDExtensionInterfaceDictionarySetTyped                            = unsafe { nil } // since 4.4
+	object_method_bind_call                            GDExtensionInterfaceObjectMethodBindCall                          = unsafe { nil } // since 4.1
+	object_method_bind_ptrcall                         GDExtensionInterfaceObjectMethodBindPtrcall                       = unsafe { nil } // since 4.1
+	object_destroy                                     GDExtensionInterfaceObjectDestroy                                 = unsafe { nil } // since 4.1
+	global_get_singleton                               GDExtensionInterfaceGlobalGetSingleton                            = unsafe { nil } // since 4.1
+	object_get_instance_binding                        GDExtensionInterfaceObjectGetInstanceBinding                      = unsafe { nil } // since 4.1
+	object_set_instance_binding                        GDExtensionInterfaceObjectSetInstanceBinding                      = unsafe { nil } // since 4.1
+	object_free_instance_binding                       GDExtensionInterfaceObjectFreeInstanceBinding                     = unsafe { nil } // since 4.2
+	object_set_instance                                GDExtensionInterfaceObjectSetInstance                             = unsafe { nil } // since 4.1
+	object_get_class_name                              GDExtensionInterfaceObjectGetClassName                            = unsafe { nil } // since 4.1
+	object_cast_to                                     GDExtensionInterfaceObjectCastTo                                  = unsafe { nil } // since 4.1
+	object_get_instance_from_id                        GDExtensionInterfaceObjectGetInstanceFromId                       = unsafe { nil } // since 4.1
+	object_get_instance_id                             GDExtensionInterfaceObjectGetInstanceId                           = unsafe { nil } // since 4.1
+	object_has_script_method                           GDExtensionInterfaceObjectHasScriptMethod                         = unsafe { nil } // since 4.3
+	object_call_script_method                          GDExtensionInterfaceObjectCallScriptMethod                        = unsafe { nil } // since 4.3
+	ref_get_object                                     GDExtensionInterfaceRefGetObject                                  = unsafe { nil } // since 4.1
+	ref_set_object                                     GDExtensionInterfaceRefSetObject                                  = unsafe { nil } // since 4.1
+	script_instance_create                             GDExtensionInterfaceScriptInstanceCreate                          = unsafe { nil } // since 4.1
+	script_instance_create2                            GDExtensionInterfaceScriptInstanceCreate2                         = unsafe { nil } // since 4.2
+	script_instance_create3                            GDExtensionInterfaceScriptInstanceCreate3                         = unsafe { nil } // since 4.3
+	placeholder_script_instance_create                 GDExtensionInterfacePlaceholderScriptInstanceCreate               = unsafe { nil } // since 4.2
+	placeholder_script_instance_update                 GDExtensionInterfacePlaceholderScriptInstanceUpdate               = unsafe { nil } // since 4.2
+	object_get_script_instance                         GDExtensionInterfaceObjectGetScriptInstance                       = unsafe { nil } // since 4.2
+	object_set_script_instance                         GDExtensionInterfaceObjectSetScriptInstance                       = unsafe { nil } // since 4.5
+	callable_custom_create                             GDExtensionInterfaceCallableCustomCreate                          = unsafe { nil } // since 4.2
+	callable_custom_create2                            GDExtensionInterfaceCallableCustomCreate2                         = unsafe { nil } // since 4.3
+	callable_custom_get_userdata                       GDExtensionInterfaceCallableCustomGetUserdata                     = unsafe { nil } // since 4.2
+	classdb_construct_object                           GDExtensionInterfaceClassdbConstructObject                        = unsafe { nil } // since 4.1
+	classdb_construct_object2                          GDExtensionInterfaceClassdbConstructObject2                       = unsafe { nil } // since 4.4
+	classdb_construct_object3                          GDExtensionInterfaceClassdbConstructObject3                       = unsafe { nil } // since 4.7
+	classdb_get_method_bind                            GDExtensionInterfaceClassdbGetMethodBind                          = unsafe { nil } // since 4.1
+	classdb_get_class_tag                              GDExtensionInterfaceClassdbGetClassTag                            = unsafe { nil } // since 4.1
+	classdb_register_extension_class                   GDExtensionInterfaceClassdbRegisterExtensionClass                 = unsafe { nil } // since 4.1
+	classdb_register_extension_class2                  GDExtensionInterfaceClassdbRegisterExtensionClass2                = unsafe { nil } // since 4.2
+	classdb_register_extension_class3                  GDExtensionInterfaceClassdbRegisterExtensionClass3                = unsafe { nil } // since 4.3
+	classdb_register_extension_class4                  GDExtensionInterfaceClassdbRegisterExtensionClass4                = unsafe { nil } // since 4.4
+	classdb_register_extension_class5                  GDExtensionInterfaceClassdbRegisterExtensionClass5                = unsafe { nil } // since 4.5
+	classdb_register_extension_class6                  GDExtensionInterfaceClassdbRegisterExtensionClass6                = unsafe { nil } // since 4.7
+	classdb_register_extension_class_method            GDExtensionInterfaceClassdbRegisterExtensionClassMethod           = unsafe { nil } // since 4.1
+	classdb_register_extension_class_virtual_method    GDExtensionInterfaceClassdbRegisterExtensionClassVirtualMethod    = unsafe { nil } // since 4.3
+	classdb_register_extension_class_integer_constant  GDExtensionInterfaceClassdbRegisterExtensionClassIntegerConstant  = unsafe { nil } // since 4.1
+	classdb_register_extension_class_property          GDExtensionInterfaceClassdbRegisterExtensionClassProperty         = unsafe { nil } // since 4.1
+	classdb_register_extension_class_property_indexed  GDExtensionInterfaceClassdbRegisterExtensionClassPropertyIndexed  = unsafe { nil } // since 4.2
+	classdb_register_extension_class_property_group    GDExtensionInterfaceClassdbRegisterExtensionClassPropertyGroup    = unsafe { nil } // since 4.1
+	classdb_register_extension_class_property_subgroup GDExtensionInterfaceClassdbRegisterExtensionClassPropertySubgroup = unsafe { nil } // since 4.1
+	classdb_register_extension_class_signal            GDExtensionInterfaceClassdbRegisterExtensionClassSignal           = unsafe { nil } // since 4.1
+	classdb_unregister_extension_class                 GDExtensionInterfaceClassdbUnregisterExtensionClass               = unsafe { nil } // since 4.1
+	get_library_path                                   GDExtensionInterfaceGetLibraryPath                       = unsafe { nil } // since 4.1
+	editor_add_plugin                                  GDExtensionInterfaceEditorAddPlugin                      = unsafe { nil } // since 4.1
+	editor_remove_plugin                               GDExtensionInterfaceEditorRemovePlugin                   = unsafe { nil } // since 4.1
+	editor_help_load_xml_from_utf8_chars               GDExtensionInterfaceEditorHelpLoadXmlFromUtf8Chars       = unsafe { nil } // since 4.3
+	editor_help_load_xml_from_utf8_chars_and_len       GDExtensionInterfaceEditorHelpLoadXmlFromUtf8CharsAndLen = unsafe { nil } // since 4.3
+	editor_register_get_classes_used_callback          GDExtensionInterfaceEditorRegisterGetClassesUsedCallback = unsafe { nil } // since 4.5
+	register_main_loop_callbacks                       GDExtensionInterfaceRegisterMainLoopCallbacks            = unsafe { nil } // since 4.5
 }
 
 pub struct Class {
