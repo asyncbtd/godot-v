@@ -1,0 +1,167 @@
+// Copyright 2026 Timofey Brukhanchik
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+module godot
+
+struct Initialization {
+mut:
+	minimum_level u32
+	pad           u32
+	userdata      voidptr
+	initialize    voidptr
+	deinitialize  voidptr
+}
+
+struct ClassInfo {
+	is_virtual                  u8
+	is_abstract                 u8
+	is_exposed                  u8
+	is_runtime                  u8
+	pad                         u32
+	icon_path                   voidptr
+	set_func                    voidptr
+	get_func                    voidptr
+	get_property_list_func      voidptr
+	free_property_list_func     voidptr
+	property_can_revert_func    voidptr
+	property_get_revert_func    voidptr
+	validate_property_func      voidptr
+	notification_func           voidptr
+	to_string_func              voidptr
+	reference_func              voidptr
+	unreference_func            voidptr
+	create_instance_func        voidptr
+	free_instance_func          voidptr
+	recreate_instance_func      voidptr
+	get_virtual_func            voidptr
+	get_virtual_call_data_func  voidptr
+	call_virtual_with_data_func voidptr
+	class_userdata              voidptr
+}
+
+struct BindingCallbacks {
+mut:
+	create_callback    voidptr
+	free_callback      voidptr
+	reference_callback voidptr
+}
+
+struct GdString {
+mut:
+	data voidptr
+}
+
+struct ScriptState {
+mut:
+	kind   int
+	object voidptr
+	source GdString
+	base   GdString
+	path   GdString
+	owned  u8
+}
+
+struct PlainObject {
+mut:
+	kind   int
+	object voidptr
+}
+
+struct NameNode {
+mut:
+	data voidptr
+	next voidptr
+}
+
+struct Method {
+mut:
+	action int
+	ret    int
+}
+
+struct Spec {
+	kind   int
+	name   string
+	action int
+	ret    int
+}
+
+struct Api {
+mut:
+	get_proc            voidptr
+	library             voidptr
+	string_new          voidptr
+	string_read         voidptr
+	string_name_new     voidptr
+	string_dtor         voidptr
+	string_copy         voidptr
+	mem_alloc           voidptr
+	mem_free            voidptr
+	construct           voidptr
+	get_method          voidptr
+	ptrcall             voidptr
+	register_class      voidptr
+	singleton           voidptr
+	set_instance        voidptr
+	set_binding         voidptr
+	get_binding         voidptr
+	get_class_name      voidptr
+	print_error         voidptr
+	destroy_object      voidptr
+	placeholder         voidptr
+	constructor         voidptr
+	destructor          voidptr
+	builtin_method      voidptr
+	from_type           voidptr
+	keyed_setter        voidptr
+	variant_destroy     voidptr
+	new_dictionary      voidptr
+	new_array           voidptr
+	new_packed          voidptr
+	packed_push         voidptr
+	dict_set            voidptr
+	variant_from_bool   voidptr
+	variant_from_int    voidptr
+	variant_from_string voidptr
+	variant_from_object voidptr
+	notification        voidptr
+	register_language   voidptr
+	unregister_language voidptr
+	get_class           voidptr
+	set_path            voidptr
+	file_read           voidptr
+	file_open           voidptr
+	file_store          voidptr
+	file_close          voidptr
+	unref               voidptr
+	add_loader          voidptr
+	remove_loader       voidptr
+	add_saver           voidptr
+	remove_saver        voidptr
+	engine              voidptr
+	resource_loader     voidptr
+	resource_saver      voidptr
+	language            voidptr
+	loader              voidptr
+	saver               voidptr
+	script_instance     voidptr
+	call_script         voidptr
+	variant_call        voidptr
+	to_type             voidptr
+	editor_hint         voidptr
+	string_from_name    voidptr
+	script_name         GdString
+	vscript_name        GdString
+	names               voidptr
+}
