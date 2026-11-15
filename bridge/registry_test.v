@@ -75,7 +75,7 @@ fn test_registry_add_script_replaces_hook() {
 fn test_script_instance_owner_and_callbacks() {
 	mut node := 1
 	mut resource := 2
-	box := ScriptInstance{
+	mut box := ScriptInstance{
 		node:     voidptr(&node)
 		resource: voidptr(&resource)
 	}
@@ -118,7 +118,7 @@ fn test_script_enter_and_call_use_the_empty_path() {
 		registry.add_script('', unsafe { nil }, unsafe { nil }, unsafe { nil })
 	}
 	mut node := 7
-	box := ScriptInstance{
+	mut box := ScriptInstance{
 		node: voidptr(&node)
 	}
 	enter_calls = 0
@@ -157,11 +157,11 @@ fn test_script_enter_and_call_use_the_empty_path() {
 		for i in 0 .. err.len {
 			err[i] = 7
 		}
-		box.call(unsafe { nil }, voidptr(&ret[0]), voidptr(&err[0]))
+		box.call(unsafe { nil }, unsafe { nil }, 0, voidptr(&ret[0]), voidptr(&err[0]))
 		assert ret.all(it == 0)
 		assert err[0] == 1
 		assert err[1] == 0
 	}
-	box.call(unsafe { nil }, unsafe { nil }, unsafe { nil })
+	box.call(unsafe { nil }, unsafe { nil }, 0, unsafe { nil }, unsafe { nil })
 	assert instance_has_method(voidptr(&box), unsafe { nil }) == false
 }

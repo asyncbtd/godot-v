@@ -62,7 +62,7 @@ fn reload_script_sources(project string) {
 }
 
 fn ensure_project_scripts() {
-	if script_library != unsafe { nil } {
+	if script_library != unsafe { nil } || api.singleton == unsafe { nil } {
 		return
 	}
 	load_project_scripts()

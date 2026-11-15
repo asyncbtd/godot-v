@@ -20,12 +20,16 @@ mut:
 	visits int
 }
 
+__global critter_seen = 0
+
 fn (mut self TestCritter) ready() {
 	self.visits += 1
+	critter_seen = self.visits
 }
 
 fn (mut self TestCritter) hop() {
 	self.visits += 10
+	critter_seen = self.visits
 }
 
 fn (mut self TestCritter) process(delta f64) {
@@ -144,16 +148,16 @@ fn test_register_skips_methods_that_are_not_callable() {
 	mut methods := slot.methods.clone()
 	methods.sort()
 	assert slot.base == ''
-	assert methods == ['idle', 'process']
+	assert methods == ['bounce', 'dash', 'idle', 'process', 'ready']
 	assert base_for('res://scripts/plainsprite.v') == 'Node'
 	plain_hits = 0
 	assert call_named[PlainSprite]('idle')
 	assert call_named[PlainSprite]('process')
 	assert call_named[PlainSprite]('_process') == false
 	assert call_named[PlainSprite]('_ready') == false
-	assert call_named[PlainSprite]('bounce') == false
-	assert call_named[PlainSprite]('dash') == false
-	assert call_named[PlainSprite]('ready') == false
+	assert call_named[PlainSprite]('bounce')
+	assert call_named[PlainSprite]('dash')
+	assert call_named[PlainSprite]('ready')
 	assert plain_hits == 11
 }
 

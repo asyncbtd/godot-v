@@ -23,7 +23,10 @@ fn dispatch(action int, instance voidptr, args voidptr, ret voidptr) {
 		action_lang_comments { write_packed(ret, ['//']) }
 		action_lang_strings { write_packed(ret, ["'", '"']) }
 		action_lang_templates { write_bool(ret, true) }
-		action_lang_validate { dictionary_bool(ret, 'valid', true) }
+		action_lang_validate { write_validate(ret, validate_source(arg_string(args, 0))) }
+		action_lang_find {
+			write_number(ret, i64(find_function_line(arg_string(args, 0), arg_string(args, 1))))
+		}
 		action_lang_template { write_template(args, ret) }
 		action_lang_create { write_pointer(ret, construct_class(kind_script)) }
 		action_script_can_instantiate { write_bool(ret, script_can_run(instance)) }
@@ -34,6 +37,15 @@ fn dispatch(action int, instance voidptr, args voidptr, ret voidptr) {
 			write_bool(ret, script_has_method(instance, read_name(arg(args, 0))))
 		}
 		action_script_methods { write_methods(instance, ret) }
+		action_script_member {
+			write_number(ret, i64(member_line_of(instance, read_name(arg(args, 0)))))
+		}
+		action_script_has_signal {
+			write_bool(ret, script_has_signal_name(instance, read_name(arg(args, 0))))
+		}
+		action_script_signals { write_named_list(instance, ret, 'signal') }
+		action_script_properties { write_named_list(instance, ret, 'prop') }
+		action_script_arg_count { write_arg_count(instance, read_name(arg(args, 0)), ret) }
 		action_script_reload_file { write_bool(ret, true) }
 		action_script_valid { write_bool(ret, true) }
 		action_script_reload {
@@ -135,6 +147,179 @@ fn write_loader_type(args voidptr, ret voidptr) {
 		return
 	}
 	write_string(ret, '')
+}
+
+fn write_named_list(instance voidptr, ret voidptr, kind string) {
+	if api.new_array == unsafe { nil } {
+		return
+	}
+	write_array(ret)
+	outline := outline_of_script(instance)
+	mut names := []string{}
+	if kind == 'signal' {
+		for signal in outline.signals {
+			names << signal.name
+		}
+	} else {
+		for prop in outline.props {
+			if prop.exported {
+				names << prop.name
+			}
+		}
+	}
+	for name in names {
+		item := temp_variant()
+		dictionary_text(item, 'name', name)
+		push_array(ret, item)
+		free_variant(item)
+	}
+}
+
+fn write_arg_count(instance voidptr, name string, ret voidptr) {
+	if ret == unsafe { nil } {
+		return
+	}
+	zero(ret, 24)
+	if gdf == unsafe { nil } {
+		return
+	}
+	plain := if name.starts_with('_') { name[1..] } else { name }
+	for method in outline_of_script(instance).methods {
+		if method.name == name || method.name == plain {
+			value := i64(method.args.len)
+			from := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_int)
+			from(ret, voidptr(&value))
+			return
+		}
+	}
+}
+
+fn write_validate(dest voidptr, report ValidateReport) {
+	if dest == unsafe { nil } || api.new_dictionary == unsafe { nil } {
+		return
+	}
+	write_dictionary(dest)
+	dict_put_bool(dest, 'valid', report.errors.len == 0)
+	if gdf == unsafe { nil } {
+		return
+	}
+	dict_put_raw(dest, 'errors', issue_variant(report.errors))
+	dict_put_raw(dest, 'warnings', issue_variant(report.warnings))
+	dict_put_raw(dest, 'functions', function_variant(report.functions))
+}
+
+fn dict_put_bool(dest voidptr, key string, value bool) {
+	mut key_string := GdString{}
+	key_string.set_text(key)
+	mut key_variant := [24]u8{}
+	mut value_variant := [24]u8{}
+	from_string := unsafe { TypeCtor(api.variant_from_string) }
+	from_bool := unsafe { TypeCtor(api.variant_from_bool) }
+	flag := u8(if value { 1 } else { 0 })
+	unsafe {
+		from_string(voidptr(&key_variant[0]), voidptr(&key_string))
+		from_bool(voidptr(&value_variant[0]), voidptr(&flag))
+		set := KeyedSet(api.dict_set)
+		set(dest, voidptr(&key_variant[0]), voidptr(&value_variant[0]))
+		destroy := VariantDestroy(api.variant_destroy)
+		destroy(voidptr(&key_variant[0]))
+		destroy(voidptr(&value_variant[0]))
+	}
+	key_string.clear()
+}
+
+fn dict_put_int(dest voidptr, key string, value i64) {
+	mut key_string := GdString{}
+	key_string.set_text(key)
+	mut key_variant := [24]u8{}
+	mut value_variant := [24]u8{}
+	from_string := unsafe { TypeCtor(api.variant_from_string) }
+	from_int := unsafe { TypeCtor(api.variant_from_int) }
+	unsafe {
+		from_string(voidptr(&key_variant[0]), voidptr(&key_string))
+		from_int(voidptr(&value_variant[0]), voidptr(&value))
+		set := KeyedSet(api.dict_set)
+		set(dest, voidptr(&key_variant[0]), voidptr(&value_variant[0]))
+		destroy := VariantDestroy(api.variant_destroy)
+		destroy(voidptr(&key_variant[0]))
+		destroy(voidptr(&value_variant[0]))
+	}
+	key_string.clear()
+}
+
+fn dict_put_text(dest voidptr, key string, value string) {
+	mut key_string := GdString{}
+	key_string.set_text(key)
+	mut value_string := GdString{}
+	value_string.set_text(value)
+	mut key_variant := [24]u8{}
+	mut value_variant := [24]u8{}
+	from_string := unsafe { TypeCtor(api.variant_from_string) }
+	unsafe {
+		from_string(voidptr(&key_variant[0]), voidptr(&key_string))
+		from_string(voidptr(&value_variant[0]), voidptr(&value_string))
+		set := KeyedSet(api.dict_set)
+		set(dest, voidptr(&key_variant[0]), voidptr(&value_variant[0]))
+		destroy := VariantDestroy(api.variant_destroy)
+		destroy(voidptr(&key_variant[0]))
+		destroy(voidptr(&value_variant[0]))
+	}
+	key_string.clear()
+	value_string.clear()
+}
+
+fn dict_put_raw(dest voidptr, key string, value voidptr) {
+	mut key_string := GdString{}
+	key_string.set_text(key)
+	mut key_variant := [24]u8{}
+	from_string := unsafe { TypeCtor(api.variant_from_string) }
+	unsafe {
+		from_string(voidptr(&key_variant[0]), voidptr(&key_string))
+		set := KeyedSet(api.dict_set)
+		set(dest, voidptr(&key_variant[0]), value)
+		destroy := VariantDestroy(api.variant_destroy)
+		destroy(voidptr(&key_variant[0]))
+	}
+	key_string.clear()
+}
+
+fn issue_variant(issues []ScriptIssue) voidptr {
+	list := heap_alloc(24)
+	write_array(list)
+	for issue in issues {
+		item := heap_alloc(24)
+		write_dictionary(item)
+		dict_put_int(item, 'line', i64(issue.line))
+		dict_put_int(item, 'column', i64(issue.column))
+		dict_put_text(item, 'message', issue.message)
+		mut wrapped := [24]u8{}
+		from := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_dictionary)
+		from(voidptr(&wrapped[0]), item)
+		push_array(list, voidptr(&wrapped[0]))
+	}
+	wrapped := heap_alloc(24)
+	from := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_array)
+	from(wrapped, list)
+	return wrapped
+}
+
+fn function_variant(methods []MethodRecord) voidptr {
+	list := heap_alloc(24)
+	write_array(list)
+	for method in methods {
+		item := heap_alloc(24)
+		write_dictionary(item)
+		dict_put_text(item, 'name', method.name)
+		dict_put_int(item, 'line', i64(method.line))
+		mut wrapped := [24]u8{}
+		from := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_dictionary)
+		from(voidptr(&wrapped[0]), item)
+		push_array(list, voidptr(&wrapped[0]))
+	}
+	wrapped := heap_alloc(24)
+	from := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_array)
+	from(wrapped, list)
+	return wrapped
 }
 
 fn is_v_script(object voidptr) bool {

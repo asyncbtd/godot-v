@@ -23,14 +23,23 @@ mut:
 	key     string
 	base    string
 	methods []string
+	info    []MethodRecord
+	props   []PropRecord
+	signals []SignalRecord
+	links   []SignalLink
 }
 
 struct ScriptHook {
 mut:
-	key    string
-	enter  voidptr
-	frame  voidptr
-	signal voidptr
+	key        string
+	enter      voidptr
+	frame      voidptr
+	signal     voidptr
+	factory    voidptr
+	set_prop   voidptr
+	get_prop   voidptr
+	can_revert voidptr
+	get_revert voidptr
 }
 
 struct Registry {
@@ -71,6 +80,32 @@ fn (r &Registry) get(key string) ?ScriptBinding {
 		}
 	}
 	return none
+}
+
+fn (mut r Registry) set_shape(key string, info []MethodRecord, props []PropRecord, signals []SignalRecord, links []SignalLink) {
+	for i, slot in r.bindings {
+		if slot.key == key {
+			r.bindings[i].info = info
+			r.bindings[i].props = props
+			r.bindings[i].signals = signals
+			r.bindings[i].links = links
+			return
+		}
+	}
+}
+
+fn (mut r Registry) set_runtime(key string, factory voidptr, signal voidptr, set_prop voidptr, get_prop voidptr, can_revert voidptr, get_revert voidptr) {
+	r.add_script(key, unsafe { nil }, unsafe { nil }, signal)
+	for i, slot in r.hooks {
+		if slot.key == key {
+			r.hooks[i].factory = factory
+			r.hooks[i].set_prop = set_prop
+			r.hooks[i].get_prop = get_prop
+			r.hooks[i].can_revert = can_revert
+			r.hooks[i].get_revert = get_revert
+			return
+		}
+	}
 }
 
 fn (mut r Registry) add_script(key string, enter voidptr, frame voidptr, signal voidptr) {
@@ -116,22 +151,55 @@ fn call_signal(signal voidptr, name string) bool {
 }
 
 fn run_script_method(data voidptr, name string) bool {
+	return run_script_call(data, name, unsafe { nil }, 0, unsafe { nil })
+}
+
+fn run_script_call(data voidptr, name string, args voidptr, count i64, ret voidptr) bool {
 	if data == unsafe { nil } || name == '' {
 		return false
 	}
 	ensure_project_scripts()
-	box := script_instance_of(data)
+	mut box := script_instance_of(data)
 	if box == unsafe { nil } {
 		return false
 	}
-	if registry.has_method(box.path.text(), name) == false {
+	key := box.script_key()
+	if registry.has_method(key, name) == false {
 		return false
 	}
-	previous := bound_owner
+	previous_owner := bound_owner
+	previous_state := bound_state
+	previous_type := bound_state_type
+	previous_force := bound_force
+	previous_values := bound_values.clone()
+	previous_ret := bound_ret
+	previous_key := bound_key
 	bound_owner = box.node
-	hook := registry.hook(box.path.text())
+	bound_key = key
+	bound_ret = ret
+	if box.state != unsafe { nil } {
+		bound_state = box.state
+		bound_force = true
+	} else {
+		bound_state = unsafe { nil }
+		bound_force = false
+		bound_state_type = ''
+	}
+	if args != unsafe { nil } {
+		bound_values = decode_args(args, count)
+	}
+	hook := registry.hook(key)
 	ok := call_signal(hook.signal, name)
-	bound_owner = previous
+	if box.state == unsafe { nil } && bound_state != unsafe { nil } {
+		box.state = bound_state
+	}
+	bound_owner = previous_owner
+	bound_state = previous_state
+	bound_state_type = previous_type
+	bound_force = previous_force
+	bound_values = previous_values.clone()
+	bound_ret = previous_ret
+	bound_key = previous_key
 	return ok
 }
 
@@ -143,10 +211,10 @@ fn run_script_enter(data voidptr) {
 	if box == unsafe { nil } {
 		return
 	}
-	if registry.has_method(box.path.text(), '_ready') {
+	if registry.has_method(box.script_key(), '_ready') {
 		return
 	}
-	hook := registry.hook(box.path.text())
+	hook := registry.hook(box.script_key())
 	if hook.enter == unsafe { nil } {
 		return
 	}
@@ -155,4 +223,11 @@ fn run_script_enter(data voidptr) {
 	f := unsafe { EnterFn(hook.enter) }
 	f()
 	bound_owner = previous
+}
+
+fn (s &ScriptInstance) script_key() string {
+	if s.id.len > 0 {
+		return s.id
+	}
+	return script_id_of_path(s.path.text())
 }

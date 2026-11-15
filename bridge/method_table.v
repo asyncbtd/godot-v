@@ -48,6 +48,12 @@ const action_script_instance = 30
 const action_script_has_method = 31
 const action_scripts_refresh = 32
 const action_script_methods = 33
+const action_lang_find = 34
+const action_script_member = 35
+const action_script_has_signal = 36
+const action_script_signals = 37
+const action_script_properties = 38
+const action_script_arg_count = 39
 
 fn write_stub(ret voidptr, kind int) {
 	if ret == unsafe { nil } {
@@ -88,7 +94,7 @@ fn method_specs() []MethodSpec {
 		MethodSpec{kind_language, '_supports_builtin_mode', action_stub, ret_bool},
 		MethodSpec{kind_language, '_supports_documentation', action_stub, ret_bool},
 		MethodSpec{kind_language, '_can_inherit_from_file', action_stub, ret_bool},
-		MethodSpec{kind_language, '_find_function', action_stub, ret_number},
+		MethodSpec{kind_language, '_find_function', action_lang_find, ret_number},
 		MethodSpec{kind_language, '_make_function', action_stub, ret_string},
 		MethodSpec{kind_language, '_can_make_function', action_stub, ret_bool},
 		MethodSpec{kind_language, '_open_in_external_editor', action_stub, ret_number},
@@ -148,14 +154,15 @@ fn method_specs() []MethodSpec {
 		MethodSpec{kind_script, '_is_tool', action_stub, ret_bool},
 		MethodSpec{kind_script, '_is_valid', action_script_valid, ret_bool},
 		MethodSpec{kind_script, '_get_language', action_script_language, ret_pointer},
-		MethodSpec{kind_script, '_has_script_signal', action_stub, ret_bool},
-		MethodSpec{kind_script, '_get_script_signal_list', action_stub, ret_array},
+		MethodSpec{kind_script, '_has_script_signal', action_script_has_signal, ret_bool},
+		MethodSpec{kind_script, '_get_script_signal_list', action_script_signals, ret_array},
 		MethodSpec{kind_script, '_has_property_default_value', action_stub, ret_bool},
 		MethodSpec{kind_script, '_get_property_default_value', action_stub, ret_variant},
 		MethodSpec{kind_script, '_update_exports', action_stub, ret_none},
+		MethodSpec{kind_script, '_get_script_method_argument_count', action_script_arg_count, ret_variant},
 		MethodSpec{kind_script, '_get_script_method_list', action_script_methods, ret_array},
-		MethodSpec{kind_script, '_get_script_property_list', action_stub, ret_array},
-		MethodSpec{kind_script, '_get_member_line', action_stub, ret_number},
+		MethodSpec{kind_script, '_get_script_property_list', action_script_properties, ret_array},
+		MethodSpec{kind_script, '_get_member_line', action_script_member, ret_number},
 		MethodSpec{kind_script, '_get_constants', action_stub, ret_dictionary},
 		MethodSpec{kind_script, '_get_members', action_stub, ret_array},
 		MethodSpec{kind_script, '_is_placeholder_fallback_enabled', action_stub, ret_bool},
