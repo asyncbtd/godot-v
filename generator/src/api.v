@@ -138,7 +138,7 @@ pub:
 		setter      string
 		getter      string @[required]
 		description string
-		index       int
+		index       int = -1
 	}
 
 	signals []struct {

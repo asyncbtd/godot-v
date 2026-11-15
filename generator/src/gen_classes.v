@@ -112,6 +112,10 @@ fn (g &GeneratorAPI) write_class_singleton(mut buf strings.Builder, class APICla
 }
 
 fn write_class_signals(mut buf strings.Builder, class APIClass) {
+	mut method_names := map[string]bool{}
+	for method in class.methods {
+		method_names[convert_name(method.name)] = true
+	}
 	for signal in class.signals {
 		doc := docstring(signal.description, prefix: '|')
 		_, sig_name := signature(signal.arguments, strip_names: true)
@@ -127,7 +131,9 @@ fn write_class_signals(mut buf strings.Builder, class APIClass) {
 		buf.writeln('pub fn (s &${class.name}) connect_${method_name}(cb Callable, cfg Signal_connect_Cfg) i64 {')
 		buf.writeln('\treturn s.${method_name}().connect(cb, cfg)')
 		buf.writeln('}')
-		write_emit(mut buf, class.name, method_name, signal.arguments)
+		if 'emit_${method_name}' !in method_names {
+			write_emit(mut buf, class.name, method_name, signal.arguments)
+		}
 	}
 }
 
@@ -264,29 +270,81 @@ fn write_virtual_interface(mut buf strings.Builder, class_name string, raw_name 
 	buf.writeln('}')
 }
 
+struct PropArg {
+	name     string
+	typ      string
+	optional bool
+}
+
+struct PropMethod {
+	ret  string
+	args []PropArg
+}
+
+fn property_type(raw string) string {
+	base := raw.split(',')[0].trim_space().trim_left('-')
+	return convert_strings(convert_type(base))
+}
+
 fn write_class_properties(mut buf strings.Builder, class APIClass) {
-	mut method_names := map[string]bool{}
+	mut methods := map[string]PropMethod{}
 	for method in class.methods {
-		method_names[convert_name(method.name)] = true
+		mut args := []PropArg{cap: method.arguments.len}
+		for arg in method.arguments {
+			args << PropArg{
+				name:     convert_name(arg.name)
+				typ:      convert_strings(convert_type(arg.type))
+				optional: arg.default_value != ''
+			}
+		}
+		methods[convert_name(method.name)] = PropMethod{
+			ret:  convert_strings(convert_type(method.return_value.type))
+			args: args
+		}
 	}
 	for prop in class.properties {
 		prop_name := convert_name(prop.name)
 		getter := convert_name(prop.getter)
-		if getter !in method_names || prop_name in method_names {
+		if getter !in methods || prop_name in methods {
 			continue
 		}
-		ret := convert_strings(convert_type(prop.type))
+		got := methods[getter]
+		ret := if got.ret != '' { got.ret } else { property_type(prop.type) }
 		buf.writeln('')
 		buf.writeln('pub fn (s &${class.name}) ${prop_name}() ${ret} {')
-		buf.writeln('\treturn s.${getter}()')
+		if prop.index >= 0 && got.args.len > 0 && !got.args[0].optional {
+			buf.writeln('\treturn s.${getter}(unsafe { ${got.args[0].typ}(${prop.index}) })')
+		} else {
+			buf.writeln('\treturn s.${getter}()')
+		}
 		buf.writeln('}')
 		setter := convert_name(prop.setter)
 		set_name := 'set_${prop_name}'
-		if prop.setter != '' && setter in method_names && set_name !in method_names && set_name != setter {
-			buf.writeln('')
-			buf.writeln('pub fn (s &${class.name}) ${set_name}(value ${ret}) {')
-			buf.writeln('\ts.${setter}(value)')
-			buf.writeln('}')
+		if prop.setter == '' || setter !in methods || set_name in methods || set_name == setter {
+			continue
 		}
+		set := methods[setter]
+		indexed := prop.index >= 0 && set.args.len > 0 && !set.args[0].optional
+		value_at := if indexed { 1 } else { 0 }
+		value := if set.args.len > value_at {
+			set.args[value_at]
+		} else {
+			PropArg{
+				typ: ret
+			}
+		}
+		buf.writeln('')
+		buf.writeln('pub fn (s &${class.name}) ${set_name}(value ${value.typ}) {')
+		call := if value.optional {
+			'${class.name}_${setter}_Cfg{ ${value.name}: value }'
+		} else {
+			'value'
+		}
+		if indexed {
+			buf.writeln('\ts.${setter}(unsafe { ${set.args[0].typ}(${prop.index}) }, ${call})')
+		} else {
+			buf.writeln('\ts.${setter}(${call})')
+		}
+		buf.writeln('}')
 	}
 }
