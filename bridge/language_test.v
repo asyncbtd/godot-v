@@ -20,11 +20,37 @@ fn test_template_source_defaults() {
 
 fn test_template_source_uses_name_and_base() {
 	assert template_source('Player', 'Area2D') == "@[godot.NodeClass('Area2D')]\npub struct Player {\n}\n\npub fn (mut self Player) ready() {}\n"
+	assert template_source('Player', '') == "@[godot.NodeClass('Node')]\npub struct Player {\n}\n\npub fn (mut self Player) ready() {}\n"
+	assert template_source('', 'Area2D') == "@[godot.NodeClass('Area2D')]\npub struct Script {\n}\n\npub fn (mut self Script) ready() {}\n"
 }
 
 fn test_is_v_path() {
 	assert is_v_path('res://scripts/player.v')
 	assert is_v_path('player.v')
+	assert is_v_path('.v')
+	assert is_v_path('player.v.v')
+	assert is_v_path('player.vv') == false
 	assert is_v_path('res://scripts/player.gd') == false
 	assert is_v_path('res://scripts/player') == false
+	assert is_v_path('') == false
+	assert is_v_path('player.V') == false
+	assert is_v_path('player.v.gd') == false
+}
+
+fn test_same_name_compares_pointers() {
+	mut data := voidptr(1)
+	expected := GdString{
+		data: data
+	}
+	assert same_name(voidptr(&data), expected)
+	mut other := voidptr(2)
+	assert same_name(voidptr(&other), expected) == false
+	assert same_name(unsafe { nil }, expected) == false
+	assert same_name(voidptr(&data), GdString{}) == false
+}
+
+fn test_empty_script_checks_do_not_need_the_engine() {
+	state := ScriptResource{}
+	assert script_can_run(voidptr(&state)) == false
+	assert is_v_script(unsafe { nil }) == false
 }

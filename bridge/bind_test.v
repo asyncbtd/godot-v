@@ -91,3 +91,60 @@ fn test_call_named_dispatches_methods() {
 	assert call_named[TestCritter]('hop')
 	assert call_named[TestCritter]('missing') == false
 }
+
+struct PlainSprite {}
+
+fn (mut self PlainSprite) idle() {
+	plain_hits += 1
+}
+
+fn (mut self PlainSprite) ready(_flag bool) {}
+
+fn (mut self PlainSprite) bounce(_speed f64) {}
+
+fn (mut self PlainSprite) dash(_x f64, _y f64) {}
+
+fn (mut self PlainSprite) process() {
+	plain_hits += 10
+}
+
+@[NodeClass('')]
+struct EmptyClassName {}
+
+fn (mut self EmptyClassName) ready() {}
+
+__global plain_hits = 0
+
+fn test_register_skips_methods_that_are_not_callable() {
+	register[PlainSprite]()
+	slot := registry.get('plainsprite') or {
+		assert false
+		return
+	}
+	mut methods := slot.methods.clone()
+	methods.sort()
+	assert slot.base == ''
+	assert methods == ['idle', 'process']
+	assert base_for('res://scripts/plainsprite.v') == 'Node'
+	plain_hits = 0
+	assert call_named[PlainSprite]('idle')
+	assert call_named[PlainSprite]('process')
+	assert call_named[PlainSprite]('_process') == false
+	assert call_named[PlainSprite]('_ready') == false
+	assert call_named[PlainSprite]('bounce') == false
+	assert call_named[PlainSprite]('dash') == false
+	assert call_named[PlainSprite]('ready') == false
+	assert plain_hits == 11
+}
+
+fn test_empty_node_class_falls_back_to_node() {
+	register[EmptyClassName]()
+	slot := registry.get('emptyclassname') or {
+		assert false
+		return
+	}
+	assert slot.base == ''
+	assert 'ready' in slot.methods
+	assert '_ready' in slot.methods
+	assert base_for('emptyclassname.v') == 'Node'
+}

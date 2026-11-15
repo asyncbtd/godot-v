@@ -80,6 +80,17 @@ fn not_registered_yet() map[string][]string {
 	}
 }
 
+fn test_method_specs_use_known_actions_and_returns() {
+	for spec in method_specs() {
+		assert spec.kind >= kind_language && spec.kind <= kind_saver
+		assert spec.action >= action_stub && spec.action <= action_script_methods
+		assert spec.ret >= ret_none && spec.ret <= ret_variant
+		assert spec.name.starts_with('_')
+		assert spec_class(spec.kind) != ''
+	}
+	assert spec_class(99) == ''
+}
+
 fn test_method_specs_match_godot() {
 	want := dump_virtual_methods()
 	mut have := map[string][]string{}

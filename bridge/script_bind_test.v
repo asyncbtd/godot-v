@@ -19,6 +19,7 @@ fn test_text_from_ptr_reads_cstring() {
 	assert text_from_ptr(unsafe { nil }, 5) == ''
 	assert text_from_ptr(c'hello', 5) == 'hello'
 	assert text_from_ptr(c'hello', 2) == 'he'
+	assert text_from_ptr(c'hello', -1) == ''
 }
 
 fn test_bool_to_u8_converts_bool() {
@@ -31,6 +32,13 @@ fn test_script_id_of_path_strips_path_and_suffix() {
 	assert script_id_of_path('player.v') == 'player'
 	assert script_id_of_path('res://game/sub/dir/player.v') == 'player'
 	assert script_id_of_path('res://game/player') == 'player'
+	assert script_id_of_path('') == ''
+	assert script_id_of_path('.v') == ''
+	assert script_id_of_path('res://dir/') == ''
+	assert script_id_of_path('file.vv') == 'file.vv'
+	assert script_id_of_path('a.v.v') == 'a.v'
+	assert script_id_of_path('res://game/Player.V') == 'Player.V'
+	assert script_id_of_path('res:\\game\\player.v') == 'res:\\game\\player'
 }
 
 fn test_script_library_suffix_matches_platform() {

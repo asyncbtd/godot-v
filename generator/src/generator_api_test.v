@@ -123,6 +123,26 @@ fn test_setup_records_names_and_enum_defaults() {
 	assert g.enum_defaults['GDExtensionLibraryInitializationLevel'] == 'core'
 	bits := if sizeof(voidptr) == 8 { '64' } else { '32' }
 	assert g.api.builtin_class_sizes[g.layout_index()].build_configuration == 'float_${bits}'
+	assert g.file('a.v') == os.join_path('', 'a.v')
+}
+
+fn test_layout_index_follows_header_precision() {
+	mut body := sample_api.replace('"precision": "float"', '"precision": "double"')
+	body = body.replace('"build_configuration": "float_32"', '"build_configuration": "double_32"')
+	body = body.replace('"build_configuration": "float_64"', '"build_configuration": "double_64"')
+	g := GeneratorAPI.new(body, '/tmp/out')
+	bits := if sizeof(voidptr) == 8 { '64' } else { '32' }
+	assert g.api.builtin_class_sizes[g.layout_index()].build_configuration == 'double_${bits}'
+	assert g.file('a.v') == os.join_path('/tmp/out', 'a.v')
+}
+
+fn test_setup_records_builtin_enum_keys() {
+	enums := '[{"name": "intSigned", "values": [{"name": "SIGNED", "value": 1}]}, {"name": "Mode", "values": [{"name": "ANY", "value": 0}]}]'
+	body := sample_api.replace('"constructors": []', '"constructors": [], "enums": ${enums}')
+	mut g := GeneratorAPI.new(body, '')
+	g.setup()
+	assert g.enum_defaults['intSigned'] == 'signed'
+	assert g.enum_defaults['intMode'] == 'any'
 }
 
 fn test_run_writes_api_bindings() {
