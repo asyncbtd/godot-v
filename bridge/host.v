@@ -16,11 +16,12 @@ module godot
 
 struct Host {
 mut:
-	api      Api
-	registry Registry
-	names    voidptr
-	scripts  []voidptr
-	library  voidptr
+	api       Api
+	registry  Registry
+	names     voidptr
+	scripts   []voidptr
+	instances []voidptr
+	library   voidptr
 }
 
 struct HostApi {

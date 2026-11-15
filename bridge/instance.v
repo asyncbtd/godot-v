@@ -112,6 +112,7 @@ fn make_live(state &ScriptResource, owner voidptr) voidptr {
 		box.state = make()
 	}
 	ensure_project_scripts()
+	godot_host.instances << voidptr(box)
 	create := unsafe { ScriptCreate(godot_host.api.script_instance) }
 	instance := create(voidptr(&script_info), voidptr(box))
 	enable_loops(owner, box.id)
@@ -216,11 +217,22 @@ fn (s &ScriptInstance) can_die() u8 {
 }
 
 fn (mut s ScriptInstance) free() {
+	forget_instance(voidptr(&s))
 	s.source.clear()
 	s.path.clear()
 	heap_free(s.state)
 	s.state = unsafe { nil }
 	free_mem(voidptr(s))
+}
+
+fn forget_instance(data voidptr) {
+	mut left := []voidptr{}
+	for item in godot_host.instances {
+		if item != data {
+			left << item
+		}
+	}
+	godot_host.instances = left
 }
 
 fn mark_bad(err voidptr) {

@@ -19,15 +19,20 @@ import v.vmod
 
 fn open_script_library(path string) bool {
 	promote_host()
-	handle := open_shared(path)
+	handle := dyn_open(path)
 	if handle == unsafe { nil } {
-		report('script library failed to load: ' + load_error())
+		report('script library failed to load: ' + dyn_last_error())
 		return false
 	}
 	godot_host.library = handle
 	call_symbol(handle, 'godot__init')
 	call_symbol(handle, 'script__init')
 	return true
+}
+
+fn close_game_library() {
+	dyn_close(godot_host.library)
+	godot_host.library = unsafe { nil }
 }
 
 fn remember_script(state voidptr) {
@@ -75,32 +80,50 @@ fn script_library_suffix() string {
 	}
 }
 
-fn script_library_path(project string) string {
+fn library_file_name(project string) !string {
 	mod_path := os.join_path(project, 'v.mod')
-	text := os.read_file(mod_path) or { panic('game v.mod not found at ${mod_path}') }
-	manifest := vmod.decode(text) or { panic('game v.mod at ${mod_path} is invalid: ${err}') }
-	if manifest.name.len == 0 {
-		panic('game v.mod at ${mod_path} has no name')
+	text := os.read_file(mod_path) or { return error('game v.mod not found at ${mod_path}') }
+	manifest := vmod.decode(text) or { return error('game v.mod at ${mod_path} is invalid: ${err}') }
+	if manifest.name == '' {
+		return error('game v.mod at ${mod_path} has no name')
 	}
-	file_name := manifest.name + script_library_suffix()
+	return manifest.name + script_library_suffix()
+}
+
+// resolve_game_library returns the library that sits next to v.mod.
+// The file name is the module name. Another copy in a child directory is an error.
+fn resolve_game_library(project string) !string {
+	file_name := library_file_name(project)!
+	root := os.join_path(project, file_name)
 	mut found := []string{}
-	for dir in ['', 'bin', 'bins', 'build', 'builds', 'lib', 'libs', 'target', 'targets'] {
-		path := if dir.len == 0 {
-			os.join_path(project, file_name)
-		} else {
-			os.join_path(project, dir, file_name)
+	if os.exists(root) {
+		found << root
+	}
+	for entry in os.ls(project) or { []string{} } {
+		dir := os.join_path(project, entry)
+		if os.is_dir(dir) == false {
+			continue
 		}
-		if os.exists(path) {
-			found << path
+		candidate := os.join_path(dir, file_name)
+		if os.exists(candidate) {
+			found << candidate
 		}
+	}
+	if found.len > 1 {
+		return error('found more than one ${file_name}:\n' + found.join('\n'))
+	}
+	if found.len == 1 && found[0] != root {
+		return error('${file_name} must sit next to v.mod, found ${found[0]}')
 	}
 	if found.len == 0 {
 		return ''
 	}
-	if found.len > 1 {
-		panic('found more than one ${file_name}:\n' + found.join('\n'))
-	}
-	return found[0]
+	return root
+}
+
+fn script_library_path(project string) string {
+	path := resolve_game_library(project) or { return '' }
+	return path
 }
 
 fn load_project_scripts() {
@@ -111,10 +134,14 @@ fn load_project_scripts() {
 	if project.len == 0 {
 		return
 	}
-	so_path := script_library_path(project)
+	so_path := resolve_game_library(project) or {
+		publish_library_problem(err.msg())
+		return
+	}
 	if so_path.len == 0 || godot_host.library != unsafe { nil } {
 		return
 	}
+	library_notice = ''
 	if open_script_library(so_path) == false {
 		return
 	}

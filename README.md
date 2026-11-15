@@ -72,10 +72,9 @@ v -cc clang -shared -enable-globals -o game.so .
 - `game` is the `name` from the game `v.mod`;
 - `.so` is `.dylib` on macOS and `.dll` on Windows.
 
-Put the library in the game root or in one of `bin`, `bins`, `build`, `builds`, `lib`, `libs`, `target`, `targets`.
-One copy only. If several are found, the language library stops.
+The library file sits next to `v.mod`. Its name is the module name (`dodge-creeps-2d.so`, `.dylib` on macOS, `.dll` on Windows). A second copy in a subdirectory is reported and not loaded.
 
-Rebuild it and start Godot again after script changes. Godot does not load this file as a second GDExtension.
+In the editor, reloading V scripts runs Build V: `v -cc clang -shared -enable-globals` with the same `-d godot_4_N` flag as the language library. Compiler errors go to the Godot output. Exported fields are read before the old library is closed and written back after the new one opens. Godot does not load this file as a second GDExtension.
 
 ## Getting Started
 

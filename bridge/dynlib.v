@@ -20,45 +20,47 @@ fn C.dlopen(filename &u8, flags int) voidptr
 
 fn C.dlsym(handle voidptr, name &u8) voidptr
 
+fn C.dlclose(handle voidptr) int
+
 fn C.dlerror() &u8
 
 fn C.LoadLibraryA(name &u8) voidptr
 
 fn C.GetProcAddress(handle voidptr, name &u8) voidptr
 
-fn host_library() string {
-	text := os.read_file('/proc/self/maps') or { return '' }
-	for line in text.split_into_lines() {
-		if line.contains('libgodotv.so') == false {
-			continue
-		}
-		start := line.index('/') or { continue }
-		return line[start..]
-	}
-	return ''
-}
+fn C.FreeLibrary(handle voidptr) int
 
-fn load_error() string {
+fn C.GetLastError() u32
+
+__global dyn_error = ''
+
+// dyn_open loads a shared library. A nil handle leaves the reason in dyn_last_error.
+fn dyn_open(path string) voidptr {
 	$if windows {
-		return 'LoadLibrary failed'
-	} $else {
-		ptr := C.dlerror()
-		if ptr == unsafe { nil } {
-			return ''
+		handle := C.LoadLibraryA(path.str)
+		if handle == unsafe { nil } {
+			dyn_error = 'LoadLibrary failed (${C.GetLastError()})'
+			return unsafe { nil }
 		}
-		return unsafe { cstring_to_vstring(ptr) }
-	}
-}
-
-fn open_shared(path string) voidptr {
-	$if windows {
-		return C.LoadLibraryA(path.str)
+		dyn_error = ''
+		return handle
 	} $else {
-		return C.dlopen(path.str, 10)
+		C.dlerror()
+		handle := C.dlopen(path.str, dyn_open_flags())
+		if handle == unsafe { nil } {
+			dyn_error = dyn_c_error()
+			return unsafe { nil }
+		}
+		dyn_error = ''
+		return handle
 	}
 }
 
-fn symbol_of(handle voidptr, name string) voidptr {
+// dyn_symbol looks up an exported symbol. A miss returns nil and does not change dyn_last_error.
+fn dyn_symbol(handle voidptr, name string) voidptr {
+	if handle == unsafe { nil } {
+		return unsafe { nil }
+	}
 	$if windows {
 		return C.GetProcAddress(handle, name.str)
 	} $else {
@@ -66,23 +68,99 @@ fn symbol_of(handle voidptr, name string) voidptr {
 	}
 }
 
-fn promote_host() {
-	$if windows {
+// dyn_close unloads a library opened with dyn_open. A nil handle is ignored.
+fn dyn_close(handle voidptr) {
+	if handle == unsafe { nil } {
 		return
-	} $else {
-		path := host_library()
-		if path.len == 0 {
-			return
+	}
+	$if windows {
+		if C.FreeLibrary(handle) == 0 {
+			dyn_error = 'FreeLibrary failed (${C.GetLastError()})'
 		}
-		C.dlopen(path.str, 262)
+	} $else {
+		if C.dlclose(handle) != 0 {
+			dyn_error = dyn_c_error()
+		}
 	}
 }
 
+// dyn_last_error is the text of the last failed open or close.
+fn dyn_last_error() string {
+	return dyn_error
+}
+
+fn dyn_open_flags() int {
+	// RTLD_NOW combined with the global/deep-bind bit this loader already used (10).
+	return 10
+}
+
+fn dyn_promote_flags() int {
+	// RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL, so an already mapped host stays visible to the game library.
+	$if macos {
+		return 26
+	} $else {
+		return 262
+	}
+}
+
+fn dyn_c_error() string {
+	ptr := C.dlerror()
+	if ptr == unsafe { nil } {
+		return ''
+	}
+	return unsafe { cstring_to_vstring(ptr) }
+}
+
+fn dyn_promote(path string) {
+	if path == '' {
+		return
+	}
+	$if windows {
+		C.LoadLibraryA(path.str)
+	} $else {
+		C.dlopen(path.str, dyn_promote_flags())
+	}
+}
+
+fn host_library() string {
+	$if windows {
+		return ''
+	} $else $if macos {
+		return ''
+	} $else {
+		text := os.read_file('/proc/self/maps') or { return '' }
+		for line in text.split_into_lines() {
+			if line.contains('libgodotv.so') == false {
+				continue
+			}
+			start := line.index('/') or { continue }
+			return line[start..]
+		}
+		return ''
+	}
+}
+
+fn promote_host() {
+	dyn_promote(host_library())
+}
+
 fn call_symbol(handle voidptr, name string) {
-	ptr := symbol_of(handle, name)
+	ptr := dyn_symbol(handle, name)
 	if ptr == unsafe { nil } {
 		return
 	}
 	f := unsafe { EnterFn(ptr) }
 	f()
+}
+
+fn open_shared(path string) voidptr {
+	return dyn_open(path)
+}
+
+fn symbol_of(handle voidptr, name string) voidptr {
+	return dyn_symbol(handle, name)
+}
+
+fn load_error() string {
+	return dyn_last_error()
 }

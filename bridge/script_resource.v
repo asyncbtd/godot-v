@@ -79,12 +79,12 @@ fn on_script_valid(ctx Call) {
 }
 
 fn on_script_reload(ctx Call) {
-	load_project_scripts()
-	write_number(ctx.ret, 0)
+	keep := if ctx.args == unsafe { nil } { false } else { arg_bool(ctx.args, 0) }
+	write_number(ctx.ret, reload_game(keep))
 }
 
-fn on_scripts_refresh(_ctx Call) {
-	load_project_scripts()
+fn on_scripts_refresh(ctx Call) {
+	reload_game(ctx.args != unsafe { nil })
 }
 
 fn on_script_language(ctx Call) {
