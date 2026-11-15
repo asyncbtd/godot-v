@@ -84,6 +84,26 @@ fn test_has_method_ignores_source_text() {
 	assert registry.has_method('res://scripts/ghost.v', 'ready') == false
 }
 
+@[NodeClass('Node')]
+struct BasedCritter {
+pub mut:
+	base Node
+}
+
+__global seen_base = unsafe { nil }
+
+fn (mut self BasedCritter) ready() {
+	seen_base = self.base.ptr
+}
+
+fn test_call_named_writes_base() {
+	register[BasedCritter]()
+	mut node := 1
+	bound_owner = voidptr(&node)
+	assert call_named[BasedCritter]('ready')
+	assert seen_base == voidptr(&node)
+}
+
 fn test_call_named_dispatches_methods() {
 	register[TestCritter]()
 	assert call_named[TestCritter]('ready')

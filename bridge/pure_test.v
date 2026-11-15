@@ -187,5 +187,4 @@ fn test_guest_registration_stores_hooks() {
 	assert mob_hook.enter == voidptr(guest_enter)
 	assert mob_hook.frame == unsafe { nil }
 	assert mob_hook.signal == unsafe { nil }
-	assert voidptr(live()) == voidptr(&host_session)
 }

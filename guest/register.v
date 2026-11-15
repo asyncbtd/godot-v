@@ -56,8 +56,17 @@ pub fn register[T]() int {
 	return 0
 }
 
+fn attach_base[T](mut self T) {
+	$for field in T.fields {
+		$if field.name == 'base' && field.typ is Node {
+			self.base.ptr = bound_owner
+		}
+	}
+}
+
 fn call_named[T](name string) bool {
 	mut self := T{}
+	attach_base(mut self)
 	mut found := false
 	$for method in T.methods {
 		if method.args.len == 0 && (method.name == name || (method.name == 'ready' && name == '_ready')) {
@@ -67,8 +76,12 @@ fn call_named[T](name string) bool {
 	}
 	$for method in T.methods {
 		if method.args.len == 1 && method.name == 'process' && (name == 'process' || name == '_process') {
-			self.$method(delta_of(owner()))
-			found = true
+			$for field in T.fields {
+				$if field.name == 'base' && field.typ is Node {
+					self.$method(delta_of(self.base.ptr))
+					found = true
+				}
+			}
 		}
 	}
 	return found

@@ -31,11 +31,6 @@ pub fn register_mob(enter fn ()) {
 	registry.add_script('mob', voidptr(enter), unsafe { nil }, unsafe { nil })
 }
 
-// live returns the session shared by the running scripts.
-pub fn live() &Session {
-	return active_session
-}
-
 // instance_scene instantiates a packed scene.
 pub fn instance_scene(scene voidptr) voidptr {
 	return call_object(scene, 'instantiate')

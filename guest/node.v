@@ -16,6 +16,8 @@ module godot
 
 type VariantCall = fn (voidptr, voidptr, voidptr, i64, voidptr, voidptr)
 
+pub type PropertyValue = bool | f64 | string
+
 struct Vec2 {
 	x f32
 	y f32
@@ -35,11 +37,6 @@ struct CachedName {
 
 __global name_cache = []CachedName{}
 __global bound_owner = unsafe { nil }
-
-// owner returns the node whose script is currently running.
-pub fn owner() voidptr {
-	return bound_owner
-}
 
 // call_method calls method on object with no arguments.
 pub fn call_method(object voidptr, method string) {
@@ -86,19 +83,18 @@ pub fn timer_stop(object voidptr) {
 	call_void(object, 'stop')
 }
 
-// hide_node hides a canvas item.
-pub fn hide_node(object voidptr) {
-	call_void(object, 'hide')
+// set_property sets a bool, number, or string property on object.
+pub fn set_property(object voidptr, prop string, value PropertyValue) {
+	match value {
+		bool { set_bool_prop(object, prop, value) }
+		f64 { set_float_prop(object, prop, value) }
+		string { set_string_prop(object, prop, value) }
+	}
 }
 
-// show_node shows a canvas item.
-pub fn show_node(object voidptr) {
-	call_void(object, 'show')
-}
-
-// set_flag_prop sets a bool property on object.
-pub fn set_flag_prop(object voidptr, prop string, value bool) {
-	set_bool_prop(object, prop, value)
+// set_property_deferred sets a bool property at the end of the frame.
+pub fn set_property_deferred(object voidptr, prop string, value bool) {
+	set_deferred_bool(object, prop, value)
 }
 
 // set_progress_ratio sets progress_ratio on a path follow.
@@ -131,11 +127,6 @@ pub fn parent_of(object voidptr) voidptr {
 	return call_object(object, 'get_parent')
 }
 
-// set_deferred_flag sets a bool property at the end of the frame.
-pub fn set_deferred_flag(object voidptr, prop string, value bool) {
-	set_deferred_bool(object, prop, value)
-}
-
 // node_at returns the node at path, or nil when it is missing.
 pub fn node_at(object voidptr, path string) voidptr {
 	if object == unsafe { nil } {
@@ -163,17 +154,6 @@ pub fn node_at(object voidptr, path string) voidptr {
 	return found
 }
 
-// set_text_prop sets a string property on object.
-pub fn set_text_prop(object voidptr, prop string, value string) {
-	mut text := GdString{}
-	text.set_text(value)
-	slot := temp_variant()
-	write_variant_string(slot, text)
-	set_prop(object, prop, slot)
-	free_variant(slot)
-	text.clear()
-}
-
 // call_group calls method on every node in group.
 pub fn call_group(object voidptr, group string, method string) {
 	tree := call_object(object, 'get_tree')
@@ -191,22 +171,6 @@ pub fn call_group(object voidptr, group string, method string) {
 	free_variant(first)
 	free_variant(second)
 	free_variant(ret)
-}
-
-// move_to sets the position of a node.
-pub fn move_to(object voidptr, x f32, y f32) {
-	slot := temp_variant()
-	write_variant_vector(slot, x, y)
-	set_prop(object, 'position', slot)
-	free_variant(slot)
-}
-
-// push_velocity sets the linear velocity of a rigid body.
-pub fn push_velocity(object voidptr, x f32, y f32) {
-	slot := temp_variant()
-	write_variant_vector(slot, x, y)
-	set_prop(object, 'linear_velocity', slot)
-	free_variant(slot)
 }
 
 // add_child adds child to parent.
@@ -297,15 +261,6 @@ fn write_variant_bool(dest voidptr, value bool) {
 fn write_variant_float(dest voidptr, value f64) {
 	from := unsafe { TypeCtor(from_type_of(type_float)) }
 	from(dest, voidptr(&value))
-}
-
-fn write_variant_vector(dest voidptr, x f32, y f32) {
-	point := Vec2{
-		x: x
-		y: y
-	}
-	from := unsafe { TypeCtor(from_type_of(type_vector2)) }
-	from(dest, voidptr(&point))
 }
 
 fn write_variant_string(dest voidptr, text &GdString) {
@@ -436,6 +391,16 @@ fn set_process_enabled(object voidptr) {
 	write_variant_bool(value, true)
 	call_with(object, 'set_process', value)
 	free_variant(value)
+}
+
+fn set_string_prop(object voidptr, prop string, value string) {
+	mut text := GdString{}
+	text.set_text(value)
+	slot := temp_variant()
+	write_variant_string(slot, text)
+	set_prop(object, prop, slot)
+	free_variant(slot)
+	text.clear()
 }
 
 fn set_bool_prop(object voidptr, prop string, value bool) {

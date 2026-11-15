@@ -26,7 +26,7 @@ fn count_enter() {
 }
 
 fn signal_reads_owner(name string) bool {
-	saw_owner = owner()
+	saw_owner = bound_owner
 	return name == 'hop'
 }
 

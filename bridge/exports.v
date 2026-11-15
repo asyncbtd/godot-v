@@ -71,12 +71,16 @@ fn godot_v_timer_stop(object voidptr) {
 
 @[export: 'godot_v_hide_node']
 fn godot_v_hide_node(object voidptr) {
-	call_void(object, 'hide')
+	CanvasItem{
+		ptr: object
+	}.hide()
 }
 
 @[export: 'godot_v_show_node']
 fn godot_v_show_node(object voidptr) {
-	call_void(object, 'show')
+	CanvasItem{
+		ptr: object
+	}.show()
 }
 
 @[export: 'godot_v_audio_play']
@@ -101,12 +105,12 @@ fn godot_v_feature(name &u8, len int) u8 {
 
 @[export: 'godot_v_set_text_prop']
 fn godot_v_set_text_prop(object voidptr, prop &u8, prop_len int, value &u8, value_len int) {
-	set_text_prop(object, text_from_ptr(prop, prop_len), text_from_ptr(value, value_len))
+	set_property(object, text_from_ptr(prop, prop_len), text_from_ptr(value, value_len))
 }
 
 @[export: 'godot_v_set_flag_prop']
 fn godot_v_set_flag_prop(object voidptr, prop &u8, prop_len int, value u8) {
-	set_bool_prop(object, text_from_ptr(prop, prop_len), value != 0)
+	set_property(object, text_from_ptr(prop, prop_len), value != 0)
 }
 
 @[export: 'godot_v_instance_scene']
@@ -135,7 +139,9 @@ fn godot_v_rotation_of(object voidptr) f64 {
 
 @[export: 'godot_v_move_to']
 fn godot_v_move_to(object voidptr, x f32, y f32) {
-	move_to(object, x, y)
+	Node2D{
+		ptr: object
+	}.set_position(Vector2{x, y})
 }
 
 @[export: 'godot_v_set_rotation']
@@ -145,7 +151,9 @@ fn godot_v_set_rotation(object voidptr, angle f64) {
 
 @[export: 'godot_v_push_velocity']
 fn godot_v_push_velocity(object voidptr, x f32, y f32) {
-	push_velocity(object, x, y)
+	RigidBody2D{
+		ptr: object
+	}.set_linear_velocity(Vector2{x, y})
 }
 
 @[export: 'godot_v_add_child']
@@ -184,7 +192,7 @@ fn godot_v_parent_of(object voidptr) voidptr {
 
 @[export: 'godot_v_set_deferred_flag']
 fn godot_v_set_deferred_flag(object voidptr, prop &u8, len int, value u8) {
-	set_deferred_bool(object, text_from_ptr(prop, len), value != 0)
+	set_property_deferred(object, text_from_ptr(prop, len), value != 0)
 }
 
 @[export: 'godot_v_action_down']

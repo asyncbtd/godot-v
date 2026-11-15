@@ -20,6 +20,7 @@ fn godot_v_init(get_proc_address voidptr, library voidptr, initialization voidpt
 	api.get_proc = get_proc_address
 	api.library = library
 	load_api()
+	load_gdf(get_proc_address, library)
 	mut startup := unsafe { &Initialization(initialization) }
 	startup.minimum_level = level_scene
 	startup.userdata = unsafe { nil }
@@ -75,6 +76,19 @@ fn deinitialize_level(_userdata voidptr, level u32) {
 		api.saver = unsafe { nil }
 	}
 	release_kept_names()
+}
+
+type ProcAddress = fn (&i8) GDExtensionInterfaceFunctionPtr
+
+fn load_gdf(get_proc_address voidptr, library voidptr) {
+	mut interface_fns := &GDExtensionInterfaceFunctions{
+		gpaddr: unsafe { ProcAddress(get_proc_address) }
+		clp:    library
+	}
+	interface_load(mut interface_fns)
+	gdf = &GDExt{
+		GDExtensionInterfaceFunctions: interface_fns
+	}
 }
 
 fn destroy_object(object voidptr) {
