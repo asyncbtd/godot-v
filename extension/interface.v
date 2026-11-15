@@ -1306,12 +1306,699 @@ pub mut:
 	register_main_loop_callbacks                       GDExtensionInterfaceRegisterMainLoopCallbacks            = unsafe { nil } // since 4.5
 }
 
-pub struct Class {
-	godot_class bool = true
+// Version of the interface dump schema this file was generated from.
+pub const gdextension_interface_format_version = 1
+
+// Oldest Godot 4.x minor version the bindings support.
+pub const godot_base_minor = 5
+
+// target_godot_minor is the Godot 4.x minor version the bindings were built
+// for: the newest `-d godot_4_N` flag given, or 5 by default.
+pub fn target_godot_minor() int {
+	$if godot_4_7 ? {
+		return 7
+	}
+	$if godot_4_6 ? {
+		return 6
+	}
+	return godot_base_minor
 }
 
-// HACK: using this to distinguish user-defined classes
-pub interface IClass {
-	// ptr voidptr
-	godot_class bool
+// interface_load resolves every interface entry point through get_proc_address.
+// Entry points introduced after Godot 4.5 resolve only when built
+// with `-d godot_4_N`; required ones panic when the running Godot lacks them.
+pub fn interface_load(mut fns &GDExtensionInterfaceFunctions) {
+	if fns.gpaddr == unsafe { nil } {
+		panic('GDExtension interface: get_proc_address is null')
+	}
+	if fns.clp == unsafe { nil } {
+		panic('GDExtension interface: class library pointer is null')
+	}
+	fns.get_godot_version = unsafe { GDExtensionInterfaceGetGodotVersion(fns.gpaddr(c'get_godot_version')) }
+	fns.get_godot_version2 = unsafe { GDExtensionInterfaceGetGodotVersion2(fns.gpaddr(c'get_godot_version2')) }
+	fns.mem_alloc = unsafe { GDExtensionInterfaceMemAlloc(fns.gpaddr(c'mem_alloc')) }
+	fns.mem_realloc = unsafe { GDExtensionInterfaceMemRealloc(fns.gpaddr(c'mem_realloc')) }
+	fns.mem_free = unsafe { GDExtensionInterfaceMemFree(fns.gpaddr(c'mem_free')) }
+	fns.print_error = unsafe { GDExtensionInterfacePrintError(fns.gpaddr(c'print_error')) }
+	fns.print_error_with_message = unsafe { GDExtensionInterfacePrintErrorWithMessage(fns.gpaddr(c'print_error_with_message')) }
+	fns.print_warning = unsafe { GDExtensionInterfacePrintWarning(fns.gpaddr(c'print_warning')) }
+	fns.print_warning_with_message = unsafe { GDExtensionInterfacePrintWarningWithMessage(fns.gpaddr(c'print_warning_with_message')) }
+	fns.print_script_error = unsafe { GDExtensionInterfacePrintScriptError(fns.gpaddr(c'print_script_error')) }
+	fns.print_script_error_with_message = unsafe { GDExtensionInterfacePrintScriptErrorWithMessage(fns.gpaddr(c'print_script_error_with_message')) }
+	fns.get_native_struct_size = unsafe { GDExtensionInterfaceGetNativeStructSize(fns.gpaddr(c'get_native_struct_size')) }
+	fns.variant_new_copy = unsafe { GDExtensionInterfaceVariantNewCopy(fns.gpaddr(c'variant_new_copy')) }
+	fns.variant_new_nil = unsafe { GDExtensionInterfaceVariantNewNil(fns.gpaddr(c'variant_new_nil')) }
+	fns.variant_destroy = unsafe { GDExtensionInterfaceVariantDestroy(fns.gpaddr(c'variant_destroy')) }
+	fns.variant_call = unsafe { GDExtensionInterfaceVariantCall(fns.gpaddr(c'variant_call')) }
+	fns.variant_call_static = unsafe { GDExtensionInterfaceVariantCallStatic(fns.gpaddr(c'variant_call_static')) }
+	fns.variant_evaluate = unsafe { GDExtensionInterfaceVariantEvaluate(fns.gpaddr(c'variant_evaluate')) }
+	fns.variant_set = unsafe { GDExtensionInterfaceVariantSet(fns.gpaddr(c'variant_set')) }
+	fns.variant_set_named = unsafe { GDExtensionInterfaceVariantSetNamed(fns.gpaddr(c'variant_set_named')) }
+	fns.variant_set_keyed = unsafe { GDExtensionInterfaceVariantSetKeyed(fns.gpaddr(c'variant_set_keyed')) }
+	fns.variant_set_indexed = unsafe { GDExtensionInterfaceVariantSetIndexed(fns.gpaddr(c'variant_set_indexed')) }
+	fns.variant_get = unsafe { GDExtensionInterfaceVariantGet(fns.gpaddr(c'variant_get')) }
+	fns.variant_get_named = unsafe { GDExtensionInterfaceVariantGetNamed(fns.gpaddr(c'variant_get_named')) }
+	fns.variant_get_keyed = unsafe { GDExtensionInterfaceVariantGetKeyed(fns.gpaddr(c'variant_get_keyed')) }
+	fns.variant_get_indexed = unsafe { GDExtensionInterfaceVariantGetIndexed(fns.gpaddr(c'variant_get_indexed')) }
+	fns.variant_iter_init = unsafe { GDExtensionInterfaceVariantIterInit(fns.gpaddr(c'variant_iter_init')) }
+	fns.variant_iter_next = unsafe { GDExtensionInterfaceVariantIterNext(fns.gpaddr(c'variant_iter_next')) }
+	fns.variant_iter_get = unsafe { GDExtensionInterfaceVariantIterGet(fns.gpaddr(c'variant_iter_get')) }
+	fns.variant_hash = unsafe { GDExtensionInterfaceVariantHash(fns.gpaddr(c'variant_hash')) }
+	fns.variant_recursive_hash = unsafe { GDExtensionInterfaceVariantRecursiveHash(fns.gpaddr(c'variant_recursive_hash')) }
+	fns.variant_hash_compare = unsafe { GDExtensionInterfaceVariantHashCompare(fns.gpaddr(c'variant_hash_compare')) }
+	fns.variant_booleanize = unsafe { GDExtensionInterfaceVariantBooleanize(fns.gpaddr(c'variant_booleanize')) }
+	fns.variant_duplicate = unsafe { GDExtensionInterfaceVariantDuplicate(fns.gpaddr(c'variant_duplicate')) }
+	fns.variant_stringify = unsafe { GDExtensionInterfaceVariantStringify(fns.gpaddr(c'variant_stringify')) }
+	fns.variant_get_type = unsafe { GDExtensionInterfaceVariantGetType(fns.gpaddr(c'variant_get_type')) }
+	fns.variant_has_method = unsafe { GDExtensionInterfaceVariantHasMethod(fns.gpaddr(c'variant_has_method')) }
+	fns.variant_has_member = unsafe { GDExtensionInterfaceVariantHasMember(fns.gpaddr(c'variant_has_member')) }
+	fns.variant_has_key = unsafe { GDExtensionInterfaceVariantHasKey(fns.gpaddr(c'variant_has_key')) }
+	fns.variant_get_object_instance_id = unsafe { GDExtensionInterfaceVariantGetObjectInstanceId(fns.gpaddr(c'variant_get_object_instance_id')) }
+	fns.variant_get_type_name = unsafe { GDExtensionInterfaceVariantGetTypeName(fns.gpaddr(c'variant_get_type_name')) }
+	fns.variant_can_convert = unsafe { GDExtensionInterfaceVariantCanConvert(fns.gpaddr(c'variant_can_convert')) }
+	fns.variant_can_convert_strict = unsafe { GDExtensionInterfaceVariantCanConvertStrict(fns.gpaddr(c'variant_can_convert_strict')) }
+	fns.get_variant_from_type_constructor = unsafe { GDExtensionInterfaceGetVariantFromTypeConstructor(fns.gpaddr(c'get_variant_from_type_constructor')) }
+	fns.get_variant_to_type_constructor = unsafe { GDExtensionInterfaceGetVariantToTypeConstructor(fns.gpaddr(c'get_variant_to_type_constructor')) }
+	fns.variant_get_ptr_internal_getter = unsafe { GDExtensionInterfaceVariantGetPtrInternalGetter(fns.gpaddr(c'variant_get_ptr_internal_getter')) }
+	fns.variant_get_ptr_operator_evaluator = unsafe { GDExtensionInterfaceVariantGetPtrOperatorEvaluator(fns.gpaddr(c'variant_get_ptr_operator_evaluator')) }
+	fns.variant_get_ptr_builtin_method = unsafe { GDExtensionInterfaceVariantGetPtrBuiltinMethod(fns.gpaddr(c'variant_get_ptr_builtin_method')) }
+	fns.variant_get_ptr_constructor = unsafe { GDExtensionInterfaceVariantGetPtrConstructor(fns.gpaddr(c'variant_get_ptr_constructor')) }
+	fns.variant_get_ptr_destructor = unsafe { GDExtensionInterfaceVariantGetPtrDestructor(fns.gpaddr(c'variant_get_ptr_destructor')) }
+	fns.variant_construct = unsafe { GDExtensionInterfaceVariantConstruct(fns.gpaddr(c'variant_construct')) }
+	fns.variant_get_ptr_setter = unsafe { GDExtensionInterfaceVariantGetPtrSetter(fns.gpaddr(c'variant_get_ptr_setter')) }
+	fns.variant_get_ptr_getter = unsafe { GDExtensionInterfaceVariantGetPtrGetter(fns.gpaddr(c'variant_get_ptr_getter')) }
+	fns.variant_get_ptr_indexed_setter = unsafe { GDExtensionInterfaceVariantGetPtrIndexedSetter(fns.gpaddr(c'variant_get_ptr_indexed_setter')) }
+	fns.variant_get_ptr_indexed_getter = unsafe { GDExtensionInterfaceVariantGetPtrIndexedGetter(fns.gpaddr(c'variant_get_ptr_indexed_getter')) }
+	fns.variant_get_ptr_keyed_setter = unsafe { GDExtensionInterfaceVariantGetPtrKeyedSetter(fns.gpaddr(c'variant_get_ptr_keyed_setter')) }
+	fns.variant_get_ptr_keyed_getter = unsafe { GDExtensionInterfaceVariantGetPtrKeyedGetter(fns.gpaddr(c'variant_get_ptr_keyed_getter')) }
+	fns.variant_get_ptr_keyed_checker = unsafe { GDExtensionInterfaceVariantGetPtrKeyedChecker(fns.gpaddr(c'variant_get_ptr_keyed_checker')) }
+	fns.variant_get_constant_value = unsafe { GDExtensionInterfaceVariantGetConstantValue(fns.gpaddr(c'variant_get_constant_value')) }
+	fns.variant_get_ptr_utility_function = unsafe { GDExtensionInterfaceVariantGetPtrUtilityFunction(fns.gpaddr(c'variant_get_ptr_utility_function')) }
+	fns.string_new_with_latin1_chars = unsafe { GDExtensionInterfaceStringNewWithLatin1Chars(fns.gpaddr(c'string_new_with_latin1_chars')) }
+	fns.string_new_with_utf8_chars = unsafe { GDExtensionInterfaceStringNewWithUtf8Chars(fns.gpaddr(c'string_new_with_utf8_chars')) }
+	fns.string_new_with_utf16_chars = unsafe { GDExtensionInterfaceStringNewWithUtf16Chars(fns.gpaddr(c'string_new_with_utf16_chars')) }
+	fns.string_new_with_utf32_chars = unsafe { GDExtensionInterfaceStringNewWithUtf32Chars(fns.gpaddr(c'string_new_with_utf32_chars')) }
+	fns.string_new_with_wide_chars = unsafe { GDExtensionInterfaceStringNewWithWideChars(fns.gpaddr(c'string_new_with_wide_chars')) }
+	fns.string_new_with_latin1_chars_and_len = unsafe { GDExtensionInterfaceStringNewWithLatin1CharsAndLen(fns.gpaddr(c'string_new_with_latin1_chars_and_len')) }
+	fns.string_new_with_utf8_chars_and_len = unsafe { GDExtensionInterfaceStringNewWithUtf8CharsAndLen(fns.gpaddr(c'string_new_with_utf8_chars_and_len')) }
+	fns.string_new_with_utf8_chars_and_len2 = unsafe { GDExtensionInterfaceStringNewWithUtf8CharsAndLen2(fns.gpaddr(c'string_new_with_utf8_chars_and_len2')) }
+	fns.string_new_with_utf16_chars_and_len = unsafe { GDExtensionInterfaceStringNewWithUtf16CharsAndLen(fns.gpaddr(c'string_new_with_utf16_chars_and_len')) }
+	fns.string_new_with_utf16_chars_and_len2 = unsafe { GDExtensionInterfaceStringNewWithUtf16CharsAndLen2(fns.gpaddr(c'string_new_with_utf16_chars_and_len2')) }
+	fns.string_new_with_utf32_chars_and_len = unsafe { GDExtensionInterfaceStringNewWithUtf32CharsAndLen(fns.gpaddr(c'string_new_with_utf32_chars_and_len')) }
+	fns.string_new_with_wide_chars_and_len = unsafe { GDExtensionInterfaceStringNewWithWideCharsAndLen(fns.gpaddr(c'string_new_with_wide_chars_and_len')) }
+	fns.string_to_latin1_chars = unsafe { GDExtensionInterfaceStringToLatin1Chars(fns.gpaddr(c'string_to_latin1_chars')) }
+	fns.string_to_utf8_chars = unsafe { GDExtensionInterfaceStringToUtf8Chars(fns.gpaddr(c'string_to_utf8_chars')) }
+	fns.string_to_utf16_chars = unsafe { GDExtensionInterfaceStringToUtf16Chars(fns.gpaddr(c'string_to_utf16_chars')) }
+	fns.string_to_utf32_chars = unsafe { GDExtensionInterfaceStringToUtf32Chars(fns.gpaddr(c'string_to_utf32_chars')) }
+	fns.string_to_wide_chars = unsafe { GDExtensionInterfaceStringToWideChars(fns.gpaddr(c'string_to_wide_chars')) }
+	fns.string_operator_index = unsafe { GDExtensionInterfaceStringOperatorIndex(fns.gpaddr(c'string_operator_index')) }
+	fns.string_operator_index_const = unsafe { GDExtensionInterfaceStringOperatorIndexConst(fns.gpaddr(c'string_operator_index_const')) }
+	fns.string_operator_plus_eq_string = unsafe { GDExtensionInterfaceStringOperatorPlusEqString(fns.gpaddr(c'string_operator_plus_eq_string')) }
+	fns.string_operator_plus_eq_char = unsafe { GDExtensionInterfaceStringOperatorPlusEqChar(fns.gpaddr(c'string_operator_plus_eq_char')) }
+	fns.string_operator_plus_eq_cstr = unsafe { GDExtensionInterfaceStringOperatorPlusEqCstr(fns.gpaddr(c'string_operator_plus_eq_cstr')) }
+	fns.string_operator_plus_eq_wcstr = unsafe { GDExtensionInterfaceStringOperatorPlusEqWcstr(fns.gpaddr(c'string_operator_plus_eq_wcstr')) }
+	fns.string_operator_plus_eq_c32str = unsafe { GDExtensionInterfaceStringOperatorPlusEqC32str(fns.gpaddr(c'string_operator_plus_eq_c32str')) }
+	fns.string_resize = unsafe { GDExtensionInterfaceStringResize(fns.gpaddr(c'string_resize')) }
+	fns.string_name_new_with_latin1_chars = unsafe { GDExtensionInterfaceStringNameNewWithLatin1Chars(fns.gpaddr(c'string_name_new_with_latin1_chars')) }
+	fns.string_name_new_with_utf8_chars = unsafe { GDExtensionInterfaceStringNameNewWithUtf8Chars(fns.gpaddr(c'string_name_new_with_utf8_chars')) }
+	fns.string_name_new_with_utf8_chars_and_len = unsafe { GDExtensionInterfaceStringNameNewWithUtf8CharsAndLen(fns.gpaddr(c'string_name_new_with_utf8_chars_and_len')) }
+	fns.xml_parser_open_buffer = unsafe { GDExtensionInterfaceXmlParserOpenBuffer(fns.gpaddr(c'xml_parser_open_buffer')) }
+	fns.file_access_store_buffer = unsafe { GDExtensionInterfaceFileAccessStoreBuffer(fns.gpaddr(c'file_access_store_buffer')) }
+	fns.file_access_get_buffer = unsafe { GDExtensionInterfaceFileAccessGetBuffer(fns.gpaddr(c'file_access_get_buffer')) }
+	fns.image_ptrw = unsafe { GDExtensionInterfaceImagePtrw(fns.gpaddr(c'image_ptrw')) }
+	fns.image_ptr = unsafe { GDExtensionInterfaceImagePtr(fns.gpaddr(c'image_ptr')) }
+	fns.worker_thread_pool_add_native_group_task = unsafe { GDExtensionInterfaceWorkerThreadPoolAddNativeGroupTask(fns.gpaddr(c'worker_thread_pool_add_native_group_task')) }
+	fns.worker_thread_pool_add_native_task = unsafe { GDExtensionInterfaceWorkerThreadPoolAddNativeTask(fns.gpaddr(c'worker_thread_pool_add_native_task')) }
+	fns.packed_byte_array_operator_index = unsafe { GDExtensionInterfacePackedByteArrayOperatorIndex(fns.gpaddr(c'packed_byte_array_operator_index')) }
+	fns.packed_byte_array_operator_index_const = unsafe { GDExtensionInterfacePackedByteArrayOperatorIndexConst(fns.gpaddr(c'packed_byte_array_operator_index_const')) }
+	fns.packed_float32_array_operator_index = unsafe { GDExtensionInterfacePackedFloat32ArrayOperatorIndex(fns.gpaddr(c'packed_float32_array_operator_index')) }
+	fns.packed_float32_array_operator_index_const = unsafe { GDExtensionInterfacePackedFloat32ArrayOperatorIndexConst(fns.gpaddr(c'packed_float32_array_operator_index_const')) }
+	fns.packed_float64_array_operator_index = unsafe { GDExtensionInterfacePackedFloat64ArrayOperatorIndex(fns.gpaddr(c'packed_float64_array_operator_index')) }
+	fns.packed_float64_array_operator_index_const = unsafe { GDExtensionInterfacePackedFloat64ArrayOperatorIndexConst(fns.gpaddr(c'packed_float64_array_operator_index_const')) }
+	fns.packed_int32_array_operator_index = unsafe { GDExtensionInterfacePackedInt32ArrayOperatorIndex(fns.gpaddr(c'packed_int32_array_operator_index')) }
+	fns.packed_int32_array_operator_index_const = unsafe { GDExtensionInterfacePackedInt32ArrayOperatorIndexConst(fns.gpaddr(c'packed_int32_array_operator_index_const')) }
+	fns.packed_int64_array_operator_index = unsafe { GDExtensionInterfacePackedInt64ArrayOperatorIndex(fns.gpaddr(c'packed_int64_array_operator_index')) }
+	fns.packed_int64_array_operator_index_const = unsafe { GDExtensionInterfacePackedInt64ArrayOperatorIndexConst(fns.gpaddr(c'packed_int64_array_operator_index_const')) }
+	fns.packed_string_array_operator_index = unsafe { GDExtensionInterfacePackedStringArrayOperatorIndex(fns.gpaddr(c'packed_string_array_operator_index')) }
+	fns.packed_string_array_operator_index_const = unsafe { GDExtensionInterfacePackedStringArrayOperatorIndexConst(fns.gpaddr(c'packed_string_array_operator_index_const')) }
+	fns.packed_vector2_array_operator_index = unsafe { GDExtensionInterfacePackedVector2ArrayOperatorIndex(fns.gpaddr(c'packed_vector2_array_operator_index')) }
+	fns.packed_vector2_array_operator_index_const = unsafe { GDExtensionInterfacePackedVector2ArrayOperatorIndexConst(fns.gpaddr(c'packed_vector2_array_operator_index_const')) }
+	fns.packed_vector3_array_operator_index = unsafe { GDExtensionInterfacePackedVector3ArrayOperatorIndex(fns.gpaddr(c'packed_vector3_array_operator_index')) }
+	fns.packed_vector3_array_operator_index_const = unsafe { GDExtensionInterfacePackedVector3ArrayOperatorIndexConst(fns.gpaddr(c'packed_vector3_array_operator_index_const')) }
+	fns.packed_vector4_array_operator_index = unsafe { GDExtensionInterfacePackedVector4ArrayOperatorIndex(fns.gpaddr(c'packed_vector4_array_operator_index')) }
+	fns.packed_vector4_array_operator_index_const = unsafe { GDExtensionInterfacePackedVector4ArrayOperatorIndexConst(fns.gpaddr(c'packed_vector4_array_operator_index_const')) }
+	fns.packed_color_array_operator_index = unsafe { GDExtensionInterfacePackedColorArrayOperatorIndex(fns.gpaddr(c'packed_color_array_operator_index')) }
+	fns.packed_color_array_operator_index_const = unsafe { GDExtensionInterfacePackedColorArrayOperatorIndexConst(fns.gpaddr(c'packed_color_array_operator_index_const')) }
+	fns.array_operator_index = unsafe { GDExtensionInterfaceArrayOperatorIndex(fns.gpaddr(c'array_operator_index')) }
+	fns.array_operator_index_const = unsafe { GDExtensionInterfaceArrayOperatorIndexConst(fns.gpaddr(c'array_operator_index_const')) }
+	fns.array_ref = unsafe { GDExtensionInterfaceArrayRef(fns.gpaddr(c'array_ref')) }
+	fns.array_set_typed = unsafe { GDExtensionInterfaceArraySetTyped(fns.gpaddr(c'array_set_typed')) }
+	fns.dictionary_operator_index = unsafe { GDExtensionInterfaceDictionaryOperatorIndex(fns.gpaddr(c'dictionary_operator_index')) }
+	fns.dictionary_operator_index_const = unsafe { GDExtensionInterfaceDictionaryOperatorIndexConst(fns.gpaddr(c'dictionary_operator_index_const')) }
+	fns.dictionary_set_typed = unsafe { GDExtensionInterfaceDictionarySetTyped(fns.gpaddr(c'dictionary_set_typed')) }
+	fns.object_method_bind_call = unsafe { GDExtensionInterfaceObjectMethodBindCall(fns.gpaddr(c'object_method_bind_call')) }
+	fns.object_method_bind_ptrcall = unsafe { GDExtensionInterfaceObjectMethodBindPtrcall(fns.gpaddr(c'object_method_bind_ptrcall')) }
+	fns.object_destroy = unsafe { GDExtensionInterfaceObjectDestroy(fns.gpaddr(c'object_destroy')) }
+	fns.global_get_singleton = unsafe { GDExtensionInterfaceGlobalGetSingleton(fns.gpaddr(c'global_get_singleton')) }
+	fns.object_get_instance_binding = unsafe { GDExtensionInterfaceObjectGetInstanceBinding(fns.gpaddr(c'object_get_instance_binding')) }
+	fns.object_set_instance_binding = unsafe { GDExtensionInterfaceObjectSetInstanceBinding(fns.gpaddr(c'object_set_instance_binding')) }
+	fns.object_free_instance_binding = unsafe { GDExtensionInterfaceObjectFreeInstanceBinding(fns.gpaddr(c'object_free_instance_binding')) }
+	fns.object_set_instance = unsafe { GDExtensionInterfaceObjectSetInstance(fns.gpaddr(c'object_set_instance')) }
+	fns.object_get_class_name = unsafe { GDExtensionInterfaceObjectGetClassName(fns.gpaddr(c'object_get_class_name')) }
+	fns.object_cast_to = unsafe { GDExtensionInterfaceObjectCastTo(fns.gpaddr(c'object_cast_to')) }
+	fns.object_get_instance_from_id = unsafe { GDExtensionInterfaceObjectGetInstanceFromId(fns.gpaddr(c'object_get_instance_from_id')) }
+	fns.object_get_instance_id = unsafe { GDExtensionInterfaceObjectGetInstanceId(fns.gpaddr(c'object_get_instance_id')) }
+	fns.object_has_script_method = unsafe { GDExtensionInterfaceObjectHasScriptMethod(fns.gpaddr(c'object_has_script_method')) }
+	fns.object_call_script_method = unsafe { GDExtensionInterfaceObjectCallScriptMethod(fns.gpaddr(c'object_call_script_method')) }
+	fns.ref_get_object = unsafe { GDExtensionInterfaceRefGetObject(fns.gpaddr(c'ref_get_object')) }
+	fns.ref_set_object = unsafe { GDExtensionInterfaceRefSetObject(fns.gpaddr(c'ref_set_object')) }
+	fns.script_instance_create = unsafe { GDExtensionInterfaceScriptInstanceCreate(fns.gpaddr(c'script_instance_create')) }
+	fns.script_instance_create2 = unsafe { GDExtensionInterfaceScriptInstanceCreate2(fns.gpaddr(c'script_instance_create2')) }
+	fns.script_instance_create3 = unsafe { GDExtensionInterfaceScriptInstanceCreate3(fns.gpaddr(c'script_instance_create3')) }
+	fns.placeholder_script_instance_create = unsafe { GDExtensionInterfacePlaceholderScriptInstanceCreate(fns.gpaddr(c'placeholder_script_instance_create')) }
+	fns.placeholder_script_instance_update = unsafe { GDExtensionInterfacePlaceholderScriptInstanceUpdate(fns.gpaddr(c'placeholder_script_instance_update')) }
+	fns.object_get_script_instance = unsafe { GDExtensionInterfaceObjectGetScriptInstance(fns.gpaddr(c'object_get_script_instance')) }
+	fns.object_set_script_instance = unsafe { GDExtensionInterfaceObjectSetScriptInstance(fns.gpaddr(c'object_set_script_instance')) }
+	fns.callable_custom_create = unsafe { GDExtensionInterfaceCallableCustomCreate(fns.gpaddr(c'callable_custom_create')) }
+	fns.callable_custom_create2 = unsafe { GDExtensionInterfaceCallableCustomCreate2(fns.gpaddr(c'callable_custom_create2')) }
+	fns.callable_custom_get_userdata = unsafe { GDExtensionInterfaceCallableCustomGetUserdata(fns.gpaddr(c'callable_custom_get_userdata')) }
+	fns.classdb_construct_object = unsafe { GDExtensionInterfaceClassdbConstructObject(fns.gpaddr(c'classdb_construct_object')) }
+	fns.classdb_construct_object2 = unsafe { GDExtensionInterfaceClassdbConstructObject2(fns.gpaddr(c'classdb_construct_object2')) }
+	fns.classdb_get_method_bind = unsafe { GDExtensionInterfaceClassdbGetMethodBind(fns.gpaddr(c'classdb_get_method_bind')) }
+	fns.classdb_get_class_tag = unsafe { GDExtensionInterfaceClassdbGetClassTag(fns.gpaddr(c'classdb_get_class_tag')) }
+	fns.classdb_register_extension_class = unsafe { GDExtensionInterfaceClassdbRegisterExtensionClass(fns.gpaddr(c'classdb_register_extension_class')) }
+	fns.classdb_register_extension_class2 = unsafe { GDExtensionInterfaceClassdbRegisterExtensionClass2(fns.gpaddr(c'classdb_register_extension_class2')) }
+	fns.classdb_register_extension_class3 = unsafe { GDExtensionInterfaceClassdbRegisterExtensionClass3(fns.gpaddr(c'classdb_register_extension_class3')) }
+	fns.classdb_register_extension_class4 = unsafe { GDExtensionInterfaceClassdbRegisterExtensionClass4(fns.gpaddr(c'classdb_register_extension_class4')) }
+	fns.classdb_register_extension_class5 = unsafe { GDExtensionInterfaceClassdbRegisterExtensionClass5(fns.gpaddr(c'classdb_register_extension_class5')) }
+	fns.classdb_register_extension_class_method = unsafe { GDExtensionInterfaceClassdbRegisterExtensionClassMethod(fns.gpaddr(c'classdb_register_extension_class_method')) }
+	fns.classdb_register_extension_class_virtual_method = unsafe { GDExtensionInterfaceClassdbRegisterExtensionClassVirtualMethod(fns.gpaddr(c'classdb_register_extension_class_virtual_method')) }
+	fns.classdb_register_extension_class_integer_constant = unsafe { GDExtensionInterfaceClassdbRegisterExtensionClassIntegerConstant(fns.gpaddr(c'classdb_register_extension_class_integer_constant')) }
+	fns.classdb_register_extension_class_property = unsafe { GDExtensionInterfaceClassdbRegisterExtensionClassProperty(fns.gpaddr(c'classdb_register_extension_class_property')) }
+	fns.classdb_register_extension_class_property_indexed = unsafe { GDExtensionInterfaceClassdbRegisterExtensionClassPropertyIndexed(fns.gpaddr(c'classdb_register_extension_class_property_indexed')) }
+	fns.classdb_register_extension_class_property_group = unsafe { GDExtensionInterfaceClassdbRegisterExtensionClassPropertyGroup(fns.gpaddr(c'classdb_register_extension_class_property_group')) }
+	fns.classdb_register_extension_class_property_subgroup = unsafe { GDExtensionInterfaceClassdbRegisterExtensionClassPropertySubgroup(fns.gpaddr(c'classdb_register_extension_class_property_subgroup')) }
+	fns.classdb_register_extension_class_signal = unsafe { GDExtensionInterfaceClassdbRegisterExtensionClassSignal(fns.gpaddr(c'classdb_register_extension_class_signal')) }
+	fns.classdb_unregister_extension_class = unsafe { GDExtensionInterfaceClassdbUnregisterExtensionClass(fns.gpaddr(c'classdb_unregister_extension_class')) }
+	fns.get_library_path = unsafe { GDExtensionInterfaceGetLibraryPath(fns.gpaddr(c'get_library_path')) }
+	fns.editor_add_plugin = unsafe { GDExtensionInterfaceEditorAddPlugin(fns.gpaddr(c'editor_add_plugin')) }
+	fns.editor_remove_plugin = unsafe { GDExtensionInterfaceEditorRemovePlugin(fns.gpaddr(c'editor_remove_plugin')) }
+	fns.editor_help_load_xml_from_utf8_chars = unsafe { GDExtensionInterfaceEditorHelpLoadXmlFromUtf8Chars(fns.gpaddr(c'editor_help_load_xml_from_utf8_chars')) }
+	fns.editor_help_load_xml_from_utf8_chars_and_len = unsafe { GDExtensionInterfaceEditorHelpLoadXmlFromUtf8CharsAndLen(fns.gpaddr(c'editor_help_load_xml_from_utf8_chars_and_len')) }
+	fns.editor_register_get_classes_used_callback = unsafe { GDExtensionInterfaceEditorRegisterGetClassesUsedCallback(fns.gpaddr(c'editor_register_get_classes_used_callback')) }
+	fns.register_main_loop_callbacks = unsafe { GDExtensionInterfaceRegisterMainLoopCallbacks(fns.gpaddr(c'register_main_loop_callbacks')) }
+	if fns.get_godot_version2 == unsafe { nil } {
+		panic('GDExtension interface: missing entry point get_godot_version2 (ABI mismatch with running Godot)')
+	}
+	if fns.print_error == unsafe { nil } {
+		panic('GDExtension interface: missing entry point print_error (ABI mismatch with running Godot)')
+	}
+	if fns.print_error_with_message == unsafe { nil } {
+		panic('GDExtension interface: missing entry point print_error_with_message (ABI mismatch with running Godot)')
+	}
+	if fns.print_warning == unsafe { nil } {
+		panic('GDExtension interface: missing entry point print_warning (ABI mismatch with running Godot)')
+	}
+	if fns.print_warning_with_message == unsafe { nil } {
+		panic('GDExtension interface: missing entry point print_warning_with_message (ABI mismatch with running Godot)')
+	}
+	if fns.print_script_error == unsafe { nil } {
+		panic('GDExtension interface: missing entry point print_script_error (ABI mismatch with running Godot)')
+	}
+	if fns.print_script_error_with_message == unsafe { nil } {
+		panic('GDExtension interface: missing entry point print_script_error_with_message (ABI mismatch with running Godot)')
+	}
+	if fns.get_native_struct_size == unsafe { nil } {
+		panic('GDExtension interface: missing entry point get_native_struct_size (ABI mismatch with running Godot)')
+	}
+	if fns.variant_new_copy == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_new_copy (ABI mismatch with running Godot)')
+	}
+	if fns.variant_new_nil == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_new_nil (ABI mismatch with running Godot)')
+	}
+	if fns.variant_destroy == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_destroy (ABI mismatch with running Godot)')
+	}
+	if fns.variant_call == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_call (ABI mismatch with running Godot)')
+	}
+	if fns.variant_call_static == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_call_static (ABI mismatch with running Godot)')
+	}
+	if fns.variant_evaluate == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_evaluate (ABI mismatch with running Godot)')
+	}
+	if fns.variant_set == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_set (ABI mismatch with running Godot)')
+	}
+	if fns.variant_set_named == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_set_named (ABI mismatch with running Godot)')
+	}
+	if fns.variant_set_keyed == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_set_keyed (ABI mismatch with running Godot)')
+	}
+	if fns.variant_set_indexed == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_set_indexed (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_named == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_named (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_keyed == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_keyed (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_indexed == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_indexed (ABI mismatch with running Godot)')
+	}
+	if fns.variant_iter_init == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_iter_init (ABI mismatch with running Godot)')
+	}
+	if fns.variant_iter_next == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_iter_next (ABI mismatch with running Godot)')
+	}
+	if fns.variant_iter_get == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_iter_get (ABI mismatch with running Godot)')
+	}
+	if fns.variant_hash == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_hash (ABI mismatch with running Godot)')
+	}
+	if fns.variant_recursive_hash == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_recursive_hash (ABI mismatch with running Godot)')
+	}
+	if fns.variant_hash_compare == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_hash_compare (ABI mismatch with running Godot)')
+	}
+	if fns.variant_booleanize == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_booleanize (ABI mismatch with running Godot)')
+	}
+	if fns.variant_duplicate == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_duplicate (ABI mismatch with running Godot)')
+	}
+	if fns.variant_stringify == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_stringify (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_type == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_type (ABI mismatch with running Godot)')
+	}
+	if fns.variant_has_method == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_has_method (ABI mismatch with running Godot)')
+	}
+	if fns.variant_has_member == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_has_member (ABI mismatch with running Godot)')
+	}
+	if fns.variant_has_key == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_has_key (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_object_instance_id == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_object_instance_id (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_type_name == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_type_name (ABI mismatch with running Godot)')
+	}
+	if fns.variant_can_convert == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_can_convert (ABI mismatch with running Godot)')
+	}
+	if fns.variant_can_convert_strict == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_can_convert_strict (ABI mismatch with running Godot)')
+	}
+	if fns.get_variant_from_type_constructor == unsafe { nil } {
+		panic('GDExtension interface: missing entry point get_variant_from_type_constructor (ABI mismatch with running Godot)')
+	}
+	if fns.get_variant_to_type_constructor == unsafe { nil } {
+		panic('GDExtension interface: missing entry point get_variant_to_type_constructor (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_ptr_internal_getter == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_ptr_internal_getter (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_ptr_operator_evaluator == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_ptr_operator_evaluator (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_ptr_builtin_method == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_ptr_builtin_method (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_ptr_constructor == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_ptr_constructor (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_ptr_destructor == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_ptr_destructor (ABI mismatch with running Godot)')
+	}
+	if fns.variant_construct == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_construct (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_ptr_setter == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_ptr_setter (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_ptr_getter == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_ptr_getter (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_ptr_indexed_setter == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_ptr_indexed_setter (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_ptr_indexed_getter == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_ptr_indexed_getter (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_ptr_keyed_setter == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_ptr_keyed_setter (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_ptr_keyed_getter == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_ptr_keyed_getter (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_ptr_keyed_checker == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_ptr_keyed_checker (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_constant_value == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_constant_value (ABI mismatch with running Godot)')
+	}
+	if fns.variant_get_ptr_utility_function == unsafe { nil } {
+		panic('GDExtension interface: missing entry point variant_get_ptr_utility_function (ABI mismatch with running Godot)')
+	}
+	if fns.string_new_with_latin1_chars == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_new_with_latin1_chars (ABI mismatch with running Godot)')
+	}
+	if fns.string_new_with_utf8_chars == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_new_with_utf8_chars (ABI mismatch with running Godot)')
+	}
+	if fns.string_new_with_utf16_chars == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_new_with_utf16_chars (ABI mismatch with running Godot)')
+	}
+	if fns.string_new_with_utf32_chars == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_new_with_utf32_chars (ABI mismatch with running Godot)')
+	}
+	if fns.string_new_with_wide_chars == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_new_with_wide_chars (ABI mismatch with running Godot)')
+	}
+	if fns.string_new_with_latin1_chars_and_len == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_new_with_latin1_chars_and_len (ABI mismatch with running Godot)')
+	}
+	if fns.string_new_with_utf8_chars_and_len2 == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_new_with_utf8_chars_and_len2 (ABI mismatch with running Godot)')
+	}
+	if fns.string_new_with_utf16_chars_and_len2 == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_new_with_utf16_chars_and_len2 (ABI mismatch with running Godot)')
+	}
+	if fns.string_new_with_utf32_chars_and_len == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_new_with_utf32_chars_and_len (ABI mismatch with running Godot)')
+	}
+	if fns.string_new_with_wide_chars_and_len == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_new_with_wide_chars_and_len (ABI mismatch with running Godot)')
+	}
+	if fns.string_to_latin1_chars == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_to_latin1_chars (ABI mismatch with running Godot)')
+	}
+	if fns.string_to_utf8_chars == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_to_utf8_chars (ABI mismatch with running Godot)')
+	}
+	if fns.string_to_utf16_chars == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_to_utf16_chars (ABI mismatch with running Godot)')
+	}
+	if fns.string_to_utf32_chars == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_to_utf32_chars (ABI mismatch with running Godot)')
+	}
+	if fns.string_to_wide_chars == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_to_wide_chars (ABI mismatch with running Godot)')
+	}
+	if fns.string_operator_index == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_operator_index (ABI mismatch with running Godot)')
+	}
+	if fns.string_operator_index_const == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_operator_index_const (ABI mismatch with running Godot)')
+	}
+	if fns.string_operator_plus_eq_string == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_operator_plus_eq_string (ABI mismatch with running Godot)')
+	}
+	if fns.string_operator_plus_eq_char == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_operator_plus_eq_char (ABI mismatch with running Godot)')
+	}
+	if fns.string_operator_plus_eq_cstr == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_operator_plus_eq_cstr (ABI mismatch with running Godot)')
+	}
+	if fns.string_operator_plus_eq_wcstr == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_operator_plus_eq_wcstr (ABI mismatch with running Godot)')
+	}
+	if fns.string_operator_plus_eq_c32str == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_operator_plus_eq_c32str (ABI mismatch with running Godot)')
+	}
+	if fns.string_resize == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_resize (ABI mismatch with running Godot)')
+	}
+	if fns.string_name_new_with_latin1_chars == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_name_new_with_latin1_chars (ABI mismatch with running Godot)')
+	}
+	if fns.string_name_new_with_utf8_chars == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_name_new_with_utf8_chars (ABI mismatch with running Godot)')
+	}
+	if fns.string_name_new_with_utf8_chars_and_len == unsafe { nil } {
+		panic('GDExtension interface: missing entry point string_name_new_with_utf8_chars_and_len (ABI mismatch with running Godot)')
+	}
+	if fns.xml_parser_open_buffer == unsafe { nil } {
+		panic('GDExtension interface: missing entry point xml_parser_open_buffer (ABI mismatch with running Godot)')
+	}
+	if fns.file_access_store_buffer == unsafe { nil } {
+		panic('GDExtension interface: missing entry point file_access_store_buffer (ABI mismatch with running Godot)')
+	}
+	if fns.file_access_get_buffer == unsafe { nil } {
+		panic('GDExtension interface: missing entry point file_access_get_buffer (ABI mismatch with running Godot)')
+	}
+	if fns.image_ptrw == unsafe { nil } {
+		panic('GDExtension interface: missing entry point image_ptrw (ABI mismatch with running Godot)')
+	}
+	if fns.image_ptr == unsafe { nil } {
+		panic('GDExtension interface: missing entry point image_ptr (ABI mismatch with running Godot)')
+	}
+	if fns.worker_thread_pool_add_native_group_task == unsafe { nil } {
+		panic('GDExtension interface: missing entry point worker_thread_pool_add_native_group_task (ABI mismatch with running Godot)')
+	}
+	if fns.worker_thread_pool_add_native_task == unsafe { nil } {
+		panic('GDExtension interface: missing entry point worker_thread_pool_add_native_task (ABI mismatch with running Godot)')
+	}
+	if fns.packed_byte_array_operator_index == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_byte_array_operator_index (ABI mismatch with running Godot)')
+	}
+	if fns.packed_byte_array_operator_index_const == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_byte_array_operator_index_const (ABI mismatch with running Godot)')
+	}
+	if fns.packed_float32_array_operator_index == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_float32_array_operator_index (ABI mismatch with running Godot)')
+	}
+	if fns.packed_float32_array_operator_index_const == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_float32_array_operator_index_const (ABI mismatch with running Godot)')
+	}
+	if fns.packed_float64_array_operator_index == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_float64_array_operator_index (ABI mismatch with running Godot)')
+	}
+	if fns.packed_float64_array_operator_index_const == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_float64_array_operator_index_const (ABI mismatch with running Godot)')
+	}
+	if fns.packed_int32_array_operator_index == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_int32_array_operator_index (ABI mismatch with running Godot)')
+	}
+	if fns.packed_int32_array_operator_index_const == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_int32_array_operator_index_const (ABI mismatch with running Godot)')
+	}
+	if fns.packed_int64_array_operator_index == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_int64_array_operator_index (ABI mismatch with running Godot)')
+	}
+	if fns.packed_int64_array_operator_index_const == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_int64_array_operator_index_const (ABI mismatch with running Godot)')
+	}
+	if fns.packed_string_array_operator_index == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_string_array_operator_index (ABI mismatch with running Godot)')
+	}
+	if fns.packed_string_array_operator_index_const == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_string_array_operator_index_const (ABI mismatch with running Godot)')
+	}
+	if fns.packed_vector2_array_operator_index == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_vector2_array_operator_index (ABI mismatch with running Godot)')
+	}
+	if fns.packed_vector2_array_operator_index_const == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_vector2_array_operator_index_const (ABI mismatch with running Godot)')
+	}
+	if fns.packed_vector3_array_operator_index == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_vector3_array_operator_index (ABI mismatch with running Godot)')
+	}
+	if fns.packed_vector3_array_operator_index_const == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_vector3_array_operator_index_const (ABI mismatch with running Godot)')
+	}
+	if fns.packed_vector4_array_operator_index == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_vector4_array_operator_index (ABI mismatch with running Godot)')
+	}
+	if fns.packed_vector4_array_operator_index_const == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_vector4_array_operator_index_const (ABI mismatch with running Godot)')
+	}
+	if fns.packed_color_array_operator_index == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_color_array_operator_index (ABI mismatch with running Godot)')
+	}
+	if fns.packed_color_array_operator_index_const == unsafe { nil } {
+		panic('GDExtension interface: missing entry point packed_color_array_operator_index_const (ABI mismatch with running Godot)')
+	}
+	if fns.array_operator_index == unsafe { nil } {
+		panic('GDExtension interface: missing entry point array_operator_index (ABI mismatch with running Godot)')
+	}
+	if fns.array_operator_index_const == unsafe { nil } {
+		panic('GDExtension interface: missing entry point array_operator_index_const (ABI mismatch with running Godot)')
+	}
+	if fns.array_set_typed == unsafe { nil } {
+		panic('GDExtension interface: missing entry point array_set_typed (ABI mismatch with running Godot)')
+	}
+	if fns.dictionary_operator_index == unsafe { nil } {
+		panic('GDExtension interface: missing entry point dictionary_operator_index (ABI mismatch with running Godot)')
+	}
+	if fns.dictionary_operator_index_const == unsafe { nil } {
+		panic('GDExtension interface: missing entry point dictionary_operator_index_const (ABI mismatch with running Godot)')
+	}
+	if fns.dictionary_set_typed == unsafe { nil } {
+		panic('GDExtension interface: missing entry point dictionary_set_typed (ABI mismatch with running Godot)')
+	}
+	if fns.object_method_bind_call == unsafe { nil } {
+		panic('GDExtension interface: missing entry point object_method_bind_call (ABI mismatch with running Godot)')
+	}
+	if fns.object_method_bind_ptrcall == unsafe { nil } {
+		panic('GDExtension interface: missing entry point object_method_bind_ptrcall (ABI mismatch with running Godot)')
+	}
+	if fns.object_destroy == unsafe { nil } {
+		panic('GDExtension interface: missing entry point object_destroy (ABI mismatch with running Godot)')
+	}
+	if fns.global_get_singleton == unsafe { nil } {
+		panic('GDExtension interface: missing entry point global_get_singleton (ABI mismatch with running Godot)')
+	}
+	if fns.object_get_instance_binding == unsafe { nil } {
+		panic('GDExtension interface: missing entry point object_get_instance_binding (ABI mismatch with running Godot)')
+	}
+	if fns.object_set_instance_binding == unsafe { nil } {
+		panic('GDExtension interface: missing entry point object_set_instance_binding (ABI mismatch with running Godot)')
+	}
+	if fns.object_free_instance_binding == unsafe { nil } {
+		panic('GDExtension interface: missing entry point object_free_instance_binding (ABI mismatch with running Godot)')
+	}
+	if fns.object_set_instance == unsafe { nil } {
+		panic('GDExtension interface: missing entry point object_set_instance (ABI mismatch with running Godot)')
+	}
+	if fns.object_get_class_name == unsafe { nil } {
+		panic('GDExtension interface: missing entry point object_get_class_name (ABI mismatch with running Godot)')
+	}
+	if fns.object_get_instance_from_id == unsafe { nil } {
+		panic('GDExtension interface: missing entry point object_get_instance_from_id (ABI mismatch with running Godot)')
+	}
+	if fns.object_get_instance_id == unsafe { nil } {
+		panic('GDExtension interface: missing entry point object_get_instance_id (ABI mismatch with running Godot)')
+	}
+	if fns.object_has_script_method == unsafe { nil } {
+		panic('GDExtension interface: missing entry point object_has_script_method (ABI mismatch with running Godot)')
+	}
+	if fns.object_call_script_method == unsafe { nil } {
+		panic('GDExtension interface: missing entry point object_call_script_method (ABI mismatch with running Godot)')
+	}
+	if fns.ref_get_object == unsafe { nil } {
+		panic('GDExtension interface: missing entry point ref_get_object (ABI mismatch with running Godot)')
+	}
+	if fns.ref_set_object == unsafe { nil } {
+		panic('GDExtension interface: missing entry point ref_set_object (ABI mismatch with running Godot)')
+	}
+	if fns.script_instance_create3 == unsafe { nil } {
+		panic('GDExtension interface: missing entry point script_instance_create3 (ABI mismatch with running Godot)')
+	}
+	if fns.placeholder_script_instance_create == unsafe { nil } {
+		panic('GDExtension interface: missing entry point placeholder_script_instance_create (ABI mismatch with running Godot)')
+	}
+	if fns.placeholder_script_instance_update == unsafe { nil } {
+		panic('GDExtension interface: missing entry point placeholder_script_instance_update (ABI mismatch with running Godot)')
+	}
+	if fns.object_get_script_instance == unsafe { nil } {
+		panic('GDExtension interface: missing entry point object_get_script_instance (ABI mismatch with running Godot)')
+	}
+	if fns.object_set_script_instance == unsafe { nil } {
+		panic('GDExtension interface: missing entry point object_set_script_instance (ABI mismatch with running Godot)')
+	}
+	if fns.callable_custom_create2 == unsafe { nil } {
+		panic('GDExtension interface: missing entry point callable_custom_create2 (ABI mismatch with running Godot)')
+	}
+	if fns.callable_custom_get_userdata == unsafe { nil } {
+		panic('GDExtension interface: missing entry point callable_custom_get_userdata (ABI mismatch with running Godot)')
+	}
+	if fns.classdb_get_method_bind == unsafe { nil } {
+		panic('GDExtension interface: missing entry point classdb_get_method_bind (ABI mismatch with running Godot)')
+	}
+	if fns.classdb_register_extension_class_method == unsafe { nil } {
+		panic('GDExtension interface: missing entry point classdb_register_extension_class_method (ABI mismatch with running Godot)')
+	}
+	if fns.classdb_register_extension_class_virtual_method == unsafe { nil } {
+		panic('GDExtension interface: missing entry point classdb_register_extension_class_virtual_method (ABI mismatch with running Godot)')
+	}
+	if fns.classdb_register_extension_class_integer_constant == unsafe { nil } {
+		panic('GDExtension interface: missing entry point classdb_register_extension_class_integer_constant (ABI mismatch with running Godot)')
+	}
+	if fns.classdb_register_extension_class_property == unsafe { nil } {
+		panic('GDExtension interface: missing entry point classdb_register_extension_class_property (ABI mismatch with running Godot)')
+	}
+	if fns.classdb_register_extension_class_property_indexed == unsafe { nil } {
+		panic('GDExtension interface: missing entry point classdb_register_extension_class_property_indexed (ABI mismatch with running Godot)')
+	}
+	if fns.classdb_register_extension_class_property_group == unsafe { nil } {
+		panic('GDExtension interface: missing entry point classdb_register_extension_class_property_group (ABI mismatch with running Godot)')
+	}
+	if fns.classdb_register_extension_class_property_subgroup == unsafe { nil } {
+		panic('GDExtension interface: missing entry point classdb_register_extension_class_property_subgroup (ABI mismatch with running Godot)')
+	}
+	if fns.classdb_register_extension_class_signal == unsafe { nil } {
+		panic('GDExtension interface: missing entry point classdb_register_extension_class_signal (ABI mismatch with running Godot)')
+	}
+	if fns.classdb_unregister_extension_class == unsafe { nil } {
+		panic('GDExtension interface: missing entry point classdb_unregister_extension_class (ABI mismatch with running Godot)')
+	}
+	if fns.get_library_path == unsafe { nil } {
+		panic('GDExtension interface: missing entry point get_library_path (ABI mismatch with running Godot)')
+	}
+	if fns.editor_add_plugin == unsafe { nil } {
+		panic('GDExtension interface: missing entry point editor_add_plugin (ABI mismatch with running Godot)')
+	}
+	if fns.editor_remove_plugin == unsafe { nil } {
+		panic('GDExtension interface: missing entry point editor_remove_plugin (ABI mismatch with running Godot)')
+	}
+	if fns.editor_help_load_xml_from_utf8_chars == unsafe { nil } {
+		panic('GDExtension interface: missing entry point editor_help_load_xml_from_utf8_chars (ABI mismatch with running Godot)')
+	}
+	if fns.editor_help_load_xml_from_utf8_chars_and_len == unsafe { nil } {
+		panic('GDExtension interface: missing entry point editor_help_load_xml_from_utf8_chars_and_len (ABI mismatch with running Godot)')
+	}
+	if fns.editor_register_get_classes_used_callback == unsafe { nil } {
+		panic('GDExtension interface: missing entry point editor_register_get_classes_used_callback (ABI mismatch with running Godot)')
+	}
+	if fns.register_main_loop_callbacks == unsafe { nil } {
+		panic('GDExtension interface: missing entry point register_main_loop_callbacks (ABI mismatch with running Godot)')
+	}
+	$if godot_4_6 ?|| godot_4_7 ? {
+		fns.mem_alloc2 = unsafe { GDExtensionInterfaceMemAlloc2(fns.gpaddr(c'mem_alloc2')) }
+		fns.mem_realloc2 = unsafe { GDExtensionInterfaceMemRealloc2(fns.gpaddr(c'mem_realloc2')) }
+		fns.mem_free2 = unsafe { GDExtensionInterfaceMemFree2(fns.gpaddr(c'mem_free2')) }
+	}
+	$if godot_4_6 ?|| godot_4_7 ? {
+		if fns.mem_alloc2 == unsafe { nil } {
+			panic('GDExtension interface: missing entry point mem_alloc2 (ABI mismatch with running Godot)')
+		}
+		if fns.mem_realloc2 == unsafe { nil } {
+			panic('GDExtension interface: missing entry point mem_realloc2 (ABI mismatch with running Godot)')
+		}
+		if fns.mem_free2 == unsafe { nil } {
+			panic('GDExtension interface: missing entry point mem_free2 (ABI mismatch with running Godot)')
+		}
+	}
+	$if godot_4_7 ? {
+		fns.variant_get_type_by_name = unsafe { GDExtensionInterfaceVariantGetTypeByName(fns.gpaddr(c'variant_get_type_by_name')) }
+		fns.classdb_construct_object3 = unsafe { GDExtensionInterfaceClassdbConstructObject3(fns.gpaddr(c'classdb_construct_object3')) }
+		fns.classdb_register_extension_class6 = unsafe { GDExtensionInterfaceClassdbRegisterExtensionClass6(fns.gpaddr(c'classdb_register_extension_class6')) }
+	}
+	$if godot_4_7 ? {
+		if fns.variant_get_type_by_name == unsafe { nil } {
+			panic('GDExtension interface: missing entry point variant_get_type_by_name (ABI mismatch with running Godot)')
+		}
+		if fns.classdb_construct_object3 == unsafe { nil } {
+			panic('GDExtension interface: missing entry point classdb_construct_object3 (ABI mismatch with running Godot)')
+		}
+		if fns.classdb_register_extension_class6 == unsafe { nil } {
+			panic('GDExtension interface: missing entry point classdb_register_extension_class6 (ABI mismatch with running Godot)')
+		}
+	}
 }

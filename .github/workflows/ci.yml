@@ -36,10 +36,13 @@ jobs:
     timeout-minutes: 5
     outputs:
       godot-versions: ${{ steps.versions.outputs.list }}
+      latest-godot: ${{ steps.versions.outputs.latest }}
     steps:
       - name: List supported Godot versions
         id: versions
-        run: echo 'list=["4.5", "4.6", "4.7"]' >> "$GITHUB_OUTPUT"
+        run: |
+          echo 'list=["4.5", "4.6", "4.7"]' >> "$GITHUB_OUTPUT"
+          echo 'latest=4.7' >> "$GITHUB_OUTPUT"
 
   license:
     runs-on: ubuntu-24.04
@@ -117,10 +120,10 @@ jobs:
           godot-version: ${{ matrix.godot }}
 
       - name: Dump extension API
-        run: godot --headless --quit --dump-extension-api
+        run: godot --headless --quit --dump-extension-api-with-docs
 
       - name: Generate bindings
-        run: v run generator/generation.vsh
+        run: v run generator/gen_api.vsh
 
       - name: Unit tests
         env:
@@ -149,12 +152,37 @@ jobs:
           godot-version: ${{ matrix.godot }}
 
       - name: Dump extension API
-        run: godot --headless --quit --dump-extension-api
+        run: godot --headless --quit --dump-extension-api-with-docs
 
       - name: Generate bindings
-        run: v run generator/generation.vsh
+        run: v run generator/gen_api.vsh
 
       - name: Build
         env:
           GODOT_VERSION: ${{ matrix.godot }}
         run: v -cc clang -shared -enable-globals -d godot_${GODOT_VERSION//./_} -o libgodotv.so .
+
+  interface:
+    name: Check interface.v
+    needs: [prepare, setup-v]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-v
+        with:
+          v-commit: ${{ env.V_COMMIT }}
+
+      - uses: ./.github/actions/setup-godot
+        with:
+          godot-version: ${{ needs.prepare.outputs.latest-godot }}
+
+      - name: Dump GDExtension interface
+        run: godot --headless --quit --dump-gdextension-interface-json
+
+      - name: Regenerate interface.v
+        run: v run generator/gen_interface.vsh
+
+      - name: Committed interface.v matches the newest Godot
+        run: git diff --exit-code -- extension/interface.v

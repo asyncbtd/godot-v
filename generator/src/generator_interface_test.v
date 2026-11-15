@@ -96,13 +96,13 @@ fn test_deprecation_note() {
 }
 
 fn test_new_rejects_unknown_format_version() {
-	if _ := InterfaceGen.new('{"format_version": 2, "types": [], "interface": []}', '') {
+	if _ := GeneratorInterface.new('{"format_version": 2, "types": [], "interface": []}', '') {
 		assert false
 	}
 }
 
 fn test_gate_by_since() {
-	g := InterfaceGen.new(sample_dump, '')!
+	g := GeneratorInterface.new(sample_dump, '')!
 	assert g.max_minor == 7
 	assert g.gate('') == ''
 	assert g.gate('4.5') == ''
@@ -111,7 +111,7 @@ fn test_gate_by_since() {
 }
 
 fn test_interface_output() {
-	g := InterfaceGen.new(sample_dump, '')!
+	g := GeneratorInterface.new(sample_dump, '')!
 	out := g.gen_interface()!
 	assert out.contains('pub enum GDExtensionInitializationLevel {')
 	assert out.contains('pub type GDExtensionCb = fn (p_userdata voidptr, p_type GDExtensionBool)')
@@ -120,11 +120,25 @@ fn test_interface_output() {
 	assert out.contains('// Deprecated since 4.5, use old_fn')
 }
 
-fn test_runtime_gates_new_entry_points() {
-	g := InterfaceGen.new(sample_dump, '')!
-	out := g.gen_runtime()
+fn test_version_follows_dump_max_minor() {
+	g := GeneratorInterface.new(sample_dump, '')!
+	out := g.gen_version()
+	assert out.contains('pub const gdextension_interface_format_version = 1')
+	assert out.contains('pub const godot_base_minor = 5')
+	assert out.contains('\$if godot_4_7 ? {')
+	assert out.contains('\$if godot_4_6 ? {')
+	assert out.contains('\treturn godot_base_minor')
+	assert !out.contains('godot_4_8')
+}
+
+fn test_load_gates_new_entry_points() {
+	g := GeneratorInterface.new(sample_dump, '')!
+	out := g.gen_load()
 	assert out.contains('\$if godot_4_6 ? || godot_4_7 ? {')
 	assert out.contains('\$if godot_4_7 ? {')
-	assert out.contains('fns.old_fn == unsafe { nil }')
-	assert !out.contains('fns.gone_fn == unsafe { nil }')
+	assert out.contains('fns.mem_alloc2 = unsafe { GDExtensionInterfaceMemAlloc2(fns.gpaddr(c"mem_alloc2")) }')
+	assert out.contains('fns.old_fn = unsafe { GDExtensionInterfaceOldFn(fns.gpaddr(c"old_fn")) }')
+	assert out.contains("panic('GDExtension interface: missing entry point old_fn")
+	assert out.contains('fns.gone_fn = unsafe { GDExtensionInterfaceGoneFn(fns.gpaddr(c"gone_fn")) }')
+	assert !out.contains("panic('GDExtension interface: missing entry point gone_fn")
 }

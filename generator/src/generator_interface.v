@@ -206,15 +206,15 @@ fn deprecation_note(d GDExtDeprecated) string {
 	return s
 }
 
-pub struct InterfaceGen {
+pub struct GeneratorInterface {
 	data    GDExtDump
 	out_dir string
 	// max_minor is the newest Godot 4.x minor version present in the dump.
 	max_minor int
 }
 
-// InterfaceGen.new decodes a gdextension_interface.json dump into a generator.
-pub fn InterfaceGen.new(json string, out_dir string) !InterfaceGen {
+// GeneratorInterface.new decodes a gdextension_interface.json dump into a generator.
+pub fn GeneratorInterface.new(json string, out_dir string) !GeneratorInterface {
 	data := json2.decode[GDExtDump](json)!
 	if data.format_version != supported_format_version {
 		return error('unsupported interface dump format_version ${data.format_version}, expected ${supported_format_version}')
@@ -223,28 +223,31 @@ pub fn InterfaceGen.new(json string, out_dir string) !InterfaceGen {
 	for f in data.interface_fns {
 		max_minor = int_max(max_minor, since_minor(f.since))
 	}
-	return InterfaceGen{
+	return GeneratorInterface{
 		data:      data
 		out_dir:   out_dir
 		max_minor: max_minor
 	}
 }
 
-// run writes interface.v and runtime.v.
-pub fn (mut g InterfaceGen) run() ! {
-	os.write_file(os.join_path(g.out_dir, 'interface.v'), g.gen_interface()!)!
-	os.write_file(os.join_path(g.out_dir, 'runtime.v'), g.gen_runtime())!
+// run writes extension/interface.v. Maintainers commit that file; users do not
+// regenerate it. `extension/_*.v` stays the per-Godot API output.
+pub fn (mut g GeneratorInterface) run() ! {
+	mut out := g.gen_interface()!
+	out += g.gen_version()
+	out += g.gen_load()
+	os.write_file(os.join_path(g.out_dir, 'interface.v'), out)!
 }
 
 // is_function_type reports whether `name` is a function pointer type of the dump.
-fn (g &InterfaceGen) is_function_type(name string) bool {
+fn (g &GeneratorInterface) is_function_type(name string) bool {
 	return g.data.types.any(it.kind == 'function' && it.name == name)
 }
 
 // gate returns the compile-time condition under which an entry point that
 // appeared in Godot `since` is resolved, empty when it is always resolved.
 // Building with `-d godot_4_N` targets Godot 4.N and newer.
-fn (g &InterfaceGen) gate(since string) string {
+fn (g &GeneratorInterface) gate(since string) string {
 	minor := since_minor(since)
 	if minor <= base_minor {
 		return ''
@@ -257,7 +260,7 @@ fn (g &InterfaceGen) gate(since string) string {
 }
 
 // gated_fns groups the interface entries by their compile-time gate.
-fn (g &InterfaceGen) gated_fns() map[string][]GDExtFn {
+fn (g &GeneratorInterface) gated_fns() map[string][]GDExtFn {
 	mut groups := map[string][]GDExtFn{}
 	for f in g.data.interface_fns {
 		groups[g.gate(f.since)] << f
@@ -266,13 +269,13 @@ fn (g &InterfaceGen) gated_fns() map[string][]GDExtFn {
 }
 
 // gate_keys returns the gates in a stable order, the always-on gate first.
-fn (g &InterfaceGen) gate_keys(groups map[string][]GDExtFn) []string {
+fn (g &GeneratorInterface) gate_keys(groups map[string][]GDExtFn) []string {
 	mut keys := groups.keys()
 	keys.sort()
 	return keys
 }
 
-fn (g &InterfaceGen) gen_interface() !string {
+fn (g &GeneratorInterface) gen_interface() !string {
 	mut buf := strings.new_builder(16384)
 	buf.write_string(interface_license)
 	buf.writeln('module godot')
@@ -305,16 +308,6 @@ fn (g &InterfaceGen) gen_interface() !string {
 	}
 	g.write_interface_fn_types(mut buf)
 	g.write_iface_fns(mut buf)
-	buf.writeln('')
-	buf.writeln('pub struct Class {')
-	buf.writeln('\tgodot_class bool = true')
-	buf.writeln('}')
-	buf.writeln('')
-	buf.writeln('// HACK: using this to distinguish user-defined classes')
-	buf.writeln('pub interface IClass {')
-	buf.writeln('\t// ptr voidptr')
-	buf.writeln('\tgodot_class bool')
-	buf.writeln('}')
 	return buf.str()
 }
 
@@ -339,7 +332,7 @@ fn write_note(mut buf strings.Builder, d GDExtDeprecated) {
 
 // Interface enums are C enums, i.e. 32-bit: they are embedded in structs and
 // passed by value, so they must not use the 64-bit layout of the API enums.
-fn (g &InterfaceGen) write_enum(mut buf strings.Builder, t GDExtType) {
+fn (g &GeneratorInterface) write_enum(mut buf strings.Builder, t GDExtType) {
 	if has_duplicate_values(t.values) {
 		buf.writeln('@[_allow_multiple_values]')
 	}
@@ -351,7 +344,7 @@ fn (g &InterfaceGen) write_enum(mut buf strings.Builder, t GDExtType) {
 	buf.writeln('')
 }
 
-fn (g &InterfaceGen) write_handle(mut buf strings.Builder, t GDExtType) {
+fn (g &GeneratorInterface) write_handle(mut buf strings.Builder, t GDExtType) {
 	if smart_v(t.name) != '' {
 		return
 	}
@@ -359,7 +352,7 @@ fn (g &InterfaceGen) write_handle(mut buf strings.Builder, t GDExtType) {
 	buf.writeln('')
 }
 
-fn (g &InterfaceGen) write_alias(mut buf strings.Builder, t GDExtType) {
+fn (g &GeneratorInterface) write_alias(mut buf strings.Builder, t GDExtType) {
 	write_note(mut buf, t.deprecated)
 	buf.writeln('pub type ${t.name} = ${base_type(t.typ)}')
 	buf.writeln('')
@@ -381,13 +374,13 @@ fn fn_signature(args []GDExtArg, ret GDExtReturn) string {
 	return sig
 }
 
-fn (g &InterfaceGen) write_fn_type(mut buf strings.Builder, t GDExtType) {
+fn (g &GeneratorInterface) write_fn_type(mut buf strings.Builder, t GDExtType) {
 	write_note(mut buf, t.deprecated)
 	buf.writeln('pub type ${t.name} = ${fn_signature(t.arguments, t.return_value)}')
 	buf.writeln('')
 }
 
-fn (g &InterfaceGen) write_struct(mut buf strings.Builder, t GDExtType) {
+fn (g &GeneratorInterface) write_struct(mut buf strings.Builder, t GDExtType) {
 	write_note(mut buf, t.deprecated)
 	buf.writeln('pub struct ${t.name} {')
 	buf.writeln('pub mut:')
@@ -408,7 +401,7 @@ fn interface_type_name(name string) string {
 	return 'GDExtensionInterface' + pascal_case(name)
 }
 
-fn (g &InterfaceGen) write_interface_fn_types(mut buf strings.Builder) {
+fn (g &GeneratorInterface) write_interface_fn_types(mut buf strings.Builder) {
 	for f in g.data.interface_fns {
 		write_note(mut buf, f.deprecated)
 		buf.writeln('pub type ${interface_type_name(f.name)} = ${fn_signature(f.arguments, f.return_value)}')
@@ -416,7 +409,7 @@ fn (g &InterfaceGen) write_interface_fn_types(mut buf strings.Builder) {
 	}
 }
 
-fn (g &InterfaceGen) write_iface_fns(mut buf strings.Builder) {
+fn (g &GeneratorInterface) write_iface_fns(mut buf strings.Builder) {
 	buf.writeln('// GDExtensionInterfaceFunctions holds every entry point of the interface.')
 	buf.writeln('// Entry points introduced after Godot 4.${base_minor} are resolved only when built with')
 	buf.writeln('// `-d godot_4_N`, otherwise they stay nil. Deprecated ones may be nil on newer Godot.')
@@ -432,60 +425,72 @@ fn (g &InterfaceGen) write_iface_fns(mut buf strings.Builder) {
 	buf.writeln('}')
 }
 
-fn (g &InterfaceGen) gen_runtime() string {
-	groups := g.gated_fns()
-	keys := g.gate_keys(groups)
-	mut buf := strings.new_builder(16384)
-	buf.write_string(interface_license)
-	buf.writeln('module godot')
+// gen_version emits the supported-version constants and target_godot_minor.
+// The upper bound is the newest `since` in the dump, so a 4.7 dump covers
+// builds for 4.5, 4.6 and 4.7.
+fn (g &GeneratorInterface) gen_version() string {
+	mut buf := strings.new_builder(512)
 	buf.writeln('')
-	buf.writeln('import time')
-	buf.writeln('')
-	buf.writeln('__global (')
-	buf.writeln('\tgdf = &GDExt(unsafe { nil })')
-	buf.writeln(')')
-	buf.writeln('')
-	buf.writeln('pub struct GDExt {')
-	buf.writeln('\tGDExtensionInterfaceFunctions')
-	buf.writeln('}')
-	buf.writeln('')
-	buf.writeln('// Version of the interface dump schema this module was generated from.')
+	buf.writeln('// Version of the interface dump schema this file was generated from.')
 	buf.writeln('pub const gdextension_interface_format_version = ${g.data.format_version}')
 	buf.writeln('')
 	buf.writeln('// Oldest Godot 4.x minor version the bindings support.')
 	buf.writeln('pub const godot_base_minor = ${base_minor}')
 	buf.writeln('')
-	g.write_target_minor(mut buf)
-	buf.writeln('// setup loads the GDExtension interface and keeps it for later calls.')
-	buf.writeln('pub fn setup(gpaddr fn (&i8) GDExtensionInterfaceFunctionPtr, clp GDExtensionClassLibraryPtr) &GDExt {')
-	buf.writeln('\tC._vinit(0, unsafe { nil })')
+	buf.writeln('// target_godot_minor is the Godot 4.x minor version the bindings were built')
+	buf.writeln('// for: the newest `-d godot_4_N` flag given, or ${base_minor} by default.')
+	buf.writeln('pub fn target_godot_minor() int {')
+	for k := g.max_minor; k > base_minor; k-- {
+		buf.writeln('\t\$if godot_4_${k} ? {')
+		buf.writeln('\t\treturn ${k}')
+		buf.writeln('\t}')
+	}
+	buf.writeln('\treturn godot_base_minor')
+	buf.writeln('}')
+	return buf.str()
+}
+
+// gen_load emits the interface loader: every entry point of the dump is
+// resolved through get_proc_address, grouped by its compile-time gate, and
+// every required (non-deprecated) entry point is checked against the running
+// Godot. Deprecated entry points may legitimately be nil on newer Godot.
+fn (g &GeneratorInterface) gen_load() string {
+	groups := g.gated_fns()
+	keys := g.gate_keys(groups)
+	mut buf := strings.new_builder(16384)
 	buf.writeln('')
-	buf.writeln('\tmut interface_fns := &GDExtensionInterfaceFunctions{')
-	buf.writeln('\t\tgpaddr: gpaddr')
-	buf.writeln('\t\tclp: clp')
+	buf.writeln('// interface_load resolves every interface entry point through get_proc_address.')
+	buf.writeln('// Entry points introduced after Godot 4.${base_minor} resolve only when built')
+	buf.writeln('// with `-d godot_4_N`; required ones panic when the running Godot lacks them.')
+	buf.writeln('pub fn interface_load(mut fns &GDExtensionInterfaceFunctions) {')
+	buf.writeln('\tif fns.gpaddr == unsafe { nil } {')
+	buf.writeln("\t\tpanic('GDExtension interface: get_proc_address is null')")
+	buf.writeln('\t}')
+	buf.writeln('\tif fns.clp == unsafe { nil } {')
+	buf.writeln("\t\tpanic('GDExtension interface: class library pointer is null')")
 	buf.writeln('\t}')
 	for gate in keys {
-		g.write_group(mut buf, gate, groups[gate], fn (f GDExtFn) string {
-			return 'interface_fns.${f.name} = unsafe { ${interface_type_name(f.name)}(gpaddr(c"${f.name}")) }'
+		fns := groups[gate]
+		if fns.len == 0 {
+			continue
+		}
+		g.write_group(mut buf, gate, fns, fn (f GDExtFn) string {
+			return 'fns.${f.name} = unsafe { ${interface_type_name(f.name)}(fns.gpaddr(c"${f.name}")) }'
+		})
+		required := fns.filter(it.deprecated.since == '')
+		if required.len == 0 {
+			continue
+		}
+		g.write_group(mut buf, gate, required, fn (f GDExtFn) string {
+			return "if fns.${f.name} == unsafe { nil } { panic('GDExtension interface: missing entry point ${f.name} (ABI mismatch with running Godot)') }"
 		})
 	}
-	buf.writeln('')
-	buf.writeln('\tgdf = &GDExt{')
-	buf.writeln('\t\tGDExtensionInterfaceFunctions: interface_fns')
-	buf.writeln('\t}')
-	buf.writeln('\tcheck_interface(interface_fns)')
-	buf.writeln('\tprepare_binds()')
-	buf.writeln('')
-	buf.writeln('\treturn gdf')
 	buf.writeln('}')
-	buf.writeln('')
-	g.write_check_interface(mut buf, groups, keys)
-	buf.write_string(runtime_tail)
 	return buf.str()
 }
 
 // write_group emits the lines of one gate group, wrapped in `$if` when gated.
-fn (g &InterfaceGen) write_group(mut buf strings.Builder, gate string, fns []GDExtFn, line fn (GDExtFn) string) {
+fn (g &GeneratorInterface) write_group(mut buf strings.Builder, gate string, fns []GDExtFn, line fn (GDExtFn) string) {
 	indent := if gate == '' { '\t' } else { '\t\t' }
 	if gate != '' {
 		buf.writeln('\t\$if ${gate} {')
@@ -497,148 +502,3 @@ fn (g &InterfaceGen) write_group(mut buf strings.Builder, gate string, fns []GDE
 		buf.writeln('\t}')
 	}
 }
-
-// write_target_minor emits target_godot_minor, the `-d godot_4_N` selection.
-fn (g &InterfaceGen) write_target_minor(mut buf strings.Builder) {
-	buf.writeln('// target_godot_minor is the Godot 4.x minor version the bindings were built')
-	buf.writeln('// for: the newest `-d godot_4_N` flag given, or ${base_minor} by default.')
-	buf.writeln('pub fn target_godot_minor() int {')
-	for k := g.max_minor; k > base_minor; k-- {
-		buf.writeln('\t\$if godot_4_${k} ? {')
-		buf.writeln('\t\treturn ${k}')
-		buf.writeln('\t}')
-	}
-	buf.writeln('\treturn godot_base_minor')
-	buf.writeln('}')
-	buf.writeln('')
-}
-
-// write_check_interface emits a runtime ABI check. The running Godot must not be
-// older than the version the bindings were built for, and every non-deprecated
-// entry point enabled for that version must have resolved through
-// get_proc_address. Deprecated entry points may legitimately be gone.
-fn (g &InterfaceGen) write_check_interface(mut buf strings.Builder, groups map[string][]GDExtFn, keys []string) {
-	buf.writeln('// check_interface verifies the running Godot against the bindings: its version')
-	buf.writeln('// must be at least the build target and every required entry point must exist.')
-	buf.writeln('fn check_interface(fns &GDExtensionInterfaceFunctions) {')
-	buf.writeln('\tif fns.gpaddr == unsafe { nil } {')
-	buf.writeln("\t\tpanic('GDExtension interface: get_proc_address is null')")
-	buf.writeln('\t}')
-	buf.writeln('\tif fns.clp == unsafe { nil } {')
-	buf.writeln("\t\tpanic('GDExtension interface: class library pointer is null')")
-	buf.writeln('\t}')
-	buf.writeln('\tcheck_target_version(fns)')
-	for gate in keys {
-		required := groups[gate].filter(it.deprecated.since == '')
-		if required.len == 0 {
-			continue
-		}
-		g.write_group(mut buf, gate, required, fn (f GDExtFn) string {
-			return "if fns.${f.name} == unsafe { nil } { panic('GDExtension interface: missing entry point ${f.name} (ABI mismatch with running Godot)') }"
-		})
-	}
-	buf.writeln('}')
-	buf.writeln('')
-	buf.write_string(version_check)
-}
-
-// version_check is emitted verbatim after check_interface.
-const version_check = r'fn check_target_version(fns &GDExtensionInterfaceFunctions) {
-	mut version := GDExtensionGodotVersion2{}
-	fns.get_godot_version2(&version)
-	target := target_godot_minor()
-	if version.major == 4 && int(version.minor) < target {
-		panic("GDExtension interface: built for Godot 4.${target}+ but Godot 4.${version.minor} is running, rebuild without -d godot_4_${target}")
-	}
-	if version.major == 4 && int(version.minor) < godot_base_minor {
-		panic("GDExtension interface: Godot 4.${version.minor} is older than the supported 4.${godot_base_minor}")
-	}
-}
-
-'
-
-// runtime_tail is the hand-written portion of runtime.v that does not depend on
-// the dump: the version info structs, the bind cache and the method-bind helpers.
-const runtime_tail = r'pub struct InfoVersion {
-	name        string
-	description string
-	major       int
-	minor       int
-	patch       int
-	full        string
-	time        time.Time
-	status      string
-	build       string
-}
-
-pub struct Info {
-	version InfoVersion
-	godot   InfoVersion
-}
-
-__global (
-	class_bind_ptrs   []voidptr
-	builtin_bind_ptrs []voidptr
-	utility_bind_ptrs []voidptr
-)
-
-// prepare_binds allocates the method-bind pointer tables.
-pub fn prepare_binds() {
-	if class_bind_ptrs.len != class_bind_count {
-		class_bind_ptrs = []voidptr{len: class_bind_count, init: unsafe { nil }}
-	}
-	if builtin_bind_ptrs.len != builtin_bind_count {
-		builtin_bind_ptrs = []voidptr{len: builtin_bind_count, init: unsafe { nil }}
-	}
-	if utility_bind_ptrs.len != utility_bind_count {
-		utility_bind_ptrs = []voidptr{len: utility_bind_count, init: unsafe { nil }}
-	}
-}
-
-fn class_method_bind(index int, class_name string, method string, hash i64) voidptr {
-	prepare_binds()
-	cached := class_bind_ptrs[index]
-	if cached != unsafe { nil } {
-		return cached
-	}
-	classname := StringName.new(class_name)
-	fnname := StringName.new(method)
-	defer {
-		classname.deinit()
-		fnname.deinit()
-	}
-	ptr := gdf.classdb_get_method_bind(&classname, &fnname, hash)
-	class_bind_ptrs[index] = ptr
-	return ptr
-}
-
-fn builtin_method_bind(index int, typ GDExtensionVariantType, method string, hash i64) GDExtensionPtrBuiltInMethod {
-	prepare_binds()
-	cached := builtin_bind_ptrs[index]
-	if cached != unsafe { nil } {
-		return GDExtensionPtrBuiltInMethod(cached)
-	}
-	fnname := StringName.new(method)
-	defer {
-		fnname.deinit()
-	}
-	ptr := gdf.variant_get_ptr_builtin_method(typ, &fnname, hash)
-	builtin_bind_ptrs[index] = voidptr(ptr)
-	return ptr
-}
-
-fn utility_function(index int, method string, hash i64) GDExtensionPtrUtilityFunction {
-	prepare_binds()
-	cached := utility_bind_ptrs[index]
-	if cached != unsafe { nil } {
-		return GDExtensionPtrUtilityFunction(cached)
-	}
-	fnname := StringName.new(method)
-	defer {
-		fnname.deinit()
-	}
-	ptr := gdf.variant_get_ptr_utility_function(&fnname, hash)
-	utility_bind_ptrs[index] = voidptr(ptr)
-	return ptr
-}
-'

@@ -85,7 +85,7 @@ Rebuild it and start Godot again after script changes. Godot does not load this 
 v install asyncbtd.godot
 ```
 
-### 3. Dump the engine API
+### 2. Dump the engine API
 
 Run this with the Godot editor you ship the game on. It writes `extension_api.json` in the current directory.
 
@@ -99,22 +99,31 @@ With [godots](https://github.com/MakovWait/godots), from a directory that contai
 godots exec -- --headless --quit --dump-extension-api-with-docs
 ```
 
-### 4. Generate the V bindings
+### 3. Generate the V bindings
 
-The generator reads `extension_api.json` from the current directory, or the path you pass. It writes `extension/_*.v` into this module and deletes only those files before writing. The generated files stay on disk and are not committed.
+The generator reads `extension_api.json` from the current directory, or the path you pass. It writes `extension/_*.v` into this module and deletes only those files before writing. Those files stay on disk and are not committed. `extension/interface.v` is already in the module.
 
 ```bash
-v run generator/generation.vsh
-v run generator/generation.vsh /absolute/path/to/extension_api.json
+v run generator/gen_api.vsh
+v run generator/gen_api.vsh /absolute/path/to/extension_api.json
 ```
 
-### 5. Build the language library
+`extension/interface.v` is generated from the newest supported Godot and committed. Regenerate it when that version changes:
+
+```bash
+godot --headless --quit --dump-gdextension-interface-json
+v run generator/gen_interface.vsh
+```
+
+### 4. Build the language library
 
 `godot_v_init` is compiled into this library. The built-in tcc does not set the non-executable stack flag, and Godot fails to load such a library on glibc 2.44. Use clang or gcc.
 
 ```bash
 v -cc clang -shared -enable-globals -o libgodotv.so .
 ```
+
+This build targets Godot 4.5 and still runs on a newer editor. Add `-d godot_4_N` to compile the entry points of a newer minor, for example `-d godot_4_6`.
 
 Copy `libgodotv.so` into the Godot project and add `godot.gdextension` next to `project.godot`:
 

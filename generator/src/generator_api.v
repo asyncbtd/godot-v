@@ -29,7 +29,7 @@ import strings
 import time
 import v.vmod
 
-pub struct Generator {
+pub struct GeneratorAPI {
 	api     API @[required]
 	out_dir string
 mut:
@@ -41,7 +41,7 @@ mut:
 	utility_bind  int
 }
 
-fn (g &Generator) layout_index() int {
+fn (g &GeneratorAPI) layout_index() int {
 	bits := if sizeof(voidptr) == 8 { '64' } else { '32' }
 	precision := if g.api.header.precision == 'double' { 'double' } else { 'float' }
 	name := '${precision}_${bits}'
@@ -53,22 +53,22 @@ fn (g &Generator) layout_index() int {
 	panic('missing builtin layout ${name}')
 }
 
-// Generator.new decodes an extension API dump into a generator.
-pub fn Generator.new(api_dump string, out_dir string) Generator {
+// GeneratorAPI.new decodes an extension API dump into a generator.
+pub fn GeneratorAPI.new(api_dump string, out_dir string) GeneratorAPI {
 	api := json2.decode[API](api_dump) or { panic('Failed to parse API dump JSON: ${err}') }
 
-	return Generator{
+	return GeneratorAPI{
 		api:     api
 		out_dir: out_dir
 	}
 }
 
-fn (g &Generator) file(name string) string {
+fn (g &GeneratorAPI) file(name string) string {
 	return os.join_path(g.out_dir, name)
 }
 
 // run writes the V bindings for the decoded API.
-pub fn (mut g Generator) run() ! {
+pub fn (mut g GeneratorAPI) run() ! {
 	g.setup()
 
 	g.gen_gdext_info()!
@@ -81,7 +81,7 @@ pub fn (mut g Generator) run() ! {
 	g.gen_bind_counts()!
 }
 
-fn (g &Generator) gen_bind_counts() ! {
+fn (g &GeneratorAPI) gen_bind_counts() ! {
 	os.write_file(g.file('__bind_count.v'), "
 		|module godot
 		|
@@ -94,7 +94,7 @@ fn (g &Generator) gen_bind_counts() ! {
 // makes useful mappings
 // - populate class names
 // - populate enum defaults with the first value of each enum
-fn (mut g Generator) setup() {
+fn (mut g GeneratorAPI) setup() {
 	for enm in g.api.global_enums {
 		name := convert_type(enm.name)
 		g.enum_defaults[name] = convert_name(enm.values.first().name)
@@ -125,7 +125,7 @@ fn (mut g Generator) setup() {
 	}
 }
 
-fn (g &Generator) gen_gdext_info() ! {
+fn (g &GeneratorAPI) gen_gdext_info() ! {
 	mut buf := strings.new_builder(1024)
 	manifest_path := os.join_path(os.dir(g.out_dir), 'v.mod')
 	manifest_text := os.read_file(manifest_path) or { panic(err) }
@@ -166,7 +166,7 @@ fn (g &Generator) gen_gdext_info() ! {
 	f.write(buf)!
 }
 
-fn (mut g Generator) gen_functions() ! {
+fn (mut g GeneratorAPI) gen_functions() ! {
 	mut buf := strings.new_builder(1024)
 	buf.writeln('module godot')
 
@@ -280,7 +280,7 @@ fn (mut g Generator) gen_functions() ! {
 	f.write(buf)!
 }
 
-fn (g &Generator) gen_enums() ! {
+fn (g &GeneratorAPI) gen_enums() ! {
 	mut buf := strings.new_builder(1024)
 	buf.writeln('module godot')
 
@@ -307,7 +307,7 @@ fn (g &Generator) gen_enums() ! {
 }
 
 // Generate signals for each class.
-fn (mut g Generator) gen_signals() ! {
+fn (mut g GeneratorAPI) gen_signals() ! {
 	mut buf := strings.new_builder(1024)
 	buf.writeln('module godot')
 
@@ -383,7 +383,7 @@ fn (mut g Generator) gen_signals() ! {
 	f.write(buf)!
 }
 
-fn (mut g Generator) gen_builtin_classes() ! {
+fn (mut g GeneratorAPI) gen_builtin_classes() ! {
 	for class in g.api.builtin_classes {
 		if class.name.is_lower() {
 			continue
@@ -881,7 +881,7 @@ fn (mut g Generator) gen_builtin_classes() ! {
 	}
 }
 
-fn (mut g Generator) gen_classes() ! {
+fn (mut g GeneratorAPI) gen_classes() ! {
 	for class in g.api.classes {
 		mut buf := strings.new_builder(1024)
 
@@ -1245,7 +1245,7 @@ fn (mut g Generator) gen_classes() ! {
 	}
 }
 
-fn (g &Generator) gen_structs() ! {
+fn (g &GeneratorAPI) gen_structs() ! {
 	mut buf := strings.new_builder(1024)
 	buf.writeln('module godot')
 
