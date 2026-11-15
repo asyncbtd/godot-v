@@ -48,12 +48,43 @@ pub:
 	values string
 }
 
+// Tool runs the script inside the editor.
+@[attribute]
+pub struct Tool {}
+
+// Abstract marks a script that cannot be instantiated.
+@[attribute]
+pub struct Abstract {}
+
+// Icon is the path of the class icon shown in the editor.
+@[attribute]
+pub struct Icon {
+pub:
+	path string
+}
+
+// Rpc exposes a method to the multiplayer API.
+@[attribute]
+pub struct Rpc {}
+
 // register reads NodeClass, methods, exports, and signals of T and stores them under the struct name.
 pub fn register[T]() int {
 	mut base := ''
+	mut tool := false
+	mut abstract := false
+	mut icon := ''
 	$for attr in T.attributes {
 		$if attr is NodeClass {
 			base = attr.name
+		}
+		$if attr is Tool {
+			tool = true
+		}
+		$if attr is Abstract {
+			abstract = true
+		}
+		$if attr is Icon {
+			icon = attr.path
 		}
 	}
 	mut methods := []string{}
@@ -61,6 +92,7 @@ pub fn register[T]() int {
 	mut props := []PropRecord{}
 	mut signals := []SignalRecord{}
 	mut links := []SignalLink{}
+	mut rpcs := []string{}
 	$for method in T.methods {
 		mut rec := MethodRecord{
 			name: method.name
@@ -185,7 +217,6 @@ pub fn register[T]() int {
 			}
 		}
 		rec.args = args
-		info << rec
 		if known {
 			methods << method.name
 			if method.args.len == 0 && virtual_zero(method.name) {
@@ -217,7 +248,12 @@ pub fn register[T]() int {
 					signal: attr.name
 				}
 			}
+			$if attr is Rpc {
+				rec.rpc = true
+				rpcs << method.name
+			}
 		}
+		info << rec
 	}
 	$for field in T.fields {
 		if field.name != 'base' {
@@ -283,6 +319,14 @@ pub fn register[T]() int {
 	key := T.name.all_after_last('.').to_lower()
 	registry.set(key, base, methods)
 	registry.set_shape(key, info, props, signals, links)
+	registry.set_class(key, ClassFacts{
+		name:     T.name.all_after_last('.')
+		base:     base
+		icon:     icon
+		tool:     tool
+		abstract: abstract
+		rpcs:     rpcs.clone()
+	})
 	registry.set_runtime(key, voidptr(alloc_state[T]), voidptr(call_named[T]), voidptr(set_named[T]),
 		voidptr(get_named[T]), voidptr(can_revert_named[T]), voidptr(revert_named[T]))
 	return 0

@@ -71,8 +71,8 @@ fn spec_class(kind int) string {
 // Virtual methods documented as not registered yet.
 fn not_registered_yet() map[string][]string {
 	return {
-		'ScriptLanguageExtension': ['_get_doc_comment_delimiters', '_preferred_file_name_casing']
-		'ScriptExtension':         ['_get_class_icon_path', '_is_abstract', '_placeholder_erased']
+		'ScriptLanguageExtension': ['_preferred_file_name_casing']
+		'ScriptExtension':         ['_placeholder_erased']
 		'ResourceFormatLoader':    ['_exists', '_get_classes_used', '_get_dependencies',
 			'_get_resource_script_class', '_get_resource_uid', '_rename_dependencies']
 		'ResourceFormatSaver':     ['_set_uid']
@@ -82,7 +82,7 @@ fn not_registered_yet() map[string][]string {
 fn test_method_specs_use_known_actions_and_returns() {
 	for spec in method_specs() {
 		assert spec.kind >= kind_language && spec.kind <= kind_saver
-		assert spec.action >= action_stub && spec.action <= action_script_arg_count
+		assert spec.action >= action_stub && spec.action <= action_script_rpc
 		assert spec.ret >= ret_none && spec.ret <= ret_variant
 		assert spec.name.starts_with('_')
 		assert spec_class(spec.kind) != ''

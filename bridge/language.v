@@ -21,6 +21,17 @@ fn dispatch(action int, instance voidptr, args voidptr, ret voidptr) {
 		action_lang_extension { write_string(ret, 'v') }
 		action_lang_extensions { write_packed(ret, ['v']) }
 		action_lang_comments { write_packed(ret, ['//']) }
+		action_lang_reserved { write_packed(ret, v_keywords()) }
+		action_lang_flow { write_bool(ret, is_v_flow(arg_string(args, 0))) }
+		action_lang_doc { write_packed(ret, doc_comment_delimiters()) }
+		action_lang_builtin { write_builtin_templates(ret, arg_string(args, 0)) }
+		action_lang_path { write_string(ret, path_problem(arg_string(args, 0))) }
+		action_lang_global_type { write_bool(ret, handles_global_class(arg_string(args, 0))) }
+		action_lang_global_class { write_global_class(ret, global_class_at(arg_string(args, 0))) }
+		action_lang_open {
+			write_number(ret, open_in_editor(arg_object(args, 0), arg_i64(args, 1), arg_i64(args, 2)))
+		}
+		action_lang_external { write_bool(ret, editor_program().len > 0) }
 		action_lang_strings { write_packed(ret, ["'", '"']) }
 		action_lang_templates { write_bool(ret, true) }
 		action_lang_validate { write_validate(ret, validate_source(arg_string(args, 0))) }
@@ -46,6 +57,11 @@ fn dispatch(action int, instance voidptr, args voidptr, ret voidptr) {
 		action_script_signals { write_named_list(instance, ret, 'signal') }
 		action_script_properties { write_named_list(instance, ret, 'prop') }
 		action_script_arg_count { write_arg_count(instance, read_name(arg(args, 0)), ret) }
+		action_script_global { write_string_name(ret, script_facts(instance).name) }
+		action_script_tool { write_bool(ret, script_facts(instance).tool) }
+		action_script_abstract { write_bool(ret, script_facts(instance).abstract) }
+		action_script_icon { write_string(ret, script_facts(instance).icon) }
+		action_script_rpc { write_rpc_config(ret, script_facts(instance).rpcs) }
 		action_script_reload_file { write_bool(ret, true) }
 		action_script_valid { write_bool(ret, true) }
 		action_script_reload {

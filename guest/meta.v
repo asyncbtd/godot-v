@@ -36,6 +36,7 @@ mut:
 	args []MethodArg
 	ret  string
 	line int
+	rpc  bool
 }
 
 struct PropRecord {
@@ -69,11 +70,15 @@ struct ScriptIssue {
 
 struct ScriptOutline {
 mut:
-	base    string
-	methods []MethodRecord
-	props   []PropRecord
-	signals []SignalRecord
-	links   []SignalLink
+	name     string
+	base     string
+	icon     string
+	tool     bool
+	abstract bool
+	methods  []MethodRecord
+	props    []PropRecord
+	signals  []SignalRecord
+	links    []SignalLink
 }
 
 struct ValidateReport {
@@ -356,6 +361,7 @@ fn parse_outline(source string) ScriptOutline {
 					name: name
 					args: args_from_signature(text)
 					line: line
+					rpc:  attr_has(pending, 'rpc')
 				}
 				if have_link {
 					link.method = name
@@ -364,6 +370,14 @@ fn parse_outline(source string) ScriptOutline {
 					link = SignalLink{}
 				}
 			}
+			pending = []string{}
+			continue
+		}
+		if struct_name := struct_from_line(text) {
+			outline.name = struct_name
+			outline.tool = attr_has(pending, 'tool')
+			outline.abstract = attr_has(pending, 'abstract')
+			outline.icon = icon_from(pending)
 			pending = []string{}
 			continue
 		}
@@ -391,6 +405,39 @@ fn parse_outline(source string) ScriptOutline {
 		pending = []string{}
 	}
 	return outline
+}
+
+fn attr_has(pending []string, name string) bool {
+	needle := '[${name.to_lower()}'
+	for attr in pending {
+		if attr.to_lower().contains(needle) {
+			return true
+		}
+	}
+	return false
+}
+
+fn icon_from(pending []string) string {
+	for attr in pending {
+		if attr_has([attr], 'icon') {
+			quoted := strings_of(attr)
+			if quoted.len > 0 {
+				return quoted[0]
+			}
+		}
+	}
+	return ''
+}
+
+fn struct_from_line(text string) ?string {
+	if text.starts_with('struct ') == false && text.contains(' struct ') == false {
+		return none
+	}
+	rest := text.all_after('struct ').all_before('{').all_before('[').trim_space()
+	if rest == '' || rest.contains('(') {
+		return none
+	}
+	return rest
 }
 
 fn is_function_line(text string) bool {

@@ -27,6 +27,7 @@ mut:
 	props   []PropRecord
 	signals []SignalRecord
 	links   []SignalLink
+	facts   ClassFacts
 }
 
 struct ScriptHook {
@@ -89,6 +90,22 @@ fn (mut r Registry) set_shape(key string, info []MethodRecord, props []PropRecor
 			r.bindings[i].props = props
 			r.bindings[i].signals = signals
 			r.bindings[i].links = links
+			return
+		}
+	}
+}
+
+fn (mut r Registry) set_class(key string, facts ClassFacts) {
+	for i, slot in r.bindings {
+		if slot.key == key {
+			r.bindings[i].facts = ClassFacts{
+				name:     facts.name
+				base:     facts.base
+				icon:     facts.icon
+				tool:     facts.tool
+				abstract: facts.abstract
+				rpcs:     facts.rpcs.clone()
+			}
 			return
 		}
 	}

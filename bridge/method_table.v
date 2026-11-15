@@ -54,6 +54,20 @@ const action_script_has_signal = 36
 const action_script_signals = 37
 const action_script_properties = 38
 const action_script_arg_count = 39
+const action_lang_reserved = 40
+const action_lang_flow = 41
+const action_lang_doc = 42
+const action_lang_builtin = 43
+const action_lang_path = 44
+const action_lang_global_type = 45
+const action_lang_global_class = 46
+const action_lang_open = 47
+const action_lang_external = 48
+const action_script_global = 49
+const action_script_tool = 50
+const action_script_abstract = 51
+const action_script_icon = 52
+const action_script_rpc = 53
 
 fn write_stub(ret voidptr, kind int) {
 	if ret == unsafe { nil } {
@@ -80,15 +94,16 @@ fn method_specs() []MethodSpec {
 		MethodSpec{kind_language, '_get_type', action_lang_type, ret_string},
 		MethodSpec{kind_language, '_get_extension', action_lang_extension, ret_string},
 		MethodSpec{kind_language, '_finish', action_stub, ret_none},
-		MethodSpec{kind_language, '_get_reserved_words', action_stub, ret_packed_string},
-		MethodSpec{kind_language, '_is_control_flow_keyword', action_stub, ret_bool},
+		MethodSpec{kind_language, '_get_reserved_words', action_lang_reserved, ret_packed_string},
+		MethodSpec{kind_language, '_is_control_flow_keyword', action_lang_flow, ret_bool},
+		MethodSpec{kind_language, '_get_doc_comment_delimiters', action_lang_doc, ret_packed_string},
 		MethodSpec{kind_language, '_get_comment_delimiters', action_lang_comments, ret_packed_string},
 		MethodSpec{kind_language, '_get_string_delimiters', action_lang_strings, ret_packed_string},
 		MethodSpec{kind_language, '_make_template', action_lang_template, ret_pointer},
-		MethodSpec{kind_language, '_get_built_in_templates', action_stub, ret_array},
+		MethodSpec{kind_language, '_get_built_in_templates', action_lang_builtin, ret_array},
 		MethodSpec{kind_language, '_is_using_templates', action_lang_templates, ret_bool},
 		MethodSpec{kind_language, '_validate', action_lang_validate, ret_dictionary},
-		MethodSpec{kind_language, '_validate_path', action_stub, ret_string},
+		MethodSpec{kind_language, '_validate_path', action_lang_path, ret_string},
 		MethodSpec{kind_language, '_create_script', action_lang_create, ret_pointer},
 		MethodSpec{kind_language, '_has_named_classes', action_stub, ret_bool},
 		MethodSpec{kind_language, '_supports_builtin_mode', action_stub, ret_bool},
@@ -97,8 +112,8 @@ fn method_specs() []MethodSpec {
 		MethodSpec{kind_language, '_find_function', action_lang_find, ret_number},
 		MethodSpec{kind_language, '_make_function', action_stub, ret_string},
 		MethodSpec{kind_language, '_can_make_function', action_stub, ret_bool},
-		MethodSpec{kind_language, '_open_in_external_editor', action_stub, ret_number},
-		MethodSpec{kind_language, '_overrides_external_editor', action_stub, ret_bool},
+		MethodSpec{kind_language, '_open_in_external_editor', action_lang_open, ret_number},
+		MethodSpec{kind_language, '_overrides_external_editor', action_lang_external, ret_bool},
 		MethodSpec{kind_language, '_complete_code', action_stub, ret_dictionary},
 		MethodSpec{kind_language, '_lookup_code', action_stub, ret_dictionary},
 		MethodSpec{kind_language, '_auto_indent_code', action_stub, ret_string},
@@ -131,12 +146,12 @@ fn method_specs() []MethodSpec {
 		MethodSpec{kind_language, '_profiling_get_accumulated_data', action_stub, ret_number},
 		MethodSpec{kind_language, '_profiling_get_frame_data', action_stub, ret_number},
 		MethodSpec{kind_language, '_frame', action_scripts_refresh, ret_none},
-		MethodSpec{kind_language, '_handles_global_class_type', action_stub, ret_bool},
-		MethodSpec{kind_language, '_get_global_class_name', action_stub, ret_dictionary},
+		MethodSpec{kind_language, '_handles_global_class_type', action_lang_global_type, ret_bool},
+		MethodSpec{kind_language, '_get_global_class_name', action_lang_global_class, ret_dictionary},
 		MethodSpec{kind_script, '_editor_can_reload_from_file', action_script_reload_file, ret_bool},
 		MethodSpec{kind_script, '_can_instantiate', action_script_can_instantiate, ret_bool},
 		MethodSpec{kind_script, '_get_base_script', action_stub, ret_pointer},
-		MethodSpec{kind_script, '_get_global_name', action_stub, ret_string_name},
+		MethodSpec{kind_script, '_get_global_name', action_script_global, ret_string_name},
 		MethodSpec{kind_script, '_inherits_script', action_stub, ret_bool},
 		MethodSpec{kind_script, '_get_instance_base_type', action_script_base, ret_string_name},
 		MethodSpec{kind_script, '_instance_create', action_script_instance, ret_pointer},
@@ -151,7 +166,9 @@ fn method_specs() []MethodSpec {
 		MethodSpec{kind_script, '_has_method', action_script_has_method, ret_bool},
 		MethodSpec{kind_script, '_has_static_method', action_stub, ret_bool},
 		MethodSpec{kind_script, '_get_method_info', action_stub, ret_dictionary},
-		MethodSpec{kind_script, '_is_tool', action_stub, ret_bool},
+		MethodSpec{kind_script, '_is_tool', action_script_tool, ret_bool},
+		MethodSpec{kind_script, '_is_abstract', action_script_abstract, ret_bool},
+		MethodSpec{kind_script, '_get_class_icon_path', action_script_icon, ret_string},
 		MethodSpec{kind_script, '_is_valid', action_script_valid, ret_bool},
 		MethodSpec{kind_script, '_get_language', action_script_language, ret_pointer},
 		MethodSpec{kind_script, '_has_script_signal', action_script_has_signal, ret_bool},
@@ -166,7 +183,7 @@ fn method_specs() []MethodSpec {
 		MethodSpec{kind_script, '_get_constants', action_stub, ret_dictionary},
 		MethodSpec{kind_script, '_get_members', action_stub, ret_array},
 		MethodSpec{kind_script, '_is_placeholder_fallback_enabled', action_stub, ret_bool},
-		MethodSpec{kind_script, '_get_rpc_config', action_stub, ret_variant},
+		MethodSpec{kind_script, '_get_rpc_config', action_script_rpc, ret_variant},
 		MethodSpec{kind_loader, '_get_recognized_extensions', action_loader_extensions, ret_packed_string},
 		MethodSpec{kind_loader, '_handles_type', action_loader_handles, ret_bool},
 		MethodSpec{kind_loader, '_get_resource_type', action_loader_type, ret_string},

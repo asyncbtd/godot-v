@@ -134,6 +134,14 @@ fn arg_object(args voidptr, index int) voidptr {
 	return unsafe { *&voidptr(ptr) }
 }
 
+fn arg_i64(args voidptr, index int) i64 {
+	ptr := arg(args, index)
+	if ptr == unsafe { nil } {
+		return 0
+	}
+	return unsafe { *&i64(ptr) }
+}
+
 fn arg_bool(args voidptr, index int) bool {
 	ptr := arg(args, index)
 	return unsafe { *&u8(ptr) } != 0
