@@ -89,9 +89,13 @@ fn script_can_run(instance voidptr) bool {
 	if gdf == unsafe { nil } || godot_host.api.engine == unsafe { nil } {
 		return false
 	}
-	return Engine{
+	editor := Engine{
 		ptr: godot_host.api.engine
-	}.is_editor_hint() == false
+	}.is_editor_hint()
+	if editor == false {
+		return true
+	}
+	return script_facts(instance).tool
 }
 
 fn script_has_method(instance voidptr, name string) bool {
@@ -173,8 +177,44 @@ fn (mut s ScriptInstance) call_name(name string, args voidptr, count i64, ret vo
 	}
 }
 
+fn connect_script_links(s &ScriptInstance) {
+	if gdf == unsafe { nil } || s.node == unsafe { nil } {
+		return
+	}
+	slot := godot_host.registry.get(s.script_key()) or { return }
+	owner := Object{
+		ptr: s.node
+	}
+	node := Node{
+		ptr: s.node
+	}
+	for link in slot.links {
+		if link.signal == '' || link.method == '' {
+			continue
+		}
+		mut target := owner
+		if link.node != '' && link.node != '.' && link.node != 'self' {
+			path := NodePath.new(link.node)
+			found := node.get_node_or_null(path)
+			path.deinit()
+			if found.ptr == unsafe { nil } {
+				continue
+			}
+			target = Object{
+				ptr: found.ptr
+			}
+		}
+		cb := Callable.new2(owner, link.method)
+		if target.is_connected(link.signal, cb) == false {
+			target.connect(link.signal, cb, Object_connect_Cfg{})
+		}
+		cb.deinit()
+	}
+}
+
 fn (mut s ScriptInstance) notify(what int) {
 	if what == 13 {
+		connect_script_links(s)
 		run_script_enter(voidptr(s))
 	}
 	name := notification_name(what)

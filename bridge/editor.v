@@ -211,12 +211,27 @@ fn local_script_path(path string) string {
 	return path.all_after('res://')
 }
 
+fn script_disk_path(path string) string {
+	if path.starts_with('res://') && gdf != unsafe { nil } {
+		full := ProjectSettings.singleton().globalize_path(path)
+		if full != '' {
+			return full
+		}
+	}
+	rel := local_script_path(path)
+	root := project_dir()
+	if root == '' || os.is_abs_path(rel) {
+		return rel
+	}
+	return os.join_path(root, rel)
+}
+
 fn open_in_editor(script voidptr, line i64, column i64) i64 {
 	program := editor_program()
 	if program.len == 0 || script == unsafe { nil } {
 		return i64(GDError.err_unavailable)
 	}
-	file := local_script_path(script_state(script).path.text())
+	file := script_disk_path(script_state(script).path.text())
 	if file.len == 0 {
 		return i64(GDError.err_unavailable)
 	}
@@ -245,6 +260,8 @@ fn write_builtin_templates(ret voidptr, object string) {
 		from := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_dictionary)
 		from(voidptr(&wrapped[0]), dict)
 		push_array(ret, voidptr(&wrapped[0]))
+		destroy_variant(voidptr(&wrapped[0]))
+		release_godot(dict, GDExtensionVariantType.type_dictionary)
 	}
 }
 
@@ -281,7 +298,10 @@ fn write_rpc_config(ret voidptr, names []string) {
 		from := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_dictionary)
 		from(voidptr(&wrapped[0]), inner)
 		dict_put_raw(dict, name, voidptr(&wrapped[0]))
+		destroy_variant(voidptr(&wrapped[0]))
+		release_godot(inner, GDExtensionVariantType.type_dictionary)
 	}
 	from := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_dictionary)
 	from(ret, dict)
+	release_godot(dict, GDExtensionVariantType.type_dictionary)
 }

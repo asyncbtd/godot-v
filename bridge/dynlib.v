@@ -32,6 +32,21 @@ fn C.FreeLibrary(handle voidptr) int
 
 fn C.GetLastError() u32
 
+fn C.godot_v_module_address() voidptr
+
+struct C.Dl_info {
+	dli_fname &u8
+	dli_fbase voidptr
+	dli_sname &u8
+	dli_saddr voidptr
+}
+
+fn C.dladdr(addr voidptr, info &C.Dl_info) int
+
+fn C.GetModuleHandleExA(flags u32, addr voidptr, module &voidptr) int
+
+fn C.GetModuleFileNameA(module voidptr, buf &u8, size u32) u32
+
 __global dyn_error = ''
 
 // dyn_open loads a shared library. A nil handle leaves the reason in dyn_last_error.
@@ -122,7 +137,33 @@ fn dyn_promote(path string) {
 	}
 }
 
-fn host_library() string {
+fn shared_library_file(path string) bool {
+	return path.ends_with('.so') || path.ends_with('.dll') || path.ends_with('.dylib')
+}
+
+fn loaded_module_path() string {
+	addr := C.godot_v_module_address()
+	$if windows {
+		mut handle := voidptr(0)
+		if C.GetModuleHandleExA(u32(0x4 | 0x2), addr, &handle) == 0 || handle == unsafe { nil } {
+			return ''
+		}
+		buf := []u8{len: 4096}
+		n := int(C.GetModuleFileNameA(handle, buf.data, 4096))
+		if n <= 0 {
+			return ''
+		}
+		return unsafe { tos(buf.data, n) }.clone()
+	} $else {
+		info := C.Dl_info{}
+		if C.dladdr(addr, &info) == 0 || info.dli_fname == unsafe { nil } {
+			return ''
+		}
+		return unsafe { cstring_to_vstring(info.dli_fname) }
+	}
+}
+
+fn mapped_host_library() string {
 	$if windows {
 		return ''
 	} $else $if macos {
@@ -138,6 +179,14 @@ fn host_library() string {
 		}
 		return ''
 	}
+}
+
+fn host_library() string {
+	path := loaded_module_path()
+	if shared_library_file(path) {
+		return path
+	}
+	return mapped_host_library()
 }
 
 fn promote_host() {

@@ -26,9 +26,14 @@ fn string_name(text string) GdString {
 }
 
 fn destroy_string_name(name &GdString) {
-	if name.data == unsafe { nil } {
+	if name.data == unsafe { nil } || gdf == unsafe { nil } {
 		return
 	}
+	kill := gdf.variant_get_ptr_destructor(GDExtensionVariantType.type_stringname)
+	if kill == unsafe { nil } {
+		return
+	}
+	kill(voidptr(name))
 }
 
 fn (mut s GdString) set_text(text string) {

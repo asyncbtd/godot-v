@@ -43,7 +43,7 @@ mut:
 }
 
 fn script_id_of_path(path string) string {
-	name := path.all_after_last('/')
+	name := path.replace('\\', '/').all_after_last('/')
 	if name.ends_with('.v') {
 		return name[..name.len - 2]
 	}
@@ -58,11 +58,17 @@ fn script_stem(key string) string {
 	return name.all_after_last('.')
 }
 
+fn compact_stem(key string) string {
+	return script_stem(key).replace('_', '')
+}
+
 fn (r &Registry) find(key string) int {
 	id := key.replace('\\', '/').to_lower()
 	stem := script_stem(id)
+	flat := compact_stem(id)
 	for i, slot in r.scripts {
-		if slot.id == id || slot.id == stem || slot.id.ends_with('.' + stem) {
+		if slot.id == id || slot.id == stem || slot.id.ends_with('.' + stem)
+			|| (flat != '' && compact_stem(slot.id) == flat) {
 			return i
 		}
 	}

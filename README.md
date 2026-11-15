@@ -57,9 +57,9 @@ pub fn (mut self Player) on_body_entered() {
 ```
 
 - `godot.Node` and the other engine classes come from the generated files.
-- Registration is done by attributes, no `init` function is needed:
+- Attributes describe the script. A module-level `godot.register[Player]()` records the struct:
   - `@[godot.NodeClass('Area2D')]` sets the native base class of the script;
-  - `@[godot.SignalOn(node, signal)]` connects a method to a signal.
+  - `@[godot.SignalOn(node, signal)]` connects a method to a signal when the node is ready.
 
 ### Compile the game scripts
 
@@ -74,7 +74,7 @@ v -cc clang -shared -enable-globals -o game.so .
 
 The library file sits next to `v.mod`. Its name is the module name (`dodge-creeps-2d.so`, `.dylib` on macOS, `.dll` on Windows). A second copy in a subdirectory is reported and not loaded.
 
-In the editor, reloading V scripts runs Build V: `v -cc clang -shared -enable-globals` with the same `-d godot_4_N` flag as the language library. Compiler errors go to the Godot output. Exported fields are read before the old library is closed and written back after the new one opens. Godot does not load this file as a second GDExtension.
+In the editor, reloading V scripts runs Build V. It calls `v -shared -enable-globals` with the same `-d godot_4_N` as the language library, and picks gcc, clang, or msvc from `PATH` instead of tcc. Compiler errors go to the Godot output. Exported fields are read before the old library is closed and written back after the new one opens. Godot does not load this file as a second GDExtension.
 
 ## Getting Started
 

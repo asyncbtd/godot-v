@@ -166,6 +166,11 @@ fn instance_free_property_list(_data voidptr, list &GDExtensionPropertyInfo, cou
 	if list == unsafe { nil } || count == 0 {
 		return
 	}
+	for i in 0 .. int(count) {
+		info := unsafe { list[i] }
+		release_godot(voidptr(info.name), GDExtensionVariantType.type_stringname)
+		release_godot(voidptr(info.hint_string), GDExtensionVariantType.type_string)
+	}
 	heap_free(voidptr(list))
 }
 

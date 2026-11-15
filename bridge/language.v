@@ -118,9 +118,15 @@ fn write_validate(dest voidptr, report ValidateReport) {
 	if gdf == unsafe { nil } {
 		return
 	}
-	dict_put_raw(dest, 'errors', issue_variant(report.errors))
-	dict_put_raw(dest, 'warnings', issue_variant(report.warnings))
-	dict_put_raw(dest, 'functions', function_variant(report.functions))
+	errors := issue_variant(report.errors)
+	warnings := issue_variant(report.warnings)
+	functions := function_variant(report.functions)
+	dict_put_raw(dest, 'errors', errors)
+	dict_put_raw(dest, 'warnings', warnings)
+	dict_put_raw(dest, 'functions', functions)
+	release_variant(errors)
+	release_variant(warnings)
+	release_variant(functions)
 }
 
 fn dict_put_bool(dest voidptr, key string, value bool) {
@@ -211,10 +217,13 @@ fn issue_variant(issues []ScriptIssue) voidptr {
 		from := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_dictionary)
 		from(voidptr(&wrapped[0]), item)
 		push_array(list, voidptr(&wrapped[0]))
+		destroy_variant(voidptr(&wrapped[0]))
+		release_godot(item, GDExtensionVariantType.type_dictionary)
 	}
 	wrapped := heap_alloc(24)
 	from := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_array)
 	from(wrapped, list)
+	release_godot(list, GDExtensionVariantType.type_array)
 	return wrapped
 }
 
@@ -230,9 +239,12 @@ fn function_variant(methods []MethodRecord) voidptr {
 		from := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_dictionary)
 		from(voidptr(&wrapped[0]), item)
 		push_array(list, voidptr(&wrapped[0]))
+		destroy_variant(voidptr(&wrapped[0]))
+		release_godot(item, GDExtensionVariantType.type_dictionary)
 	}
 	wrapped := heap_alloc(24)
 	from := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_array)
 	from(wrapped, list)
+	release_godot(list, GDExtensionVariantType.type_array)
 	return wrapped
 }

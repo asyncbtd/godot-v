@@ -91,12 +91,16 @@ fn (mut g GeneratorAPI) gen_functions() ! {
 				buf.writeln('\targs << voidptr(&${convert_name(arg.name)})')
 			}
 			// add each vararg
-			buf.writeln('
-				|	for i in 0..varargs.len {
-				|		vararg := varargs[i].to_variant()
-				|		args << voidptr(&vararg)
-				|	}
-			'.strip_margin().trim('\n'))
+			buf.writeln('\tmut vararg_values := []Variant{len: varargs.len}')
+			buf.writeln('\tfor i in 0 .. varargs.len {')
+			buf.writeln('\t\tvararg_values[i] = varargs[i].to_variant()')
+			buf.writeln('\t\targs << voidptr(&vararg_values[i])')
+			buf.writeln('\t}')
+			buf.writeln('\tdefer {')
+			buf.writeln('\t\tfor mut item in vararg_values {')
+			buf.writeln('\t\t\titem.deinit()')
+			buf.writeln('\t\t}')
+			buf.writeln('\t}')
 		} else if has_args {
 			// use fixed-size array
 			arg_list := method.arguments.map('voidptr(&${convert_name(it.name)})')

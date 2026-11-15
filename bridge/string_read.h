@@ -14,6 +14,13 @@
  * limitations under the License.
  */
 
+static void godot_v_module_anchor(void) {
+}
+
+static void *godot_v_module_address(void) {
+	return (void *)godot_v_module_anchor;
+}
+
 static inline int64_t godot_call_string_read(void *f, void *src, void *buf, int64_t n) {
 	typedef int64_t (*ReadFn)(void *, void *, int64_t);
 	return ((ReadFn)f)(src, buf, n);

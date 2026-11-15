@@ -37,6 +37,24 @@ fn construct_empty(ctor voidptr, dest voidptr) {
 	call(dest, unsafe { nil })
 }
 
+fn release_godot(ptr voidptr, kind GDExtensionVariantType) {
+	if ptr == unsafe { nil } || gdf == unsafe { nil } {
+		return
+	}
+	kill := gdf.variant_get_ptr_destructor(kind)
+	if kill != unsafe { nil } {
+		kill(ptr)
+	}
+	heap_free(ptr)
+}
+
+fn release_variant(ptr voidptr) {
+	destroy_variant(ptr)
+	if ptr != unsafe { nil } {
+		heap_free(ptr)
+	}
+}
+
 fn write_dictionary(dest voidptr) {
 	construct_empty(godot_host.api.new_dictionary, dest)
 }

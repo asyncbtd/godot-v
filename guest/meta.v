@@ -327,9 +327,21 @@ fn parse_outline(source string) ScriptOutline {
 	mut pending := []string{}
 	mut link := SignalLink{}
 	mut have_link := false
+	mut in_block := false
+	mut named := false
 	for index, raw in source.split_into_lines() {
 		text := raw.trim_space()
 		line := index + 1
+		if in_block {
+			if text.contains('*/') {
+				in_block = false
+			}
+			continue
+		}
+		if text.contains('/*') && text.contains('*/') == false {
+			in_block = true
+			continue
+		}
 		if text == '' || text.starts_with('//') {
 			continue
 		}
@@ -374,10 +386,16 @@ fn parse_outline(source string) ScriptOutline {
 			continue
 		}
 		if struct_name := struct_from_line(text) {
-			outline.name = struct_name
-			outline.tool = attr_has(pending, 'tool')
-			outline.abstract = attr_has(pending, 'abstract')
-			outline.icon = icon_from(pending)
+			marked := attr_has(pending, 'nodeclass')
+			if named == false || marked {
+				outline.name = struct_name
+				outline.tool = attr_has(pending, 'tool')
+				outline.abstract = attr_has(pending, 'abstract')
+				outline.icon = icon_from(pending)
+				if marked {
+					named = true
+				}
+			}
 			pending = []string{}
 			continue
 		}
@@ -408,9 +426,10 @@ fn parse_outline(source string) ScriptOutline {
 }
 
 fn attr_has(pending []string, name string) bool {
-	needle := '[${name.to_lower()}'
+	needle := name.to_lower()
 	for attr in pending {
-		if attr.to_lower().contains(needle) {
+		low := attr.to_lower()
+		if low.contains('[${needle}') || low.contains('.${needle}') {
 			return true
 		}
 	}
@@ -609,7 +628,16 @@ fn validate_source(source string) ValidateReport {
 	return checked
 }
 
+__global (
+	checked_source   = ''
+	checked_errors   = []ScriptIssue{}
+	checked_warnings = []ScriptIssue{}
+)
+
 fn compiler_issues(source string) ([]ScriptIssue, []ScriptIssue) {
+	if source == checked_source {
+		return checked_errors.clone(), checked_warnings.clone()
+	}
 	path := os.join_path(os.temp_dir(), 'godot_v_check_${os.getpid()}.v')
 	os.write_file(path, source) or {
 		return [
@@ -642,6 +670,9 @@ fn compiler_issues(source string) ([]ScriptIssue, []ScriptIssue) {
 			message: output.trim_space()
 		}
 	}
+	checked_source = source
+	checked_errors = errors.clone()
+	checked_warnings = warnings.clone()
 	return errors, warnings
 }
 

@@ -60,6 +60,14 @@ fn test_builtin_templates_cover_the_node_classes() {
 	assert blank[0].name == 'Empty'
 }
 
+fn test_parser_prefers_the_node_class() {
+	source := "struct Helper {\n\tlabel string\n}\n\n/*\nstruct Ignored {\n}\n*/\n@[godot.Tool]\n@[godot.NodeClass('Area2D')]\npub struct Player {\n}\n"
+	outline := parse_outline(source)
+	assert outline.name == 'Player'
+	assert outline.base == 'Area2D'
+	assert outline.tool
+}
+
 fn test_parser_reads_tool_abstract_icon_and_rpc() {
 	source := "@[tool]\n@[abstract]\n@[icon('res://icon.svg')]\n@[godot.NodeClass('Node2D')]\npub struct Player {\n}\n\n@[rpc]\nfn (mut self Player) ping() {}\n"
 	facts := facts_of(parse_outline(source))

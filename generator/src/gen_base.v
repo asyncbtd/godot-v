@@ -336,11 +336,15 @@ fn write_call_args(mut buf strings.Builder, args []GenArg, class_names []string,
 		}
 	}
 	if is_vararg {
-		buf.writeln('
-			|	for i in 0..varargs.len {
-			|		vararg := varargs[i].to_variant()
-			|		args << &vararg
-			|	}
-		'.strip_margin().trim('\n'))
+		buf.writeln('\tmut vararg_values := []Variant{len: varargs.len}')
+		buf.writeln('\tfor i in 0 .. varargs.len {')
+		buf.writeln('\t\tvararg_values[i] = varargs[i].to_variant()')
+		buf.writeln('\t\targs << unsafe { &vararg_values[i] }')
+		buf.writeln('\t}')
+		buf.writeln('\tdefer {')
+		buf.writeln('\t\tfor mut item in vararg_values {')
+		buf.writeln('\t\t\titem.deinit()')
+		buf.writeln('\t\t}')
+		buf.writeln('\t}')
 	}
 }

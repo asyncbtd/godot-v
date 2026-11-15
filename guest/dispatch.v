@@ -15,9 +15,8 @@
 module godot
 
 fn call_named[T](owner voidptr, name string) bool {
-	ptr := ensure_state[T]()
-	mut self := unsafe { *ptr }
-	attach_base(mut self, owner)
+	mut self := unsafe { ensure_state[T]() }
+	attach_base(self, owner)
 	bound_result = CallValue{}
 	mut found := false
 	$for method in T.methods {
@@ -1089,16 +1088,12 @@ fn call_named[T](owner voidptr, name string) bool {
 			}
 		}
 	}
-	unsafe {
-		*ptr = self
-	}
 	write_result()
 	return found
 }
 
 fn set_named[T](name string) bool {
-	ptr := ensure_state[T]()
-	mut self := unsafe { *ptr }
+	mut self := unsafe { ensure_state[T]() }
 	mut ok := false
 	$for field in T.fields {
 		if field.name == name && field.name != 'base' {
@@ -1126,10 +1121,26 @@ fn set_named[T](name string) bool {
 				self.$(field.name) = take_arg(0).s
 				ok = true
 			}
+			$if field.typ is Vector2 {
+				self.$(field.name) = Vector2{
+					x: take_arg(0).x
+					y: take_arg(0).y
+				}
+				ok = true
+			}
+			$if field.typ is Object {
+				self.$(field.name) = Object{
+					ptr: take_arg(0).o
+				}
+				ok = true
+			}
+			$if field.typ is Node {
+				self.$(field.name) = Node{
+					ptr: take_arg(0).o
+				}
+				ok = true
+			}
 		}
-	}
-	unsafe {
-		*ptr = self
 	}
 	return ok
 }
@@ -1182,6 +1193,29 @@ fn get_named[T](name string) bool {
 				}
 				ok = true
 			}
+			$if field.typ is Vector2 {
+				value := self.$(field.name)
+				bound_result = CallValue{
+					kind: kind_vector2
+					x:    value.x
+					y:    value.y
+				}
+				ok = true
+			}
+			$if field.typ is Object {
+				bound_result = CallValue{
+					kind: kind_object
+					o:    self.$(field.name).ptr
+				}
+				ok = true
+			}
+			$if field.typ is Node {
+				bound_result = CallValue{
+					kind: kind_object
+					o:    self.$(field.name).ptr
+				}
+				ok = true
+			}
 		}
 	}
 	write_result()
@@ -1189,25 +1223,52 @@ fn get_named[T](name string) bool {
 }
 
 fn zero_value[T](name string) CallValue {
+	blank := T{}
 	$for field in T.fields {
 		if field.name == name {
 			$if field.typ is bool {
-				return CallValue{ kind: kind_bool }
+				return CallValue{
+					kind: kind_bool
+					b:    blank.$(field.name)
+				}
 			}
 			$if field.typ is int {
-				return CallValue{ kind: kind_int }
+				return CallValue{
+					kind: kind_int
+					i:    i64(blank.$(field.name))
+				}
 			}
 			$if field.typ is i64 {
-				return CallValue{ kind: kind_i64 }
+				return CallValue{
+					kind: kind_i64
+					i:    blank.$(field.name)
+				}
 			}
 			$if field.typ is f32 {
-				return CallValue{ kind: kind_f32 }
+				return CallValue{
+					kind: kind_f32
+					f:    f64(blank.$(field.name))
+				}
 			}
 			$if field.typ is f64 {
-				return CallValue{ kind: kind_f64 }
+				return CallValue{
+					kind: kind_f64
+					f:    blank.$(field.name)
+				}
 			}
 			$if field.typ is string {
-				return CallValue{ kind: kind_string }
+				return CallValue{
+					kind: kind_string
+					s:    blank.$(field.name)
+				}
+			}
+			$if field.typ is Vector2 {
+				value := blank.$(field.name)
+				return CallValue{
+					kind: kind_vector2
+					x:    value.x
+					y:    value.y
+				}
 			}
 		}
 	}
@@ -1220,7 +1281,9 @@ fn can_revert_named[T](name string) bool {
 	}
 	current := read_prop[T](name)
 	origin := zero_value[T](name)
-	return current.b != origin.b || current.i != origin.i || current.f != origin.f || current.s != origin.s
+	return current.b != origin.b || current.i != origin.i || current.f != origin.f
+		|| current.s != origin.s || current.x != origin.x || current.y != origin.y
+		|| current.o != origin.o
 }
 
 fn revert_named[T](name string) bool {

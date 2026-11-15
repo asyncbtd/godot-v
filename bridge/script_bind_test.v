@@ -38,7 +38,7 @@ fn test_script_id_of_path_strips_path_and_suffix() {
 	assert script_id_of_path('file.vv') == 'file.vv'
 	assert script_id_of_path('a.v.v') == 'a.v'
 	assert script_id_of_path('res://game/Player.V') == 'Player.V'
-	assert script_id_of_path('res:\\game\\player.v') == 'res:\\game\\player'
+	assert script_id_of_path('res:\\game\\player.v') == 'player'
 }
 
 fn test_script_library_suffix_matches_platform() {

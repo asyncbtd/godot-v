@@ -278,6 +278,15 @@ pub fn register[T]() int {
 			$if field.typ is string {
 				prop.typ = 'string'
 			}
+			$if field.typ is Vector2 {
+				prop.typ = 'Vector2'
+			}
+			$if field.typ is Object {
+				prop.typ = 'Object'
+			}
+			$if field.typ is Node {
+				prop.typ = 'Node'
+			}
 			$for attr in field.attributes {
 				$if attr is Export {
 					prop.exported = true
@@ -314,6 +323,12 @@ pub fn register[T]() int {
 			$if field.typ is VSignal[string] {
 				signals << signal_of(field.name, 'string')
 			}
+			$if field.typ is VSignal[Vector2] {
+				signals << signal_of(field.name, 'Vector2')
+			}
+			$if field.typ is VSignal[Object] {
+				signals << signal_of(field.name, 'Object')
+			}
 		}
 	}
 	key := T.name.to_lower()
@@ -343,10 +358,11 @@ fn signal_of(name string, typ string) SignalRecord {
 	}
 }
 
-fn attach_base[T](mut self T, owner voidptr) {
+fn attach_base[T](self &T, owner voidptr) {
+	mut obj := unsafe { self }
 	$for field in T.fields {
 		$if field.name == 'base' && field.typ is Node {
-			self.base.ptr = owner
+			obj.base.ptr = owner
 		}
 	}
 }

@@ -40,9 +40,13 @@ pub fn (s Variant) to_variant() Variant {
 
 // from_variant copies src into this variant.
 pub fn (s &Variant) from_variant(src Variant) {
-	unsafe {
-		C.memcpy(&s.data_, &src.data_, sizeof(s.data_))
+	if gdf == unsafe { nil } {
+		unsafe {
+			C.memcpy(&s.data_, &src.data_, sizeof(s.data_))
+		}
+		return
 	}
+	gdf.variant_new_copy(GDExtensionUninitializedVariantPtr(s), &src)
 }
 
 // to_bool reads this variant as a bool.

@@ -90,7 +90,7 @@ fn method_specs() []MethodSpec {
 		MethodSpec{ kind: kind_language, name: '_profiling_set_save_native_calls', ret: ret_none },
 		MethodSpec{ kind: kind_language, name: '_profiling_get_accumulated_data', ret: ret_number },
 		MethodSpec{ kind: kind_language, name: '_profiling_get_frame_data', ret: ret_number },
-		MethodSpec{ kind: kind_language, name: '_frame', ret: ret_none, handler: on_scripts_refresh },
+		MethodSpec{ kind: kind_language, name: '_frame', ret: ret_none },
 		MethodSpec{ kind: kind_language, name: '_handles_global_class_type', ret: ret_bool, handler: on_lang_global_type },
 		MethodSpec{ kind: kind_language, name: '_get_global_class_name', ret: ret_dictionary, handler: on_lang_global_class },
 		MethodSpec{ kind: kind_script, name: '_editor_can_reload_from_file', ret: ret_bool, handler: on_script_reload_file },
