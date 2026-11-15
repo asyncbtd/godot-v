@@ -95,117 +95,6 @@ const interface_license = '// Copyright 2026 Timofey Brukhanchik
 
 '
 
-// smart_v maps the handles that are expressed as real V types elsewhere in the
-// `godot` module (Variant, StringName, String) to their pointer form. Object
-// handles stay opaque: the generated `Object` is a wrapper, not the engine type.
-fn smart_v(t string) string {
-	return match t {
-		'GDExtensionVariantPtr', 'GDExtensionConstVariantPtr' { '&Variant' }
-		'GDExtensionStringNamePtr', 'GDExtensionConstStringNamePtr' { '&StringName' }
-		'GDExtensionStringPtr', 'GDExtensionConstStringPtr' { '&String' }
-		else { '' }
-	}
-}
-
-// base_type maps a pointer-free C base type to its V equivalent.
-fn base_type(t string) string {
-	s := smart_v(t)
-	if s != '' {
-		return s
-	}
-	return match t {
-		'char' { 'i8' }
-		'char16_t' { 'u16' }
-		'char32_t' { 'u32' }
-		'wchar_t' { 'GDWideChar' }
-		'int8_t' { 'i8' }
-		'uint8_t' { 'u8' }
-		'int16_t' { 'i16' }
-		'uint16_t' { 'u16' }
-		'int32_t' { 'int' }
-		'uint32_t' { 'u32' }
-		'int64_t' { 'i64' }
-		'uint64_t' { 'u64' }
-		'size_t' { 'GDSize' }
-		'float' { 'f32' }
-		'double' { 'f64' }
-		'void' { 'void' }
-		else { t }
-	}
-}
-
-// c_to_v converts a C type string from the dump into a V type.
-fn c_to_v(t string) string {
-	mut typ := t.trim_space().replace('const ', '')
-	mut ptrs := 0
-	for typ.ends_with('*') {
-		ptrs++
-		typ = typ[..typ.len - 1].trim_space()
-	}
-	base := base_type(typ)
-	if base == 'void' {
-		return if ptrs > 0 { 'voidptr' } else { 'void' }
-	}
-	return '&'.repeat(ptrs) + base
-}
-
-// enum_value_name converts a GDEXTENSION_* value name to its V enum value.
-fn enum_value_name(enum_name string, val string) string {
-	match enum_name {
-		'GDExtensionVariantType' {
-			s := val.replace('GDEXTENSION_VARIANT_TYPE_', '').replace('_', '').to_lower()
-			return 'type_' + s
-		}
-		'GDExtensionVariantOperator' {
-			s := val.replace('GDEXTENSION_VARIANT_OP_', '').to_lower()
-			return 'op_' + s
-		}
-		else {
-			return val.to_lower()
-		}
-	}
-}
-
-// pascal_case converts snake_case to PascalCase for interface type names.
-fn pascal_case(s string) string {
-	mut parts := s.split('_')
-	for i, p in parts {
-		if p.len > 0 {
-			parts[i] = p[0..1].to_upper() + p[1..]
-		}
-	}
-	return parts.join('')
-}
-
-// safe_name resolves V keyword collisions for field and parameter names.
-fn safe_name(name string) string {
-	return if name in keywords { '${name}_' } else { name }
-}
-
-// since_minor extracts the minor version of a "4.x" string, 0 when absent.
-fn since_minor(since string) int {
-	parts := since.split('.')
-	if parts.len < 2 {
-		return 0
-	}
-	return parts[1].int()
-}
-
-// deprecation_note renders a deprecation comment, empty when not deprecated.
-fn deprecation_note(d GDExtDeprecated) string {
-	if d.since == '' {
-		return ''
-	}
-	mut s := '// Deprecated since ${d.since}'
-	if d.replace_with != '' {
-		s += ', use ${d.replace_with}'
-	}
-	if d.message != '' {
-		s += '. ${d.message.replace('\n', ' ')}'
-	}
-	return s
-}
-
 pub struct GeneratorInterface {
 	data    GDExtDump
 	out_dir string
@@ -322,25 +211,20 @@ fn has_duplicate_values(values []GDExtValue) bool {
 	return false
 }
 
-// write_note writes the deprecation comment of a declaration, if any.
-fn write_note(mut buf strings.Builder, d GDExtDeprecated) {
-	note := deprecation_note(d)
-	if note != '' {
-		buf.writeln(note)
-	}
-}
-
 // Interface enums are C enums, i.e. 32-bit: they are embedded in structs and
 // passed by value, so they must not use the 64-bit layout of the API enums.
 fn (g &GeneratorInterface) write_enum(mut buf strings.Builder, t GDExtType) {
 	if has_duplicate_values(t.values) {
 		buf.writeln('@[_allow_multiple_values]')
 	}
-	buf.writeln('pub enum ${t.name} {')
+	mut members := []EnumMember{cap: t.values.len}
 	for v in t.values {
-		buf.writeln('\t${enum_value_name(t.name, v.name)} = ${v.value}')
+		members << EnumMember{
+			name:  enum_value_name(t.name, v.name)
+			value: i64(v.value)
+		}
 	}
-	buf.writeln('}')
+	write_enum(mut buf, t.name, '', members, false)
 	buf.writeln('')
 }
 
@@ -356,22 +240,6 @@ fn (g &GeneratorInterface) write_alias(mut buf strings.Builder, t GDExtType) {
 	write_note(mut buf, t.deprecated)
 	buf.writeln('pub type ${t.name} = ${base_type(t.typ)}')
 	buf.writeln('')
-}
-
-// fn_signature renders `fn (args) ret`. Parameter names are kept when the dump
-// names every parameter, so user callbacks stay readable.
-fn fn_signature(args []GDExtArg, ret GDExtReturn) string {
-	named := args.len > 0 && args.all(it.name != '')
-	mut params := []string{cap: args.len}
-	for a in args {
-		typ := c_to_v(a.typ)
-		params << if named { '${safe_name(a.name)} ${typ}' } else { typ }
-	}
-	sig := 'fn (${params.join(', ')})'
-	if ret.typ != '' && ret.typ != 'void' {
-		return '${sig} ${c_to_v(ret.typ)}'
-	}
-	return sig
 }
 
 fn (g &GeneratorInterface) write_fn_type(mut buf strings.Builder, t GDExtType) {
@@ -395,10 +263,6 @@ fn (g &GeneratorInterface) write_struct(mut buf strings.Builder, t GDExtType) {
 	}
 	buf.writeln('}')
 	buf.writeln('')
-}
-
-fn interface_type_name(name string) string {
-	return 'GDExtensionInterface' + pascal_case(name)
 }
 
 fn (g &GeneratorInterface) write_interface_fn_types(mut buf strings.Builder) {

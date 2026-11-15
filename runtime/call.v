@@ -45,40 +45,19 @@ fn call_list(bind voidptr, instance voidptr, args []voidptr, ret voidptr) {
 }
 
 fn postinitialize(object voidptr) {
-	what := i64(0)
-	reversed := u8(0)
-	call_ptr2(godot_host.api.notification, object, voidptr(&what), voidptr(&reversed), unsafe { nil })
-}
-
-fn object_class(object voidptr) string {
-	mut name := GdString{}
-	call_none(godot_host.api.get_class, object, voidptr(&name))
-	text := name.text()
-	name.clear()
-	return text
+	if gdf == unsafe { nil } || object == unsafe { nil } {
+		return
+	}
+	Object{
+		ptr: object
+	}.notification(0)
 }
 
 fn editor_open() bool {
-	if godot_host.api.editor_hint == unsafe { nil } || godot_host.api.engine == unsafe { nil } {
+	if gdf == unsafe { nil } || godot_host.api.engine == unsafe { nil } {
 		return false
 	}
-	mut hint := u8(0)
-	call_none(godot_host.api.editor_hint, godot_host.api.engine, voidptr(&hint))
-	return hint != 0
-}
-
-fn call_string(instance voidptr, class_name string, method string, hash i64, arg string) string {
-	bind := method_bind(class_name, method, hash)
-	mut result := GdString{}
-	if arg == '' {
-		call_none(bind, instance, voidptr(&result))
-	} else {
-		mut input := GdString{}
-		input.set_text(arg)
-		call_ptr(bind, instance, voidptr(&input), voidptr(&result))
-		input.clear()
-	}
-	text := result.text()
-	result.clear()
-	return text
+	return Engine{
+		ptr: godot_host.api.engine
+	}.is_editor_hint()
 }

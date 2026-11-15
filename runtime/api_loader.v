@@ -30,8 +30,6 @@ type MemFree = fn (voidptr)
 
 type Construct = fn (voidptr) voidptr
 
-type GetMethod = fn (voidptr, voidptr, i64) voidptr
-
 type Ptrcall = fn (voidptr, voidptr, voidptr, voidptr)
 
 type RegisterClass = fn (voidptr, voidptr, voidptr, voidptr)
@@ -51,8 +49,6 @@ type Placeholder = fn (voidptr, voidptr, voidptr) voidptr
 type Constructor = fn (int, int) voidptr
 
 type Destructor = fn (int) voidptr
-
-type BuiltinMethod = fn (int, voidptr, i64) voidptr
 
 type FromType = fn (int) voidptr
 
@@ -96,7 +92,6 @@ fn load_api() {
 	godot_host.api.mem_alloc = proc('mem_alloc')
 	godot_host.api.mem_free = proc('mem_free')
 	godot_host.api.construct = proc('classdb_construct_object2')
-	godot_host.api.get_method = proc('classdb_get_method_bind')
 	godot_host.api.ptrcall = proc('object_method_bind_ptrcall')
 	godot_host.api.register_class = proc('classdb_register_extension_class5')
 	godot_host.api.singleton = proc('global_get_singleton')
@@ -109,7 +104,6 @@ fn load_api() {
 	godot_host.api.placeholder = proc('placeholder_script_instance_create')
 	godot_host.api.constructor = proc('variant_get_ptr_constructor')
 	godot_host.api.destructor = proc('variant_get_ptr_destructor')
-	godot_host.api.builtin_method = proc('variant_get_ptr_builtin_method')
 	godot_host.api.from_type = proc('get_variant_from_type_constructor')
 	godot_host.api.keyed_setter = proc('variant_get_ptr_keyed_setter')
 	godot_host.api.variant_destroy = proc('variant_destroy')
@@ -123,20 +117,6 @@ fn load_api() {
 	godot_host.api.variant_from_int = from_type_of(int(GDExtensionVariantType.type_int))
 	godot_host.api.variant_from_string = from_type_of(int(GDExtensionVariantType.type_string))
 	godot_host.api.variant_from_object = from_type_of(int(GDExtensionVariantType.type_object))
-	godot_host.api.notification = method_bind('Object', 'notification', 4023243586)
-	godot_host.api.register_language = method_bind('Engine', 'register_script_language', 1850254898)
-	godot_host.api.unregister_language = method_bind('Engine', 'unregister_script_language', 1850254898)
-	godot_host.api.get_class = method_bind('Object', 'get_class', 201670096)
-	godot_host.api.set_path = method_bind('Resource', 'set_path', 83702148)
-	godot_host.api.file_read = method_bind('FileAccess', 'get_file_as_string', 1703090593)
-	godot_host.api.file_open = method_bind('FileAccess', 'open', 1247358404)
-	godot_host.api.file_store = method_bind('FileAccess', 'store_string', 2323990056)
-	godot_host.api.file_close = method_bind('FileAccess', 'close', 3218959716)
-	godot_host.api.unref = method_bind('RefCounted', 'unreference', 2240911060)
-	godot_host.api.add_loader = method_bind('ResourceLoader', 'add_resource_format_loader', 2896595483)
-	godot_host.api.remove_loader = method_bind('ResourceLoader', 'remove_resource_format_loader', 405397102)
-	godot_host.api.add_saver = method_bind('ResourceSaver', 'add_resource_format_saver', 362894272)
-	godot_host.api.remove_saver = method_bind('ResourceSaver', 'remove_resource_format_saver', 3373026878)
 	godot_host.api.script_instance = proc('script_instance_create3')
 	godot_host.api.call_script = proc('object_call_script_method')
 	godot_host.api.variant_call = proc('variant_call')
@@ -173,28 +153,6 @@ fn to_type_of(typ int) voidptr {
 fn keyed_setter_of(typ int) voidptr {
 	f := unsafe { KeyedSetter(godot_host.api.keyed_setter) }
 	return f(typ)
-}
-
-fn builtin_method_of(typ int, name voidptr, hash i64) voidptr {
-	f := unsafe { BuiltinMethod(godot_host.api.builtin_method) }
-	return f(typ, name, hash)
-}
-
-fn method_bind(class_name string, method string, hash i64) voidptr {
-	return resolve_method(class_name, method, hash, true)
-}
-
-fn resolve_method(class_name string, method string, hash i64, report_missing bool) voidptr {
-	class := string_name(class_name)
-	name := string_name(method)
-	f := unsafe { GetMethod(godot_host.api.get_method) }
-	bind := f(voidptr(&class), voidptr(&name), hash)
-	destroy_string_name(&class)
-	destroy_string_name(&name)
-	if bind == unsafe { nil } && report_missing {
-		report('missing method ${class_name}.${method}')
-	}
-	return bind
 }
 
 fn singleton(name string) voidptr {

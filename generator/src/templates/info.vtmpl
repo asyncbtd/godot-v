@@ -1,0 +1,27 @@
+module godot
+
+import time
+
+pub fn (g GDExt) info() Info {
+	return Info{
+		version: InfoVersion{
+			name:        '@name'
+			description: '@description'
+			major:       @major
+			minor:       @minor
+			patch:       @patch
+			full:        '@full'
+			time:        time.unix(@stamp)
+		}
+		godot: InfoVersion{
+			name:        'Godot Engine'
+			description: 'Multi-platform 2D and 3D game engine'
+			major:       @godot_major
+			minor:       @godot_minor
+			patch:       @godot_patch
+			full:        '@godot_full'
+			status:      '@godot_status'
+			build:       '@godot_build'
+		}
+	}
+}

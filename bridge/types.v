@@ -117,7 +117,6 @@ mut:
 	mem_alloc           voidptr
 	mem_free            voidptr
 	construct           voidptr
-	get_method          voidptr
 	ptrcall             voidptr
 	register_class      voidptr
 	singleton           voidptr
@@ -130,7 +129,6 @@ mut:
 	placeholder         voidptr
 	constructor         voidptr
 	destructor          voidptr
-	builtin_method      voidptr
 	from_type           voidptr
 	keyed_setter        voidptr
 	variant_destroy     voidptr
@@ -142,20 +140,6 @@ mut:
 	variant_from_int    voidptr
 	variant_from_string voidptr
 	variant_from_object voidptr
-	notification        voidptr
-	register_language   voidptr
-	unregister_language voidptr
-	get_class           voidptr
-	set_path            voidptr
-	file_read           voidptr
-	file_open           voidptr
-	file_store          voidptr
-	file_close          voidptr
-	unref               voidptr
-	add_loader          voidptr
-	remove_loader       voidptr
-	add_saver           voidptr
-	remove_saver        voidptr
 	engine              voidptr
 	resource_loader     voidptr
 	resource_saver      voidptr
@@ -166,7 +150,6 @@ mut:
 	call_script         voidptr
 	variant_call        voidptr
 	to_type             voidptr
-	editor_hint         voidptr
 	string_from_name    voidptr
 	script_name         GdString
 	vscript_name        GdString

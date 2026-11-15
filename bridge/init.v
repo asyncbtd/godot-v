@@ -33,7 +33,6 @@ fn initialize_level(_userdata voidptr, level u32) {
 	if level != level_scene {
 		return
 	}
-	godot_host.api.editor_hint = method_bind('Engine', 'is_editor_hint', 36873697)
 	godot_host.api.engine = singleton('Engine')
 	godot_host.api.resource_loader = singleton('ResourceLoader')
 	godot_host.api.resource_saver = singleton('ResourceSaver')
@@ -41,16 +40,24 @@ fn initialize_level(_userdata voidptr, level u32) {
 	godot_host.api.language = construct_class(kind_language)
 	godot_host.api.loader = construct_class(kind_loader)
 	godot_host.api.saver = construct_class(kind_saver)
-	mut err := i64(-1)
-	call_ptr(godot_host.api.register_language, godot_host.api.engine, voidptr(&godot_host.api.language), voidptr(&err))
-	if err != 0 {
-		report('register_script_language returned ${err}')
+	err := Engine{
+		ptr: godot_host.api.engine
+	}.register_script_language(ScriptLanguage{
+		ptr: godot_host.api.language
+	})
+	if err != GDError.ok {
+		report('register_script_language returned ${int(err)}')
 	}
-	at_front := u8(1)
-	call_ptr2(godot_host.api.add_loader, godot_host.api.resource_loader, voidptr(&godot_host.api.loader), voidptr(&at_front),
-		unsafe { nil })
-	call_ptr2(godot_host.api.add_saver, godot_host.api.resource_saver, voidptr(&godot_host.api.saver), voidptr(&at_front),
-		unsafe { nil })
+	ResourceLoader{
+		ptr: godot_host.api.resource_loader
+	}.add_resource_format_loader(ResourceFormatLoader{
+		ptr: godot_host.api.loader
+	}, at_front: true)
+	ResourceSaver{
+		ptr: godot_host.api.resource_saver
+	}.add_resource_format_saver(ResourceFormatSaver{
+		ptr: godot_host.api.saver
+	}, at_front: true)
 	if editor_open() == false {
 		load_project_scripts()
 	}
@@ -60,19 +67,30 @@ fn deinitialize_level(_userdata voidptr, level u32) {
 	if level != level_scene {
 		return
 	}
-	mut err := i64(0)
 	if godot_host.api.language != unsafe { nil } {
 		language := godot_host.api.language
-		call_ptr(godot_host.api.unregister_language, godot_host.api.engine, voidptr(&godot_host.api.language), voidptr(&err))
+		Engine{
+			ptr: godot_host.api.engine
+		}.unregister_script_language(ScriptLanguage{
+			ptr: language
+		})
 		godot_host.api.language = unsafe { nil }
 		destroy_object(language)
 	}
 	if godot_host.api.loader != unsafe { nil } {
-		call_ptr(godot_host.api.remove_loader, godot_host.api.resource_loader, voidptr(&godot_host.api.loader), voidptr(&err))
+		ResourceLoader{
+			ptr: godot_host.api.resource_loader
+		}.remove_resource_format_loader(ResourceFormatLoader{
+			ptr: godot_host.api.loader
+		})
 		godot_host.api.loader = unsafe { nil }
 	}
 	if godot_host.api.saver != unsafe { nil } {
-		call_ptr(godot_host.api.remove_saver, godot_host.api.resource_saver, voidptr(&godot_host.api.saver), voidptr(&err))
+		ResourceSaver{
+			ptr: godot_host.api.resource_saver
+		}.remove_resource_format_saver(ResourceFormatSaver{
+			ptr: godot_host.api.saver
+		})
 		godot_host.api.saver = unsafe { nil }
 	}
 	release_kept_names()
