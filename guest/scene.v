@@ -33,29 +33,51 @@ pub fn register_mob(enter fn ()) {
 
 // instance_scene instantiates a packed scene.
 pub fn instance_scene(scene voidptr) voidptr {
-	return call_object(scene, 'instantiate')
+	if gdf == unsafe { nil } || scene == unsafe { nil } {
+		return unsafe { nil }
+	}
+	packed := PackedScene{
+		ptr: scene
+	}
+	return packed.instantiate().ptr
 }
 
 // load_resource loads the resource at path.
 pub fn load_resource(path string) voidptr {
-	loader := singleton('ResourceLoader')
-	mut text := GdString{}
-	text.set_text(path)
-	slot := temp_variant()
-	write_variant_string(slot, text)
-	ret := temp_variant()
-	ok := invoke(loader, 'load', [slot], ret)
-	found := variant_object_ptr(ret)
-	if ok && found != unsafe { nil } {
-		keep_ref(found)
-	}
-	free_variant(slot)
-	free_variant(ret)
-	text.clear()
-	if ok == false {
+	if gdf == unsafe { nil } || path == '' {
 		return unsafe { nil }
 	}
-	return found
+	found := ResourceLoader.singleton().load(path)
+	if found.ptr != unsafe { nil } {
+		RefCounted{
+			ptr: found.ptr
+		}.reference()
+	}
+	return found.ptr
+}
+
+// load_scene loads a packed scene at path.
+pub fn load_scene(path string) PackedScene {
+	return object_as[PackedScene](load_resource(path))
+}
+
+// autoload returns the autoload node registered under name.
+pub fn autoload(name string) Node {
+	if gdf == unsafe { nil } || name == '' {
+		return Node{}
+	}
+	loop := Engine.singleton().get_main_loop()
+	tree := SceneTree{
+		MainLoop: loop
+	}
+	root := tree.get_root()
+	route := NodePath.new('/root/${name}')
+	defer {
+		route.deinit()
+	}
+	return Node{
+		ptr: root.ptr
+	}.get_node_or_null(route)
 }
 
 fn init() {

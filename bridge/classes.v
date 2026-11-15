@@ -32,10 +32,11 @@ fn register_classes() {
 	for spec in method_specs() {
 		register_method(spec)
 	}
-	register_class('VLanguage', 'ScriptLanguageExtension', kind_language)
-	register_class('VScript', 'ScriptExtension', kind_script)
-	register_class('VScriptLoader', 'ResourceFormatLoader', kind_loader)
-	register_class('VScriptSaver', 'ResourceFormatSaver', kind_saver)
+	register_host_class('VLanguage', 'ScriptLanguageExtension', kind_language)
+	register_host_class('VScript', 'ScriptExtension', kind_script)
+	register_host_class('VScriptLoader', 'ResourceFormatLoader', kind_loader)
+	register_host_class('VScriptSaver', 'ResourceFormatSaver', kind_saver)
+	register_native_classes()
 }
 
 fn register_method(spec MethodSpec) {
@@ -67,7 +68,7 @@ fn find_method(list []MethodSlot, key u64) voidptr {
 	return unsafe { nil }
 }
 
-fn register_class(class_name string, parent string, kind int) {
+fn register_host_class(class_name string, parent string, kind int) {
 	name := string_name(class_name)
 	parent_name := string_name(parent)
 	info := ClassInfo{

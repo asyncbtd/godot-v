@@ -119,25 +119,25 @@ fn make_live(state &ScriptResource, owner voidptr) voidptr {
 }
 
 fn enable_loops(owner voidptr, key string) {
+	if gdf == unsafe { nil } || owner == unsafe { nil } {
+		return
+	}
+	node := Node{
+		ptr: owner
+	}
 	if registry.has_method(key, '_process') || registry.has_method(key, 'process') {
-		set_process_enabled(owner)
+		node.set_process(true)
 	}
 	if registry.has_method(key, '_physics_process') || registry.has_method(key, 'physics_process') {
-		enable_bool_method(owner, 'set_physics_process')
+		node.set_physics_process(true)
 	}
 	if registry.has_method(key, '_input') || registry.has_method(key, 'input') {
-		enable_bool_method(owner, 'set_process_input')
+		node.set_process_input(true)
 	}
-	if registry.has_method(key, '_unhandled_input') || registry.has_method(key, 'unhandled_input') {
-		enable_bool_method(owner, 'set_process_unhandled_input')
+	if registry.has_method(key, '_unhandled_input')
+		|| registry.has_method(key, 'unhandled_input') {
+		node.set_process_unhandled_input(true)
 	}
-}
-
-fn enable_bool_method(owner voidptr, method string) {
-	slot := temp_variant()
-	write_variant_bool(slot, true)
-	call_with(owner, method, slot)
-	free_variant(slot)
 }
 
 fn script_instance_of(data voidptr) &ScriptInstance {

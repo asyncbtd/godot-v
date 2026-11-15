@@ -69,7 +69,16 @@ const sample_api = '{
 				"values": [{"name": "INHERIT", "value": 0}]
 			}],
 			"constants": [{"name": "NOTIFICATION_ENTER_TREE", "value": 10}],
-			"signals": [{"name": "ready", "arguments": []}],
+			"signals": [
+				{"name": "ready", "arguments": []},
+				{"name": "hit", "arguments": [{"name": "amount", "type": "int"}]}
+			],
+			"properties": [{
+				"type": "bool",
+				"name": "visible",
+				"setter": "set_visible",
+				"getter": "is_visible"
+			}],
 			"methods": [{
 				"name": "get_index",
 				"is_const": true,
@@ -79,6 +88,51 @@ const sample_api = '{
 				"hash": 42,
 				"return_value": {"type": "int"},
 				"arguments": []
+			}, {
+				"name": "rpc",
+				"is_const": false,
+				"is_vararg": true,
+				"is_static": false,
+				"is_virtual": false,
+				"hash": 43,
+				"return_value": {"type": ""},
+				"arguments": []
+			}, {
+				"name": "find_node",
+				"is_const": true,
+				"is_vararg": false,
+				"is_static": true,
+				"is_virtual": false,
+				"hash": 44,
+				"return_value": {"type": "int"},
+				"arguments": []
+			}, {
+				"name": "_process",
+				"is_const": false,
+				"is_vararg": false,
+				"is_static": false,
+				"is_virtual": true,
+				"hash": 45,
+				"return_value": {"type": ""},
+				"arguments": [{"name": "delta", "type": "float"}]
+			}, {
+				"name": "is_visible",
+				"is_const": true,
+				"is_vararg": false,
+				"is_static": false,
+				"is_virtual": false,
+				"hash": 46,
+				"return_value": {"type": "bool"},
+				"arguments": []
+			}, {
+				"name": "set_visible",
+				"is_const": false,
+				"is_vararg": false,
+				"is_static": false,
+				"is_virtual": false,
+				"hash": 47,
+				"return_value": {"type": ""},
+				"arguments": [{"name": "value", "type": "bool"}]
 			}]
 		},
 		{
@@ -98,9 +152,17 @@ const sample_api = '{
 				"is_bitfield": false,
 				"values": [{"name": "CORE", "value": 0}]
 			}]
-		}
+		},
+		{"name": "Input", "is_refcounted": false, "is_instantiable": false, "api_type": "core"},
+		{"name": "OS", "is_refcounted": false, "is_instantiable": false, "api_type": "core"},
+		{"name": "Engine", "is_refcounted": false, "is_instantiable": false, "api_type": "core"}
 	],
-	"singletons": [{"name": "Node", "type": "Node"}],
+	"singletons": [
+		{"name": "Node", "type": "Node"},
+		{"name": "Input", "type": "Input"},
+		{"name": "OS", "type": "OS"},
+		{"name": "Engine", "type": "Engine"}
+	],
 	"native_structures": [{"name": "ObjectID", "format": "uint64_t id"}]
 }'
 
@@ -113,10 +175,26 @@ const test_manifest = "Module {
 }
 "
 
+fn test_coverage_counts_bound_shapes() {
+	g := GeneratorAPI.new(sample_api, '')
+	found := g.coverage()
+	assert found.classes == 6
+	assert found.vararg == 1
+	assert found.static_methods == 1
+	assert found.virtual_methods == 1
+	assert found.properties == 1
+	assert found.signals == 2
+	assert found.singletons == 4
+	names := g.api.singletons.map(it.type)
+	assert 'Input' in names
+	assert 'OS' in names
+	assert 'Engine' in names
+}
+
 fn test_setup_records_names_and_enum_defaults() {
 	mut g := GeneratorAPI.new(sample_api, '')
 	g.setup()
-	assert g.class_names == ['Node', 'Sprite', 'GDExtension']
+	assert g.class_names == ['Node', 'Sprite', 'GDExtension', 'Input', 'OS', 'Engine']
 	assert g.builtin_names == ['i64']
 	assert g.enum_defaults['GDError'] == 'failed'
 	assert g.enum_defaults['NodeProcessMode'] == 'inherit'
@@ -175,6 +253,23 @@ fn test_run_writes_api_bindings() {
 	assert node.contains('pub fn (s &Node) ready() &VSignal[SignalFn_void] {')
 	assert node.contains('pub fn (s &Node) get_index() i64 {')
 	assert node.contains("class_method_bind(0, 'Node', 'get_index', i64(42))")
+	assert node.contains('pub fn (s &Node) rpc(varargs ...ToVariant) {')
+	assert node.contains('pub fn Node.find_node() i64 {')
+	assert node.contains('pub interface INodeProcess {')
+	assert node.contains('process_(delta f64)')
+	assert node.contains('pub fn (s &Node) visible() bool {')
+	assert node.contains('return s.is_visible()')
+	assert node.contains('pub fn (s &Node) connect_ready(cb Callable, cfg Signal_connect_Cfg) i64 {')
+	assert node.contains('pub fn (s &Node) emit_ready() {')
+	assert node.contains('pub fn (s &Node) emit_hit(amount i64) {')
+	assert node.contains('amount_v := Variant.from_i64(amount)')
+
+	input := os.read_file(os.join_path(out_dir, '_Input.v'))!
+	assert input.contains('pub fn Input.singleton() Input {')
+	os_file := os.read_file(os.join_path(out_dir, '_OS.v'))!
+	assert os_file.contains('pub fn OS.singleton() OS {')
+	engine := os.read_file(os.join_path(out_dir, '_Engine.v'))!
+	assert engine.contains('pub fn Engine.singleton() Engine {')
 
 	sprite := os.read_file(os.join_path(out_dir, '_Sprite.v'))!
 	assert sprite.contains('pub struct Sprite {')
@@ -188,7 +283,7 @@ fn test_run_writes_api_bindings() {
 	assert structs.contains('\tid u64')
 
 	counts := os.read_file(os.join_path(out_dir, '_gen_bind_count.v'))!
-	assert counts.contains('const class_bind_count = 1')
+	assert counts.contains('const class_bind_count = 6')
 	assert counts.contains('const builtin_bind_count = 0')
 	assert counts.contains('const utility_bind_count = 1')
 

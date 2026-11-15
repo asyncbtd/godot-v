@@ -16,18 +16,20 @@ module godot
 
 // stop_anim stops an animated sprite.
 pub fn stop_anim(object voidptr) {
-	call_void(object, 'stop')
+	if gdf == unsafe { nil } || object == unsafe { nil } {
+		return
+	}
+	AnimatedSprite2D{
+		ptr: object
+	}.stop()
 }
 
 // play_anim plays an animation, or the current one when name is empty.
 pub fn play_anim(object voidptr, name string) {
-	if name == '' {
-		call_void(object, 'play')
+	if gdf == unsafe { nil } || object == unsafe { nil } {
 		return
 	}
-	stored := cached_name(name)
-	slot := temp_variant()
-	write_variant_name(slot, stored)
-	call_with(object, 'play', slot)
-	free_variant(slot)
+	AnimatedSprite2D{
+		ptr: object
+	}.play(name: name)
 }

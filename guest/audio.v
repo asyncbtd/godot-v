@@ -16,10 +16,20 @@ module godot
 
 // audio_play starts an audio player.
 pub fn audio_play(object voidptr) {
-	call_void(object, 'play')
+	if gdf == unsafe { nil } || object == unsafe { nil } {
+		return
+	}
+	AudioStreamPlayer{
+		ptr: object
+	}.play()
 }
 
 // audio_stop stops an audio player.
 pub fn audio_stop(object voidptr) {
-	call_void(object, 'stop')
+	if gdf == unsafe { nil } || object == unsafe { nil } {
+		return
+	}
+	AudioStreamPlayer{
+		ptr: object
+	}.stop()
 }

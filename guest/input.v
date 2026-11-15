@@ -16,51 +16,26 @@ module godot
 
 // delta_of reads the process delta of a node.
 pub fn delta_of(object voidptr) f64 {
-	ret := temp_variant()
-	ok := invoke(object, 'get_process_delta_time', []voidptr{}, ret)
-	mut value := f64(0)
-	if ok {
-		to := unsafe { TypeCtor(to_type_of(type_float)) }
-		to(voidptr(&value), ret)
+	if gdf == unsafe { nil } || object == unsafe { nil } {
+		return 0
 	}
-	free_variant(ret)
-	return value
+	return Node{
+		ptr: object
+	}.get_process_delta_time()
 }
 
 // feature reports whether Godot was started with the named feature.
 pub fn feature(name string) bool {
-	target := singleton('OS')
-	mut text := GdString{}
-	text.set_text(name)
-	slot := temp_variant()
-	write_variant_string(slot, text)
-	ret := temp_variant()
-	ok := invoke(target, 'has_feature', [slot], ret)
-	mut flag := u8(0)
-	if ok {
-		to := unsafe { TypeCtor(to_type_of(type_bool)) }
-		to(voidptr(&flag), ret)
+	if gdf == unsafe { nil } || name == '' {
+		return false
 	}
-	free_variant(slot)
-	free_variant(ret)
-	text.clear()
-	return flag != 0
+	return OS.singleton().has_feature(name)
 }
 
 // action_down reports whether an input action is pressed.
 pub fn action_down(name string) bool {
-	input := singleton('Input')
-	stored := cached_name(name)
-	slot := temp_variant()
-	write_variant_name(slot, stored)
-	ret := temp_variant()
-	ok := invoke(input, 'is_action_pressed', [slot], ret)
-	mut flag := u8(0)
-	if ok {
-		to := unsafe { TypeCtor(to_type_of(type_bool)) }
-		to(voidptr(&flag), ret)
+	if gdf == unsafe { nil } || name == '' {
+		return false
 	}
-	free_variant(slot)
-	free_variant(ret)
-	return flag != 0
+	return Input.singleton().is_action_pressed(name)
 }

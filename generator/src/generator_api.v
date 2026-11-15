@@ -306,6 +306,87 @@ fn (g &GeneratorAPI) gen_enums() ! {
 	f.write(buf)!
 }
 
+struct Coverage {
+pub mut:
+	classes         int
+	vararg          int
+	static_methods  int
+	virtual_methods int
+	properties      int
+	signals         int
+	singletons      int
+}
+
+// coverage counts the API shapes the generator binds.
+fn (g &GeneratorAPI) coverage() Coverage {
+	mut found := Coverage{
+		classes:    g.api.classes.len
+		singletons: g.api.singletons.len
+	}
+	for class in g.api.classes {
+		found.properties += class.properties.len
+		found.signals += class.signals.len
+		for method in class.methods {
+			if method.is_vararg {
+				found.vararg++
+			}
+			if method.is_static {
+				found.static_methods++
+			}
+			if method.is_virtual {
+				found.virtual_methods++
+			}
+		}
+	}
+	return found
+}
+
+fn write_emit(mut buf strings.Builder, class_name string, method_name string, args []APIArg) {
+	buf.writeln('')
+	buf.write_string('pub fn (s &${class_name}) emit_${method_name}(')
+	for i, arg in args {
+		if i != 0 {
+			buf.write_string(', ')
+		}
+		buf.write_string('${convert_name(arg.name)} ${convert_strings(convert_type(arg.type))}')
+	}
+	buf.writeln(') {')
+	if args.len == 0 {
+		buf.writeln('\ts.${method_name}().emit()')
+		buf.writeln('}')
+		return
+	}
+	mut values := []string{cap: args.len}
+	for arg in args {
+		name := convert_name(arg.name)
+		kind := convert_strings(convert_type(arg.type))
+		match kind {
+			'bool' {
+				buf.writeln('\t${name}_v := Variant.from_bool(${name})')
+				values << '${name}_v'
+			}
+			'i64' {
+				buf.writeln('\t${name}_v := Variant.from_i64(${name})')
+				values << '${name}_v'
+			}
+			'f64' {
+				buf.writeln('\t${name}_v := Variant.from_f64(${name})')
+				values << '${name}_v'
+			}
+			'string' {
+				buf.writeln('\t${name}_v := String.new(${name})')
+				buf.writeln('\tdefer { ${name}_v.deinit() }')
+				values << '${name}_v'
+			}
+			else {
+				values << name
+			}
+		}
+	}
+	buf.writeln('\ts.${method_name}().emit(${values.join(', ')})')
+	buf.writeln('}')
+}
+
 // Generate signals for each class.
 fn (mut g GeneratorAPI) gen_signals() ! {
 	mut buf := strings.new_builder(1024)
@@ -968,13 +1049,19 @@ fn (mut g GeneratorAPI) gen_classes() ! {
 		for signal in class.signals {
 			doc := docstring(signal.description, prefix: '|')
 			_, sig_name := signature(signal.arguments, strip_names: true)
+			method_name := convert_name(signal.name)
 			buf.writeln('
 				${doc}
-				|pub fn (s &${class.name}) ${convert_name(signal.name)}() &VSignal[${sig_name}] {
+				|pub fn (s &${class.name}) ${method_name}() &VSignal[${sig_name}] {
 				|	signal := Signal.new2(s.obj(), "${signal.name}")
 				|	return &VSignal[${sig_name}]{signal}
 				|}
 			'.strip_margin().trim_right('\n'))
+			buf.writeln('')
+			buf.writeln('pub fn (s &${class.name}) connect_${method_name}(cb Callable, cfg Signal_connect_Cfg) i64 {')
+			buf.writeln('\treturn s.${method_name}().connect(cb, cfg)')
+			buf.writeln('}')
+			write_emit(mut buf, class.name, method_name, signal.arguments)
 		}
 
 		// to Variant
@@ -1237,6 +1324,32 @@ fn (mut g GeneratorAPI) gen_classes() ! {
 
 			// end
 			buf.writeln('}')
+		}
+
+		mut method_names := map[string]bool{}
+		for method in class.methods {
+			method_names[convert_name(method.name)] = true
+		}
+		for prop in class.properties {
+			prop_name := convert_name(prop.name)
+			getter := convert_name(prop.getter)
+			if getter !in method_names || prop_name in method_names {
+				continue
+			}
+			ret := convert_strings(convert_type(prop.type))
+			buf.writeln('')
+			buf.writeln('pub fn (s &${class.name}) ${prop_name}() ${ret} {')
+			buf.writeln('\treturn s.${getter}()')
+			buf.writeln('}')
+			setter := convert_name(prop.setter)
+			set_name := 'set_${prop_name}'
+			if prop.setter != '' && setter in method_names && set_name !in method_names
+				&& set_name != setter {
+				buf.writeln('')
+				buf.writeln('pub fn (s &${class.name}) ${set_name}(value ${ret}) {')
+				buf.writeln('\ts.${setter}(value)')
+				buf.writeln('}')
+			}
 		}
 
 		mut f := os.create(g.file('_${class.name}.v'))!

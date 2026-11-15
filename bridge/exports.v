@@ -51,7 +51,7 @@ fn godot_v_call_group(object voidptr, group &u8, group_len int, method &u8, meth
 
 @[export: 'godot_v_call_method']
 fn godot_v_call_method(object voidptr, method &u8, len int) {
-	call_void(object, text_from_ptr(method, len))
+	call_method(object, text_from_ptr(method, len))
 }
 
 @[export: 'godot_v_node_at']
@@ -61,12 +61,12 @@ fn godot_v_node_at(object voidptr, path &u8, len int) voidptr {
 
 @[export: 'godot_v_timer_start']
 fn godot_v_timer_start(object voidptr) {
-	call_void(object, 'start')
+	timer_start(object)
 }
 
 @[export: 'godot_v_timer_stop']
 fn godot_v_timer_stop(object voidptr) {
-	call_void(object, 'stop')
+	timer_stop(object)
 }
 
 @[export: 'godot_v_hide_node']
@@ -85,12 +85,12 @@ fn godot_v_show_node(object voidptr) {
 
 @[export: 'godot_v_audio_play']
 fn godot_v_audio_play(object voidptr) {
-	call_void(object, 'play')
+	audio_play(object)
 }
 
 @[export: 'godot_v_audio_stop']
 fn godot_v_audio_stop(object voidptr) {
-	call_void(object, 'stop')
+	audio_stop(object)
 }
 
 @[export: 'godot_v_load_resource']
@@ -115,17 +115,17 @@ fn godot_v_set_flag_prop(object voidptr, prop &u8, prop_len int, value u8) {
 
 @[export: 'godot_v_instance_scene']
 fn godot_v_instance_scene(scene voidptr) voidptr {
-	return call_object(scene, 'instantiate')
+	return instance_scene(scene)
 }
 
 @[export: 'godot_v_set_progress_ratio']
 fn godot_v_set_progress_ratio(object voidptr, ratio f64) {
-	set_float_prop(object, 'progress_ratio', ratio)
+	set_progress_ratio(object, ratio)
 }
 
 @[export: 'godot_v_position_of']
 fn godot_v_position_of(object voidptr, x &f32, y &f32) {
-	px, py := get_vector(object, 'position')
+	px, py := position_of(object)
 	unsafe {
 		*x = px
 		*y = py
@@ -134,7 +134,7 @@ fn godot_v_position_of(object voidptr, x &f32, y &f32) {
 
 @[export: 'godot_v_rotation_of']
 fn godot_v_rotation_of(object voidptr) f64 {
-	return get_float(object, 'rotation')
+	return rotation_of(object)
 }
 
 @[export: 'godot_v_move_to']
@@ -146,7 +146,7 @@ fn godot_v_move_to(object voidptr, x f32, y f32) {
 
 @[export: 'godot_v_set_rotation']
 fn godot_v_set_rotation(object voidptr, angle f64) {
-	set_float_prop(object, 'rotation', angle)
+	set_rotation(object, angle)
 }
 
 @[export: 'godot_v_push_velocity']
@@ -168,7 +168,7 @@ fn godot_v_play_anim(object voidptr, name &u8, len int) {
 
 @[export: 'godot_v_stop_anim']
 fn godot_v_stop_anim(object voidptr) {
-	call_void(object, 'stop')
+	stop_anim(object)
 }
 
 @[export: 'godot_v_viewport_size']
@@ -182,12 +182,12 @@ fn godot_v_viewport_size(object voidptr, x &f32, y &f32) {
 
 @[export: 'godot_v_set_disabled']
 fn godot_v_set_disabled(object voidptr, disabled u8) {
-	set_bool_prop(object, 'disabled', disabled != 0)
+	set_disabled(object, disabled != 0)
 }
 
 @[export: 'godot_v_parent_of']
 fn godot_v_parent_of(object voidptr) voidptr {
-	return call_object(object, 'get_parent')
+	return parent_of(object)
 }
 
 @[export: 'godot_v_set_deferred_flag']
