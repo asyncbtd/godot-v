@@ -38,7 +38,7 @@ fn (mut self TestCritter) process(delta f64) {
 
 fn test_register_stores_class_and_methods() {
 	register[TestCritter]()
-	slot := registry.get('testcritter') or {
+	slot := godot_host.registry.get('testcritter') or {
 		assert false
 		return
 	}
@@ -54,7 +54,7 @@ fn test_register_stores_class_and_methods() {
 fn test_register_updates_existing_slot() {
 	register[TestCritter]()
 	register[TestCritter]()
-	slot := registry.get('testcritter') or {
+	slot := godot_host.registry.get('testcritter') or {
 		assert false
 		return
 	}
@@ -79,13 +79,13 @@ fn test_underscored_filename_misses_the_registry() {
 
 fn test_has_method_uses_registry() {
 	register[TestCritter]()
-	assert registry.has_method('res://scripts/testcritter.v', 'hop')
-	assert registry.has_method('res://scripts/testcritter.v', '_ready')
-	assert registry.has_method('res://scripts/testcritter.v', 'missing') == false
+	assert godot_host.registry.has_method('res://scripts/testcritter.v', 'hop')
+	assert godot_host.registry.has_method('res://scripts/testcritter.v', '_ready')
+	assert godot_host.registry.has_method('res://scripts/testcritter.v', 'missing') == false
 }
 
 fn test_has_method_ignores_source_text() {
-	assert registry.has_method('res://scripts/ghost.v', 'ready') == false
+	assert godot_host.registry.has_method('res://scripts/ghost.v', 'ready') == false
 }
 
 @[NodeClass('Node')]
@@ -103,17 +103,16 @@ fn (mut self BasedCritter) ready() {
 fn test_call_named_writes_base() {
 	register[BasedCritter]()
 	mut node := 1
-	bound_owner = voidptr(&node)
-	assert call_named[BasedCritter]('ready')
+	assert call_named[BasedCritter](voidptr(&node), 'ready')
 	assert seen_base == voidptr(&node)
 }
 
 fn test_call_named_dispatches_methods() {
 	register[TestCritter]()
-	assert call_named[TestCritter]('ready')
-	assert call_named[TestCritter]('_ready')
-	assert call_named[TestCritter]('hop')
-	assert call_named[TestCritter]('missing') == false
+	assert call_named[TestCritter](unsafe { nil }, 'ready')
+	assert call_named[TestCritter](unsafe { nil }, '_ready')
+	assert call_named[TestCritter](unsafe { nil }, 'hop')
+	assert call_named[TestCritter](unsafe { nil }, 'missing') == false
 }
 
 struct PlainSprite {}
@@ -141,7 +140,7 @@ __global plain_hits = 0
 
 fn test_register_skips_methods_that_are_not_callable() {
 	register[PlainSprite]()
-	slot := registry.get('plainsprite') or {
+	slot := godot_host.registry.get('plainsprite') or {
 		assert false
 		return
 	}
@@ -151,19 +150,19 @@ fn test_register_skips_methods_that_are_not_callable() {
 	assert methods == ['bounce', 'dash', 'idle', 'process', 'ready']
 	assert base_for('res://scripts/plainsprite.v') == 'Node'
 	plain_hits = 0
-	assert call_named[PlainSprite]('idle')
-	assert call_named[PlainSprite]('process')
-	assert call_named[PlainSprite]('_process') == false
-	assert call_named[PlainSprite]('_ready') == false
-	assert call_named[PlainSprite]('bounce')
-	assert call_named[PlainSprite]('dash')
-	assert call_named[PlainSprite]('ready')
+	assert call_named[PlainSprite](unsafe { nil }, 'idle')
+	assert call_named[PlainSprite](unsafe { nil }, 'process')
+	assert call_named[PlainSprite](unsafe { nil }, '_process') == false
+	assert call_named[PlainSprite](unsafe { nil }, '_ready') == false
+	assert call_named[PlainSprite](unsafe { nil }, 'bounce')
+	assert call_named[PlainSprite](unsafe { nil }, 'dash')
+	assert call_named[PlainSprite](unsafe { nil }, 'ready')
 	assert plain_hits == 11
 }
 
 fn test_empty_node_class_falls_back_to_node() {
 	register[EmptyClassName]()
-	slot := registry.get('emptyclassname') or {
+	slot := godot_host.registry.get('emptyclassname') or {
 		assert false
 		return
 	}

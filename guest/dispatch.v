@@ -14,10 +14,10 @@
 
 module godot
 
-fn call_named[T](name string) bool {
+fn call_named[T](owner voidptr, name string) bool {
 	ptr := ensure_state[T]()
 	mut self := unsafe { *ptr }
-	attach_base(mut self)
+	attach_base(mut self, owner)
 	bound_result = CallValue{}
 	mut found := false
 	$for method in T.methods {
@@ -1241,7 +1241,7 @@ fn read_prop[T](name string) CallValue {
 }
 
 fn exported_prop(name string) bool {
-	if slot := registry.get(bound_key) {
+	if slot := godot_host.registry.get(bound_key) {
 		for prop in slot.props {
 			if prop.name == name && prop.exported {
 				return true

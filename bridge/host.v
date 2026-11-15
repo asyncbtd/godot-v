@@ -14,22 +14,24 @@
 
 module godot
 
-// audio_play starts an audio player.
-pub fn audio_play(object voidptr) {
-	if gdf == unsafe { nil } || object == unsafe { nil } {
-		return
-	}
-	AudioStreamPlayer{
-		ptr: object
-	}.play()
+struct Host {
+mut:
+	api      Api
+	registry Registry
+	names    voidptr
+	scripts  []voidptr
+	library  voidptr
 }
 
-// audio_stop stops an audio player.
-pub fn audio_stop(object voidptr) {
-	if gdf == unsafe { nil } || object == unsafe { nil } {
-		return
+struct HostApi {
+	register fn (string, string, fn (voidptr) voidptr, fn (voidptr)) = unsafe { nil }
+}
+
+__global godot_host = Host{}
+
+// godot_v_api returns the function table a separately linked game can call once.
+pub fn godot_v_api() &HostApi {
+	return &HostApi{
+		register: register_class
 	}
-	AudioStreamPlayer{
-		ptr: object
-	}.stop()
 }

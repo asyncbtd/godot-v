@@ -316,10 +316,10 @@ pub fn register[T]() int {
 			}
 		}
 	}
-	key := T.name.all_after_last('.').to_lower()
-	registry.set(key, base, methods)
-	registry.set_shape(key, info, props, signals, links)
-	registry.set_class(key, ClassFacts{
+	key := T.name.to_lower()
+	godot_host.registry.set(key, base, methods)
+	godot_host.registry.set_shape(key, info, props, signals, links)
+	godot_host.registry.set_class(key, ClassFacts{
 		name:     T.name.all_after_last('.')
 		base:     base
 		icon:     icon
@@ -327,7 +327,7 @@ pub fn register[T]() int {
 		abstract: abstract
 		rpcs:     rpcs.clone()
 	})
-	registry.set_runtime(key, voidptr(alloc_state[T]), voidptr(call_named[T]), voidptr(set_named[T]),
+	godot_host.registry.set_runtime(key, voidptr(alloc_state[T]), voidptr(call_named[T]), voidptr(set_named[T]),
 		voidptr(get_named[T]), voidptr(can_revert_named[T]), voidptr(revert_named[T]))
 	return 0
 }
@@ -343,16 +343,16 @@ fn signal_of(name string, typ string) SignalRecord {
 	}
 }
 
-fn attach_base[T](mut self T) {
+fn attach_base[T](mut self T, owner voidptr) {
 	$for field in T.fields {
 		$if field.name == 'base' && field.typ is Node {
-			self.base.ptr = bound_owner
+			self.base.ptr = owner
 		}
 	}
 }
 
 fn base_for(path string) string {
-	slot := registry.get(script_id_of_path(path)) or { return 'Node' }
+	slot := godot_host.registry.get(script_id_of_path(path)) or { return 'Node' }
 	if slot.base.len == 0 {
 		return 'Node'
 	}
@@ -370,7 +370,7 @@ fn refresh_base(mut state ScriptResource) {
 fn write_methods(instance voidptr, ret voidptr) {
 	write_array(ret)
 	state := script_state(instance)
-	slot := registry.get(script_id_of_path(state.path.text())) or { return }
+	slot := godot_host.registry.get(script_id_of_path(state.path.text())) or { return }
 	for name in slot.methods {
 		item := temp_variant()
 		dictionary_text(item, 'name', name)

@@ -113,7 +113,7 @@ __global (
 
 fn heap_alloc(size int) voidptr {
 	bytes := if size < 1 { 1 } else { size }
-	if api.mem_alloc != unsafe { nil } {
+	if godot_host.api.mem_alloc != unsafe { nil } {
 		return alloc(uint(bytes))
 	}
 	return unsafe { malloc(bytes) }
@@ -123,7 +123,7 @@ fn heap_free(ptr voidptr) {
 	if ptr == unsafe { nil } {
 		return
 	}
-	if api.mem_free != unsafe { nil } {
+	if godot_host.api.mem_free != unsafe { nil } {
 		free_mem(ptr)
 		return
 	}
@@ -685,7 +685,7 @@ fn outline_of_script(instance voidptr) ScriptOutline {
 	state := script_state(instance)
 	parsed := parse_outline(state.source.text())
 	key := script_id_of_path(state.path.text())
-	if slot := registry.get(key) {
+	if slot := godot_host.registry.get(key) {
 		if slot.info.len > 0 || slot.props.len > 0 || slot.signals.len > 0 {
 			mut outline := ScriptOutline{
 				base:    slot.base

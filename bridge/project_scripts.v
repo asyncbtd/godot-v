@@ -17,9 +17,6 @@ module godot
 import os
 import v.vmod
 
-__global script_library = unsafe { nil }
-__global script_resources = []voidptr{}
-
 fn open_script_library(path string) bool {
 	promote_host()
 	handle := open_shared(path)
@@ -27,7 +24,7 @@ fn open_script_library(path string) bool {
 		report('script library failed to load: ' + load_error())
 		return false
 	}
-	script_library = handle
+	godot_host.library = handle
 	call_symbol(handle, 'godot__init')
 	call_symbol(handle, 'script__init')
 	return true
@@ -41,16 +38,16 @@ fn remember_script(state voidptr) {
 	if path.len == 0 {
 		return
 	}
-	for item in script_resources {
+	for item in godot_host.scripts {
 		if script_state(item).path.text() == path {
 			return
 		}
 	}
-	script_resources << state
+	godot_host.scripts << state
 }
 
 fn reload_script_sources(project string) {
-	for state in script_resources {
+	for state in godot_host.scripts {
 		res_path := script_state(state).path.text()
 		if res_path.starts_with('res://') == false {
 			continue
@@ -62,7 +59,7 @@ fn reload_script_sources(project string) {
 }
 
 fn ensure_project_scripts() {
-	if script_library != unsafe { nil } || api.singleton == unsafe { nil } {
+	if godot_host.library != unsafe { nil } || godot_host.api.singleton == unsafe { nil } {
 		return
 	}
 	load_project_scripts()
@@ -107,13 +104,15 @@ fn script_library_path(project string) string {
 }
 
 fn load_project_scripts() {
-	project := call_string(singleton('ProjectSettings'), 'ProjectSettings', 'globalize_path',
-		3135753539, 'res://').trim_right('/')
+	if gdf == unsafe { nil } {
+		return
+	}
+	project := ProjectSettings.singleton().globalize_path('res://').trim_right('/')
 	if project.len == 0 {
 		return
 	}
 	so_path := script_library_path(project)
-	if so_path.len == 0 || script_library != unsafe { nil } {
+	if so_path.len == 0 || godot_host.library != unsafe { nil } {
 		return
 	}
 	if open_script_library(so_path) == false {

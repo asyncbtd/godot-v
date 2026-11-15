@@ -23,10 +23,24 @@ pub fn object_as[T](ptr voidptr) T {
 
 // child returns the node at path as T.
 pub fn child[T](parent Node, path string) T {
-	return object_as[T](node_at(parent.ptr, path))
+	found := node_at(parent, path)
+	return object_as[T](found.ptr)
 }
 
 // instantiate_as instantiates the scene as T.
 pub fn (s &PackedScene) instantiate_as[T]() T {
-	return object_as[T](instance_scene(s.ptr))
+	return object_as[T](instance_scene(s.ptr).ptr)
+}
+
+fn node_at(parent Node, path string) Node {
+	if gdf == unsafe { nil } || parent.ptr == unsafe { nil } || path == '' {
+		return Node{}
+	}
+	route := NodePath.new(path)
+	defer {
+		route.deinit()
+	}
+	return Node{
+		ptr: parent.ptr
+	}.get_node_or_null(route)
 }

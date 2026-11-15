@@ -5,6 +5,6 @@ Module {
 	license: 'Apache-2.0'
 	author: 'Timofey Brukhanchik'
 	tags: ['gamedev','godot']
-	subdirs: ['bridge', 'extension', 'guest']
+	subdirs: ['bridge', 'extension', 'guest', 'runtime']
 	dependencies: []
 }

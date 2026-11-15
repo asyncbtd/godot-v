@@ -61,7 +61,7 @@ fn test_state_survives_calls_and_returns_values() {
 			i:    4
 		},
 	]
-	assert call_named[Counter]('bump')
+	assert call_named[Counter](unsafe { nil }, 'bump')
 	assert bound_result.i == 4
 	bound_values = [
 		CallValue{
@@ -69,7 +69,7 @@ fn test_state_survives_calls_and_returns_values() {
 			i:    3
 		},
 	]
-	assert call_named[Counter]('bump')
+	assert call_named[Counter](unsafe { nil }, 'bump')
 	assert bound_result.i == 7
 	bound_values = [
 		CallValue{
@@ -81,9 +81,9 @@ fn test_state_survives_calls_and_returns_values() {
 			i:    5
 		},
 	]
-	assert call_named[Counter]('add')
+	assert call_named[Counter](unsafe { nil }, 'add')
 	assert bound_result.i == 7
-	slot := registry.get('counter') or {
+	slot := godot_host.registry.get('counter') or {
 		assert false
 		return
 	}
@@ -96,7 +96,7 @@ fn test_state_survives_calls_and_returns_values() {
 
 fn test_register_stores_exports_signals_and_links() {
 	register[Hero]()
-	slot := registry.get('hero') or {
+	slot := godot_host.registry.get('hero') or {
 		assert false
 		return
 	}

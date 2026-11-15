@@ -14,42 +14,33 @@
 
 module godot
 
-type HookSignal = fn (string) bool
-
 type EnterFn = fn ()
+type ScriptCall = fn (voidptr, string) bool
 
-struct ScriptBinding {
+struct ScriptInfo {
 mut:
-	key     string
-	base    string
-	methods []string
-	info    []MethodRecord
-	props   []PropRecord
-	signals []SignalRecord
-	links   []SignalLink
-	facts   ClassFacts
-}
-
-struct ScriptHook {
-mut:
-	key        string
-	enter      voidptr
-	frame      voidptr
-	signal     voidptr
+	id         string
+	base       string
+	methods    []string
+	info       []MethodRecord
+	props      []PropRecord
+	signals    []SignalRecord
+	links      []SignalLink
+	facts      ClassFacts
 	factory    voidptr
+	call       voidptr
 	set_prop   voidptr
 	get_prop   voidptr
 	can_revert voidptr
 	get_revert voidptr
+	enter      voidptr
+	frame      voidptr
 }
 
 struct Registry {
 mut:
-	bindings []ScriptBinding
-	hooks    []ScriptHook
+	scripts []ScriptInfo
 }
-
-__global registry = Registry{}
 
 fn script_id_of_path(path string) string {
 	name := path.all_after_last('/')
@@ -59,112 +50,121 @@ fn script_id_of_path(path string) string {
 	return name
 }
 
-fn (mut r Registry) set(key string, base string, methods []string) {
-	for i, slot in r.bindings {
-		if slot.key == key {
-			r.bindings[i].base = base
-			r.bindings[i].methods = methods
-			return
-		}
+fn script_stem(key string) string {
+	name := key.replace('\\', '/').all_after_last('/').to_lower()
+	if name.ends_with('.v') {
+		return name[..name.len - 2]
 	}
-	r.bindings << ScriptBinding{
-		key:     key
-		base:    base
-		methods: methods
-	}
+	return name.all_after_last('.')
 }
 
-fn (r &Registry) get(key string) ?ScriptBinding {
-	for slot in r.bindings {
-		if slot.key == key {
-			return slot
+fn (r &Registry) find(key string) int {
+	id := key.replace('\\', '/').to_lower()
+	stem := script_stem(id)
+	for i, slot in r.scripts {
+		if slot.id == id || slot.id == stem || slot.id.ends_with('.' + stem) {
+			return i
 		}
 	}
-	return none
+	return -1
+}
+
+fn (r &Registry) get(key string) ?ScriptInfo {
+	index := r.find(key)
+	if index < 0 {
+		return none
+	}
+	return r.scripts[index]
+}
+
+fn (mut r Registry) set(key string, base string, methods []string) {
+	id := key.to_lower()
+	index := r.find(id)
+	if index >= 0 {
+		r.scripts[index].base = base
+		r.scripts[index].methods = methods.clone()
+		return
+	}
+	r.scripts << ScriptInfo{
+		id:      id
+		base:    base
+		methods: methods.clone()
+	}
 }
 
 fn (mut r Registry) set_shape(key string, info []MethodRecord, props []PropRecord, signals []SignalRecord, links []SignalLink) {
-	for i, slot in r.bindings {
-		if slot.key == key {
-			r.bindings[i].info = info
-			r.bindings[i].props = props
-			r.bindings[i].signals = signals
-			r.bindings[i].links = links
-			return
-		}
+	index := r.find(key)
+	if index < 0 {
+		return
 	}
+	r.scripts[index].info = info.clone()
+	r.scripts[index].props = props.clone()
+	r.scripts[index].signals = signals.clone()
+	r.scripts[index].links = links.clone()
 }
 
 fn (mut r Registry) set_class(key string, facts ClassFacts) {
-	for i, slot in r.bindings {
-		if slot.key == key {
-			r.bindings[i].facts = ClassFacts{
-				name:     facts.name
-				base:     facts.base
-				icon:     facts.icon
-				tool:     facts.tool
-				abstract: facts.abstract
-				rpcs:     facts.rpcs.clone()
-			}
-			return
-		}
+	index := r.find(key)
+	if index < 0 {
+		return
+	}
+	r.scripts[index].facts = facts
+}
+
+fn (mut r Registry) set_runtime(key string, factory voidptr, call voidptr, set_prop voidptr, get_prop voidptr, can_revert voidptr, get_revert voidptr) {
+	index := r.find(key)
+	if index < 0 {
+		return
+	}
+	r.scripts[index].factory = factory
+	r.scripts[index].call = call
+	r.scripts[index].set_prop = set_prop
+	r.scripts[index].get_prop = get_prop
+	r.scripts[index].can_revert = can_revert
+	r.scripts[index].get_revert = get_revert
+}
+
+fn (mut r Registry) add_script(key string, enter voidptr, frame voidptr, call voidptr) {
+	id := script_stem(key)
+	index := r.find(id)
+	if index >= 0 {
+		r.scripts[index].enter = enter
+		r.scripts[index].frame = frame
+		r.scripts[index].call = call
+		return
+	}
+	r.scripts << ScriptInfo{
+		id:    id
+		enter: enter
+		frame: frame
+		call:  call
 	}
 }
 
-fn (mut r Registry) set_runtime(key string, factory voidptr, signal voidptr, set_prop voidptr, get_prop voidptr, can_revert voidptr, get_revert voidptr) {
-	r.add_script(key, unsafe { nil }, unsafe { nil }, signal)
-	for i, slot in r.hooks {
-		if slot.key == key {
-			r.hooks[i].factory = factory
-			r.hooks[i].set_prop = set_prop
-			r.hooks[i].get_prop = get_prop
-			r.hooks[i].can_revert = can_revert
-			r.hooks[i].get_revert = get_revert
-			return
-		}
-	}
+fn (r &Registry) hook(key string) ScriptInfo {
+	return r.get(key) or { return ScriptInfo{} }
 }
 
-fn (mut r Registry) add_script(key string, enter voidptr, frame voidptr, signal voidptr) {
-	for i, slot in r.hooks {
-		if slot.key == key {
-			r.hooks[i].enter = enter
-			r.hooks[i].frame = frame
-			r.hooks[i].signal = signal
-			return
+fn (r &Registry) has_method(key string, name string) bool {
+	if name == '' {
+		return false
+	}
+	slot := r.get(key) or { return false }
+	plain := name.trim_left('_')
+	for method in slot.methods {
+		if method == name || method == plain {
+			return true
 		}
-	}
-	r.hooks << ScriptHook{
-		key:    key
-		enter:  enter
-		frame:  frame
-		signal: signal
-	}
-}
-
-fn (r &Registry) hook(path string) ScriptHook {
-	key := script_id_of_path(path)
-	for slot in r.hooks {
-		if slot.key == key {
-			return slot
-		}
-	}
-	return ScriptHook{}
-}
-
-fn (r &Registry) has_method(path string, name string) bool {
-	if slot := r.get(script_id_of_path(path)) {
-		return name in slot.methods
 	}
 	return false
 }
 
-fn call_signal(signal voidptr, name string) bool {
-	if signal == unsafe { nil } {
+fn call_script(callback voidptr, owner voidptr, name string) bool {
+	if callback == unsafe { nil } {
 		return false
 	}
-	f := unsafe { HookSignal(signal) }
-	return f(name)
+	f := unsafe { ScriptCall(callback) }
+	return f(owner, name)
 }
 
 fn run_script_method(data voidptr, name string) bool {
@@ -181,17 +181,15 @@ fn run_script_call(data voidptr, name string, args voidptr, count i64, ret voidp
 		return false
 	}
 	key := box.script_key()
-	if registry.has_method(key, name) == false {
+	if godot_host.registry.has_method(key, name) == false {
 		return false
 	}
-	previous_owner := bound_owner
 	previous_state := bound_state
 	previous_type := bound_state_type
 	previous_force := bound_force
 	previous_values := bound_values.clone()
 	previous_ret := bound_ret
 	previous_key := bound_key
-	bound_owner = box.node
 	bound_key = key
 	bound_ret = ret
 	if box.state != unsafe { nil } {
@@ -205,12 +203,11 @@ fn run_script_call(data voidptr, name string, args voidptr, count i64, ret voidp
 	if args != unsafe { nil } {
 		bound_values = decode_args(args, count)
 	}
-	hook := registry.hook(key)
-	ok := call_signal(hook.signal, name)
+	hook := godot_host.registry.hook(key)
+	ok := call_script(hook.call, box.node, name)
 	if box.state == unsafe { nil } && bound_state != unsafe { nil } {
 		box.state = bound_state
 	}
-	bound_owner = previous_owner
 	bound_state = previous_state
 	bound_state_type = previous_type
 	bound_force = previous_force
@@ -228,18 +225,15 @@ fn run_script_enter(data voidptr) {
 	if box == unsafe { nil } {
 		return
 	}
-	if registry.has_method(box.script_key(), '_ready') {
+	if godot_host.registry.has_method(box.script_key(), '_ready') {
 		return
 	}
-	hook := registry.hook(box.script_key())
+	hook := godot_host.registry.hook(box.script_key())
 	if hook.enter == unsafe { nil } {
 		return
 	}
-	previous := bound_owner
-	bound_owner = box.node
 	f := unsafe { EnterFn(hook.enter) }
 	f()
-	bound_owner = previous
 }
 
 fn (s &ScriptInstance) script_key() string {

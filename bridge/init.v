@@ -17,8 +17,8 @@ module godot
 @[export: 'godot_v_init']
 fn godot_v_init(get_proc_address voidptr, library voidptr, initialization voidptr) u8 {
 	C._vinit(0, unsafe { nil })
-	api.get_proc = get_proc_address
-	api.library = library
+	godot_host.api.get_proc = get_proc_address
+	godot_host.api.library = library
 	load_api()
 	load_gdf(get_proc_address, library)
 	mut startup := unsafe { &Initialization(initialization) }
@@ -33,23 +33,23 @@ fn initialize_level(_userdata voidptr, level u32) {
 	if level != level_scene {
 		return
 	}
-	api.editor_hint = method_bind('Engine', 'is_editor_hint', 36873697)
-	api.engine = singleton('Engine')
-	api.resource_loader = singleton('ResourceLoader')
-	api.resource_saver = singleton('ResourceSaver')
+	godot_host.api.editor_hint = method_bind('Engine', 'is_editor_hint', 36873697)
+	godot_host.api.engine = singleton('Engine')
+	godot_host.api.resource_loader = singleton('ResourceLoader')
+	godot_host.api.resource_saver = singleton('ResourceSaver')
 	register_classes()
-	api.language = construct_class(kind_language)
-	api.loader = construct_class(kind_loader)
-	api.saver = construct_class(kind_saver)
+	godot_host.api.language = construct_class(kind_language)
+	godot_host.api.loader = construct_class(kind_loader)
+	godot_host.api.saver = construct_class(kind_saver)
 	mut err := i64(-1)
-	call_ptr(api.register_language, api.engine, voidptr(&api.language), voidptr(&err))
+	call_ptr(godot_host.api.register_language, godot_host.api.engine, voidptr(&godot_host.api.language), voidptr(&err))
 	if err != 0 {
 		report('register_script_language returned ${err}')
 	}
 	at_front := u8(1)
-	call_ptr2(api.add_loader, api.resource_loader, voidptr(&api.loader), voidptr(&at_front),
+	call_ptr2(godot_host.api.add_loader, godot_host.api.resource_loader, voidptr(&godot_host.api.loader), voidptr(&at_front),
 		unsafe { nil })
-	call_ptr2(api.add_saver, api.resource_saver, voidptr(&api.saver), voidptr(&at_front),
+	call_ptr2(godot_host.api.add_saver, godot_host.api.resource_saver, voidptr(&godot_host.api.saver), voidptr(&at_front),
 		unsafe { nil })
 	if editor_open() == false {
 		load_project_scripts()
@@ -61,19 +61,19 @@ fn deinitialize_level(_userdata voidptr, level u32) {
 		return
 	}
 	mut err := i64(0)
-	if api.language != unsafe { nil } {
-		language := api.language
-		call_ptr(api.unregister_language, api.engine, voidptr(&api.language), voidptr(&err))
-		api.language = unsafe { nil }
+	if godot_host.api.language != unsafe { nil } {
+		language := godot_host.api.language
+		call_ptr(godot_host.api.unregister_language, godot_host.api.engine, voidptr(&godot_host.api.language), voidptr(&err))
+		godot_host.api.language = unsafe { nil }
 		destroy_object(language)
 	}
-	if api.loader != unsafe { nil } {
-		call_ptr(api.remove_loader, api.resource_loader, voidptr(&api.loader), voidptr(&err))
-		api.loader = unsafe { nil }
+	if godot_host.api.loader != unsafe { nil } {
+		call_ptr(godot_host.api.remove_loader, godot_host.api.resource_loader, voidptr(&godot_host.api.loader), voidptr(&err))
+		godot_host.api.loader = unsafe { nil }
 	}
-	if api.saver != unsafe { nil } {
-		call_ptr(api.remove_saver, api.resource_saver, voidptr(&api.saver), voidptr(&err))
-		api.saver = unsafe { nil }
+	if godot_host.api.saver != unsafe { nil } {
+		call_ptr(godot_host.api.remove_saver, godot_host.api.resource_saver, voidptr(&godot_host.api.saver), voidptr(&err))
+		godot_host.api.saver = unsafe { nil }
 	}
 	release_kept_names()
 }
@@ -92,9 +92,9 @@ fn load_gdf(get_proc_address voidptr, library voidptr) {
 }
 
 fn destroy_object(object voidptr) {
-	if object == unsafe { nil } || api.destroy_object == unsafe { nil } {
+	if object == unsafe { nil } || godot_host.api.destroy_object == unsafe { nil } {
 		return
 	}
-	f := unsafe { MemFree(api.destroy_object) }
+	f := unsafe { MemFree(godot_host.api.destroy_object) }
 	f(object)
 }

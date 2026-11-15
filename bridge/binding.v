@@ -47,9 +47,9 @@ fn binding_reference(_token voidptr, _binding voidptr, _reference u8) u8 {
 }
 
 fn binding_of(object voidptr) voidptr {
-	if object == unsafe { nil } || api.get_binding == unsafe { nil } {
+	if object == unsafe { nil } || godot_host.api.get_binding == unsafe { nil } {
 		return unsafe { nil }
 	}
-	f := unsafe { GetBinding(api.get_binding) }
-	return f(object, api.library, voidptr(&binding))
+	f := unsafe { GetBinding(godot_host.api.get_binding) }
+	return f(object, godot_host.api.library, voidptr(&binding))
 }

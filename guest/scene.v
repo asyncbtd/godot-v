@@ -14,51 +14,40 @@
 
 module godot
 
-__global host_session Session
-
-// register_main stores the callbacks for a main script.
-pub fn register_main(enter fn (), signal fn (string) bool) {
-	registry.add_script('main', voidptr(enter), unsafe { nil }, voidptr(signal))
-}
-
-// register_player stores the callbacks for a player script.
-pub fn register_player(enter fn (), frame fn (f64), signal fn (string) bool) {
-	registry.add_script('player', voidptr(enter), voidptr(frame), voidptr(signal))
-}
-
-// register_mob stores the callback for a mob script.
-pub fn register_mob(enter fn ()) {
-	registry.add_script('mob', voidptr(enter), unsafe { nil }, unsafe { nil })
-}
-
 // instance_scene instantiates a packed scene.
-pub fn instance_scene(scene voidptr) voidptr {
+pub fn instance_scene(scene voidptr) Node {
 	if gdf == unsafe { nil } || scene == unsafe { nil } {
-		return unsafe { nil }
+		return Node{}
 	}
-	packed := PackedScene{
+	return PackedScene{
 		ptr: scene
-	}
-	return packed.instantiate().ptr
+	}.instantiate()
 }
 
 // load_resource loads the resource at path.
-pub fn load_resource(path string) voidptr {
-	if gdf == unsafe { nil } || path == '' {
-		return unsafe { nil }
+pub fn load_resource(path string) !Resource {
+	if gdf == unsafe { nil } {
+		return error('godot is not loaded')
+	}
+	if path == '' {
+		return error('resource path is empty')
 	}
 	found := ResourceLoader.singleton().load(path)
-	if found.ptr != unsafe { nil } {
-		RefCounted{
-			ptr: found.ptr
-		}.reference()
+	if found.ptr == unsafe { nil } {
+		return error('resource not found: ${path}')
 	}
-	return found.ptr
+	RefCounted{
+		ptr: found.ptr
+	}.reference()
+	return found
 }
 
 // load_scene loads a packed scene at path.
 pub fn load_scene(path string) PackedScene {
-	return object_as[PackedScene](load_resource(path))
+	found := load_resource(path) or { return PackedScene{} }
+	return PackedScene{
+		Resource: found
+	}
 }
 
 // autoload returns the autoload node registered under name.
@@ -78,8 +67,4 @@ pub fn autoload(name string) Node {
 	return Node{
 		ptr: root.ptr
 	}.get_node_or_null(route)
-}
-
-fn init() {
-	active_session = unsafe { &host_session }
 }

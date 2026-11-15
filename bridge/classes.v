@@ -44,7 +44,7 @@ fn register_method(spec MethodSpec) {
 	keep_name(name.data)
 	key := u64(uint(name.data))
 	mut method := unsafe { &MethodDef(alloc(uint(sizeof(MethodDef)))) }
-	method.action = spec.action
+	method.handler = voidptr(spec.handler)
 	method.ret = spec.ret
 	slot := MethodSlot{
 		key:    key
@@ -79,8 +79,8 @@ fn register_host_class(class_name string, parent string, kind int) {
 		call_virtual_with_data_func: voidptr(call_virtual)
 		class_userdata:              kind_pointer(kind)
 	}
-	f := unsafe { RegisterClass(api.register_class) }
-	f(api.library, voidptr(&name), voidptr(&parent_name), voidptr(&info))
+	f := unsafe { RegisterClass(godot_host.api.register_class) }
+	f(godot_host.api.library, voidptr(&name), voidptr(&parent_name), voidptr(&info))
 	destroy_string_name(&name)
 	destroy_string_name(&parent_name)
 }
@@ -102,7 +102,7 @@ fn construct_class(kind int) voidptr {
 		else { '' }
 	}
 	name := string_name(class_name)
-	construct := unsafe { Construct(api.construct) }
+	construct := unsafe { Construct(godot_host.api.construct) }
 	object := construct(voidptr(&name))
 	destroy_string_name(&name)
 	if object != unsafe { nil } {
@@ -128,15 +128,15 @@ fn create_instance(class_userdata voidptr, notify u8) voidptr {
 		else { '' }
 	}
 	parent_name := string_name(parent)
-	construct := unsafe { Construct(api.construct) }
+	construct := unsafe { Construct(godot_host.api.construct) }
 	object := construct(voidptr(&parent_name))
 	destroy_string_name(&parent_name)
 	instance := new_instance(kind, object)
 	name := string_name(class_name)
-	set_instance := unsafe { SetInstance(api.set_instance) }
+	set_instance := unsafe { SetInstance(godot_host.api.set_instance) }
 	set_instance(object, voidptr(&name), instance)
-	set_binding := unsafe { SetBinding(api.set_binding) }
-	set_binding(object, api.library, instance, voidptr(&binding))
+	set_binding := unsafe { SetBinding(godot_host.api.set_binding) }
+	set_binding(object, godot_host.api.library, instance, voidptr(&binding))
 	destroy_string_name(&name)
 	if notify != 0 {
 		postinitialize(object)
@@ -175,7 +175,7 @@ fn free_instance(class_userdata voidptr, instance voidptr) {
 }
 
 fn script_is_remembered(state voidptr) bool {
-	for item in script_resources {
+	for item in godot_host.scripts {
 		if item == state {
 			return true
 		}
@@ -197,9 +197,15 @@ fn virtual_data(class_userdata voidptr, name voidptr, _hash u32) voidptr {
 
 fn call_virtual(instance voidptr, _name voidptr, method_data voidptr, args voidptr, ret voidptr) {
 	method := unsafe { &MethodDef(method_data) }
-	if method.action == action_stub {
+	if method.handler == unsafe { nil } {
 		write_stub(ret, method.ret)
 		return
 	}
-	dispatch(method.action, instance, args, ret)
+	call := Call{
+		instance: instance
+		args:     args
+		ret:      ret
+	}
+	handler := unsafe { CallHandler(method.handler) }
+	handler(call)
 }

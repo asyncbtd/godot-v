@@ -84,17 +84,25 @@ mut:
 	next voidptr
 }
 
+struct Call {
+	instance voidptr
+	args     voidptr
+	ret      voidptr
+}
+
+type CallHandler = fn (Call)
+
 struct MethodDef {
 mut:
-	action int
-	ret    int
+	handler voidptr
+	ret     int
 }
 
 struct MethodSpec {
-	kind   int
-	name   string
-	action int
-	ret    int
+	kind    int
+	name    string
+	ret     int
+	handler CallHandler = unsafe { nil }
 }
 
 struct Api {
@@ -129,7 +137,6 @@ mut:
 	new_dictionary      voidptr
 	new_array           voidptr
 	new_packed          voidptr
-	packed_push         voidptr
 	dict_set            voidptr
 	variant_from_bool   voidptr
 	variant_from_int    voidptr
@@ -163,5 +170,4 @@ mut:
 	string_from_name    voidptr
 	script_name         GdString
 	vscript_name        GdString
-	names               voidptr
 }

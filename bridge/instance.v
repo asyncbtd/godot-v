@@ -86,17 +86,17 @@ fn script_can_run(instance voidptr) bool {
 	if script_state(instance).source.text().len == 0 {
 		return false
 	}
-	if api.engine == unsafe { nil } || api.editor_hint == unsafe { nil } {
+	if godot_host.api.engine == unsafe { nil } || godot_host.api.editor_hint == unsafe { nil } {
 		return false
 	}
 	mut hint := u8(0)
-	call_none(api.editor_hint, api.engine, voidptr(&hint))
+	call_none(godot_host.api.editor_hint, godot_host.api.engine, voidptr(&hint))
 	return hint == 0
 }
 
 fn script_has_method(instance voidptr, name string) bool {
 	state := script_state(instance)
-	return registry.has_method(state.path.text(), name)
+	return godot_host.registry.has_method(state.path.text(), name)
 }
 
 fn make_live(state &ScriptResource, owner voidptr) voidptr {
@@ -106,13 +106,13 @@ fn make_live(state &ScriptResource, owner voidptr) voidptr {
 	box.source.set_text(state.source.text())
 	box.path.set_text(state.path.text())
 	box.id = script_id_of_path(state.path.text())
-	hook := registry.hook(box.id)
+	hook := godot_host.registry.hook(box.id)
 	if hook.factory != unsafe { nil } {
 		make := unsafe { StateFactory(hook.factory) }
 		box.state = make()
 	}
 	ensure_project_scripts()
-	create := unsafe { ScriptCreate(api.script_instance) }
+	create := unsafe { ScriptCreate(godot_host.api.script_instance) }
 	instance := create(voidptr(&script_info), voidptr(box))
 	enable_loops(owner, box.id)
 	return instance
@@ -125,17 +125,17 @@ fn enable_loops(owner voidptr, key string) {
 	node := Node{
 		ptr: owner
 	}
-	if registry.has_method(key, '_process') || registry.has_method(key, 'process') {
+	if godot_host.registry.has_method(key, '_process') || godot_host.registry.has_method(key, 'process') {
 		node.set_process(true)
 	}
-	if registry.has_method(key, '_physics_process') || registry.has_method(key, 'physics_process') {
+	if godot_host.registry.has_method(key, '_physics_process') || godot_host.registry.has_method(key, 'physics_process') {
 		node.set_physics_process(true)
 	}
-	if registry.has_method(key, '_input') || registry.has_method(key, 'input') {
+	if godot_host.registry.has_method(key, '_input') || godot_host.registry.has_method(key, 'input') {
 		node.set_process_input(true)
 	}
-	if registry.has_method(key, '_unhandled_input')
-		|| registry.has_method(key, 'unhandled_input') {
+	if godot_host.registry.has_method(key, '_unhandled_input')
+		|| godot_host.registry.has_method(key, 'unhandled_input') {
 		node.set_process_unhandled_input(true)
 	}
 }
@@ -148,7 +148,7 @@ fn script_instance_of(data voidptr) &ScriptInstance {
 }
 
 fn (s &ScriptInstance) has_method(method voidptr) bool {
-	return registry.has_method(s.path.text(), read_name(method))
+	return godot_host.registry.has_method(s.path.text(), read_name(method))
 }
 
 fn (mut s ScriptInstance) call(method voidptr, args voidptr, count i64, ret voidptr, err voidptr) {
@@ -204,7 +204,7 @@ fn (s &ScriptInstance) script() voidptr {
 }
 
 fn (s &ScriptInstance) language() voidptr {
-	return api.language
+	return godot_host.api.language
 }
 
 fn (s &ScriptInstance) placeholder() u8 {
@@ -249,6 +249,15 @@ fn instance_call(data voidptr, method voidptr, args voidptr, count i64, ret void
 	box.call(method, args, count, ret, err)
 }
 
+fn delta_of(object voidptr) f64 {
+	if gdf == unsafe { nil } || object == unsafe { nil } {
+		return 0
+	}
+	return Node{
+		ptr: object
+	}.get_process_delta_time()
+}
+
 fn instance_notify(data voidptr, what int, _reversed u8) {
 	mut box := script_instance_of(data)
 	if box == unsafe { nil } {
@@ -262,7 +271,7 @@ fn with_hook(data voidptr, name voidptr, value voidptr, which string) bool {
 	if box == unsafe { nil } {
 		return false
 	}
-	hook := registry.hook(box.script_key())
+	hook := godot_host.registry.hook(box.script_key())
 	target := match which {
 		'set' { hook.set_prop }
 		'get' { hook.get_prop }
@@ -273,14 +282,12 @@ fn with_hook(data voidptr, name voidptr, value voidptr, which string) bool {
 	if target == unsafe { nil } {
 		return false
 	}
-	previous_owner := bound_owner
 	previous_state := bound_state
 	previous_type := bound_state_type
 	previous_force := bound_force
 	previous_values := bound_values.clone()
 	previous_ret := bound_ret
 	previous_key := bound_key
-	bound_owner = box.node
 	bound_key = box.script_key()
 	bound_ret = value
 	if box.state != unsafe { nil } {
@@ -299,7 +306,6 @@ fn with_hook(data voidptr, name voidptr, value voidptr, which string) bool {
 	if box.state == unsafe { nil } && bound_state != unsafe { nil } {
 		box.state = bound_state
 	}
-	bound_owner = previous_owner
 	bound_state = previous_state
 	bound_state_type = previous_type
 	bound_force = previous_force
@@ -344,7 +350,7 @@ fn instance_arg_count(data voidptr, method voidptr, valid voidptr) i64 {
 	}
 	name := read_name(method)
 	plain := if name.starts_with('_') { name[1..] } else { name }
-	if slot := registry.get(box.script_key()) {
+	if slot := godot_host.registry.get(box.script_key()) {
 		for method_info in slot.info {
 			if method_info.name == name || method_info.name == plain {
 				if valid != unsafe { nil } {
@@ -375,7 +381,7 @@ fn instance_property_list(data voidptr, count &u32) &GDExtensionPropertyInfo {
 	if box == unsafe { nil } {
 		return unsafe { nil }
 	}
-	slot := registry.get(box.script_key()) or { return unsafe { nil } }
+	slot := godot_host.registry.get(box.script_key()) or { return unsafe { nil } }
 	mut props := []PropRecord{}
 	for prop in slot.props {
 		if prop.exported {
@@ -468,7 +474,7 @@ fn instance_script(data voidptr) voidptr {
 }
 
 fn instance_language(_data voidptr) voidptr {
-	return api.language
+	return godot_host.api.language
 }
 
 fn instance_placeholder(_data voidptr) u8 {

@@ -157,14 +157,14 @@ fn script_facts(instance voidptr) ClassFacts {
 		return facts_of(parse_outline(source))
 	}
 	key := script_id_of_path(script_state(instance).path.text())
-	if slot := registry.get(key) {
+	if slot := godot_host.registry.get(key) {
 		return slot.facts
 	}
 	return ClassFacts{}
 }
 
 fn global_class_at(path string) ClassFacts {
-	for state in script_resources {
+	for state in godot_host.scripts {
 		if script_state(state).path.text() == path {
 			return script_facts(state)
 		}
@@ -173,7 +173,7 @@ fn global_class_at(path string) ClassFacts {
 	if text.len > 0 {
 		return facts_of(parse_outline(text))
 	}
-	if slot := registry.get(script_id_of_path(path)) {
+	if slot := godot_host.registry.get(script_id_of_path(path)) {
 		return slot.facts
 	}
 	return ClassFacts{}
@@ -228,7 +228,7 @@ fn open_in_editor(script voidptr, line i64, column i64) i64 {
 }
 
 fn write_builtin_templates(ret voidptr, object string) {
-	if ret == unsafe { nil } || api.new_array == unsafe { nil } || gdf == unsafe { nil } {
+	if ret == unsafe { nil } || godot_host.api.new_array == unsafe { nil } || gdf == unsafe { nil } {
 		return
 	}
 	write_array(ret)
@@ -249,7 +249,7 @@ fn write_builtin_templates(ret voidptr, object string) {
 }
 
 fn write_global_class(ret voidptr, facts ClassFacts) {
-	if ret == unsafe { nil } || api.new_dictionary == unsafe { nil } {
+	if ret == unsafe { nil } || godot_host.api.new_dictionary == unsafe { nil } {
 		return
 	}
 	write_dictionary(ret)
@@ -265,7 +265,7 @@ fn write_rpc_config(ret voidptr, names []string) {
 		return
 	}
 	zero(ret, 24)
-	if api.new_dictionary == unsafe { nil } || gdf == unsafe { nil } {
+	if godot_host.api.new_dictionary == unsafe { nil } || gdf == unsafe { nil } {
 		return
 	}
 	dict := heap_alloc(24)

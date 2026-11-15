@@ -14,7 +14,7 @@
 
 module godot
 
-fn critter_signal(name string) bool {
+fn critter_signal(_owner voidptr, name string) bool {
 	return name == 'hop'
 }
 
@@ -25,34 +25,34 @@ fn count_enter() {
 	enter_calls++
 }
 
-fn signal_reads_owner(name string) bool {
-	saw_owner = bound_owner
+fn signal_reads_owner(owner voidptr, name string) bool {
+	saw_owner = owner
 	return name == 'hop'
 }
 
 fn test_registry_set_updates_existing_binding() {
-	registry.set('critter', 'Node', ['ready'])
-	registry.set('critter', 'Area2D', ['hop', '_ready'])
-	slot := registry.get('critter') or {
+	godot_host.registry.set('critter', 'Node', ['ready'])
+	godot_host.registry.set('critter', 'Area2D', ['hop', '_ready'])
+	slot := godot_host.registry.get('critter') or {
 		assert false
 		return
 	}
 	assert slot.base == 'Area2D'
 	assert slot.methods == ['hop', '_ready']
-	assert registry.get('missing') == none
-	registry.set('other', 'Node', []string{})
-	other := registry.get('other') or {
+	assert godot_host.registry.get('missing') == none
+	godot_host.registry.set('other', 'Node', []string{})
+	other := godot_host.registry.get('other') or {
 		assert false
 		return
 	}
 	assert other.base == 'Node'
 	assert other.methods.len == 0
-	mut copy := registry.get('critter') or {
+	mut copy := godot_host.registry.get('critter') or {
 		assert false
 		return
 	}
 	copy.base = 'Sprite2D'
-	stored := registry.get('critter') or {
+	stored := godot_host.registry.get('critter') or {
 		assert false
 		return
 	}
@@ -60,16 +60,16 @@ fn test_registry_set_updates_existing_binding() {
 }
 
 fn test_registry_add_script_replaces_hook() {
-	registry.add_script('critter', unsafe { nil }, unsafe { nil }, voidptr(critter_signal))
-	hook := registry.hook('res://game/critter.v')
-	assert call_signal(hook.signal, 'hop')
-	assert call_signal(hook.signal, 'idle') == false
-	registry.add_script('critter', voidptr(critter_signal), unsafe { nil }, hook.signal)
-	assert registry.hook('critter.v').enter == voidptr(critter_signal)
-	assert registry.hook('res://missing.v').enter == unsafe { nil }
-	assert call_signal(unsafe { nil }, 'hop') == false
-	assert registry.hook('').enter == unsafe { nil }
-	assert registry.has_method('res://game/critter.v', '') == false
+	godot_host.registry.add_script('critter', unsafe { nil }, unsafe { nil }, voidptr(critter_signal))
+	hook := godot_host.registry.hook('res://game/critter.v')
+	assert call_script(hook.call, unsafe { nil }, 'hop')
+	assert call_script(hook.call, unsafe { nil }, 'idle') == false
+	godot_host.registry.add_script('critter', voidptr(critter_signal), unsafe { nil }, hook.call)
+	assert godot_host.registry.hook('critter.v').enter == voidptr(critter_signal)
+	assert godot_host.registry.hook('res://missing.v').enter == unsafe { nil }
+	assert call_script(unsafe { nil }, unsafe { nil }, 'hop') == false
+	assert godot_host.registry.hook('').enter == unsafe { nil }
+	assert godot_host.registry.has_method('res://game/critter.v', '') == false
 }
 
 fn test_script_instance_owner_and_callbacks() {
@@ -96,7 +96,7 @@ fn test_script_instance_owner_and_callbacks() {
 	mark_bad(unsafe { nil })
 	assert instance_script(unsafe { nil }) == unsafe { nil }
 	assert instance_has_method(unsafe { nil }, unsafe { nil }) == false
-	assert instance_language(unsafe { nil }) == api.language
+	assert instance_language(unsafe { nil }) == godot_host.api.language
 	assert instance_placeholder(voidptr(&box)) == 0
 	assert instance_can_die(voidptr(&box)) == 1
 	instance_free(unsafe { nil })
@@ -110,44 +110,40 @@ fn test_script_instance_owner_and_callbacks() {
 }
 
 fn test_script_enter_and_call_use_the_empty_path() {
-	saved_lib := script_library
-	script_library = voidptr(1)
+	saved_lib := godot_host.library
+	godot_host.library = voidptr(1)
 	defer {
-		script_library = saved_lib
-		registry.set('', '', []string{})
-		registry.add_script('', unsafe { nil }, unsafe { nil }, unsafe { nil })
+		godot_host.library = saved_lib
+		godot_host.registry.set('', '', []string{})
+		godot_host.registry.add_script('', unsafe { nil }, unsafe { nil }, unsafe { nil })
 	}
 	mut node := 7
 	mut box := ScriptInstance{
 		node: voidptr(&node)
 	}
 	enter_calls = 0
-	registry.set('', 'Node', ['_ready', 'hop'])
-	registry.add_script('', voidptr(count_enter), unsafe { nil }, voidptr(signal_reads_owner))
+	godot_host.registry.set('', 'Node', ['_ready', 'hop'])
+	godot_host.registry.add_script('', voidptr(count_enter), unsafe { nil }, voidptr(signal_reads_owner))
 	run_script_enter(unsafe { nil })
 	run_script_enter(voidptr(&box))
 	box.notify(0)
 	instance_notify(voidptr(&box), 12, 1)
 	assert enter_calls == 0
-	sentinel := voidptr(1)
-	bound_owner = sentinel
 	saw_owner = unsafe { nil }
 	assert run_script_method(unsafe { nil }, 'hop') == false
 	assert run_script_method(voidptr(&box), '') == false
 	assert run_script_method(voidptr(&box), 'idle') == false
 	assert run_script_method(voidptr(&box), 'hop')
 	assert saw_owner == voidptr(&node)
-	assert bound_owner == sentinel
-	registry.set('', 'Node', ['idle'])
-	registry.add_script('', unsafe { nil }, unsafe { nil }, unsafe { nil })
+	godot_host.registry.set('', 'Node', ['idle'])
+	godot_host.registry.add_script('', unsafe { nil }, unsafe { nil }, unsafe { nil })
 	run_script_enter(voidptr(&box))
 	assert enter_calls == 0
-	registry.add_script('', voidptr(count_enter), unsafe { nil }, unsafe { nil })
+	godot_host.registry.add_script('', voidptr(count_enter), unsafe { nil }, unsafe { nil })
 	run_script_enter(voidptr(&box))
 	box.notify(13)
 	instance_notify(voidptr(&box), 13, 0)
 	assert enter_calls == 3
-	assert bound_owner == sentinel
 	mut ret := [24]u8{}
 	mut err := [12]u8{}
 	unsafe {

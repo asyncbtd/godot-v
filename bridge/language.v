@@ -14,80 +14,218 @@
 
 module godot
 
-fn dispatch(action int, instance voidptr, args voidptr, ret voidptr) {
-	match action {
-		action_lang_name { write_string(ret, 'V') }
-		action_lang_type { write_string(ret, 'VScript') }
-		action_lang_extension { write_string(ret, 'v') }
-		action_lang_extensions { write_packed(ret, ['v']) }
-		action_lang_comments { write_packed(ret, ['//']) }
-		action_lang_reserved { write_packed(ret, v_keywords()) }
-		action_lang_flow { write_bool(ret, is_v_flow(arg_string(args, 0))) }
-		action_lang_doc { write_packed(ret, doc_comment_delimiters()) }
-		action_lang_builtin { write_builtin_templates(ret, arg_string(args, 0)) }
-		action_lang_path { write_string(ret, path_problem(arg_string(args, 0))) }
-		action_lang_global_type { write_bool(ret, handles_global_class(arg_string(args, 0))) }
-		action_lang_global_class { write_global_class(ret, global_class_at(arg_string(args, 0))) }
-		action_lang_open {
-			write_number(ret, open_in_editor(arg_object(args, 0), arg_i64(args, 1), arg_i64(args, 2)))
-		}
-		action_lang_external { write_bool(ret, editor_program().len > 0) }
-		action_lang_strings { write_packed(ret, ["'", '"']) }
-		action_lang_templates { write_bool(ret, true) }
-		action_lang_validate { write_validate(ret, validate_source(arg_string(args, 0))) }
-		action_lang_find {
-			write_number(ret, i64(find_function_line(arg_string(args, 0), arg_string(args, 1))))
-		}
-		action_lang_template { write_template(args, ret) }
-		action_lang_create { write_pointer(ret, construct_class(kind_script)) }
-		action_script_can_instantiate { write_bool(ret, script_can_run(instance)) }
-		action_script_instance {
-			write_pointer(ret, make_live(script_state(instance), arg_object(args, 0)))
-		}
-		action_script_has_method {
-			write_bool(ret, script_has_method(instance, read_name(arg(args, 0))))
-		}
-		action_script_methods { write_methods(instance, ret) }
-		action_script_member {
-			write_number(ret, i64(member_line_of(instance, read_name(arg(args, 0)))))
-		}
-		action_script_has_signal {
-			write_bool(ret, script_has_signal_name(instance, read_name(arg(args, 0))))
-		}
-		action_script_signals { write_named_list(instance, ret, 'signal') }
-		action_script_properties { write_named_list(instance, ret, 'prop') }
-		action_script_arg_count { write_arg_count(instance, read_name(arg(args, 0)), ret) }
-		action_script_global { write_string_name(ret, script_facts(instance).name) }
-		action_script_tool { write_bool(ret, script_facts(instance).tool) }
-		action_script_abstract { write_bool(ret, script_facts(instance).abstract) }
-		action_script_icon { write_string(ret, script_facts(instance).icon) }
-		action_script_rpc { write_rpc_config(ret, script_facts(instance).rpcs) }
-		action_script_reload_file { write_bool(ret, true) }
-		action_script_valid { write_bool(ret, true) }
-		action_script_reload {
-			load_project_scripts()
-			write_number(ret, 0)
-		}
-		action_scripts_refresh { load_project_scripts() }
-		action_script_language { write_pointer(ret, api.language) }
-		action_script_base { write_script_base(instance, ret) }
-		action_script_has_source { write_bool(ret, script_state(instance).source.text().len > 0) }
-		action_script_get_source { script_state(instance).source.copy_to(ret) }
-		action_script_set_source { set_script_source(instance, arg_string(args, 0)) }
-		action_script_placeholder { write_placeholder(instance, args, ret) }
-		action_loader_extensions { write_packed(ret, ['v']) }
-		action_saver_extensions { write_saver_extensions(args, ret) }
-		action_loader_handles { write_bool(ret, handles_script_type(arg(args, 0))) }
-		action_loader_type { write_loader_type(args, ret) }
-		action_loader_recognize { write_bool(ret, is_v_path(arg_string(args, 0))) }
-		action_loader_load { load_script(args, ret) }
-		action_saver_recognize { write_bool(ret, is_v_script(arg_object(args, 0))) }
-		action_saver_path {
-			write_bool(ret, is_v_script(arg_object(args, 0)) && is_v_path(arg_string(args, 1)))
-		}
-		action_saver_save { save_script(args, ret) }
-		else { write_stub(ret, ret_none) }
-	}
+fn on_lang_name(ctx Call) {
+	write_string(ctx.ret, 'V')
+}
+
+fn on_lang_type(ctx Call) {
+	write_string(ctx.ret, 'VScript')
+}
+
+fn on_lang_extension(ctx Call) {
+	write_string(ctx.ret, 'v')
+}
+
+fn on_lang_extensions(ctx Call) {
+	write_packed(ctx.ret, ['v'])
+}
+
+fn on_lang_comments(ctx Call) {
+	write_packed(ctx.ret, ['//'])
+}
+
+fn on_lang_reserved(ctx Call) {
+	write_packed(ctx.ret, v_keywords())
+}
+
+fn on_lang_flow(ctx Call) {
+	write_bool(ctx.ret, is_v_flow(arg_string(ctx.args, 0)))
+}
+
+fn on_lang_doc(ctx Call) {
+	write_packed(ctx.ret, doc_comment_delimiters())
+}
+
+fn on_lang_builtin(ctx Call) {
+	write_builtin_templates(ctx.ret, arg_string(ctx.args, 0))
+}
+
+fn on_lang_path(ctx Call) {
+	write_string(ctx.ret, path_problem(arg_string(ctx.args, 0)))
+}
+
+fn on_lang_global_type(ctx Call) {
+	write_bool(ctx.ret, handles_global_class(arg_string(ctx.args, 0)))
+}
+
+fn on_lang_global_class(ctx Call) {
+	write_global_class(ctx.ret, global_class_at(arg_string(ctx.args, 0)))
+}
+
+fn on_lang_open(ctx Call) {
+	write_number(ctx.ret, open_in_editor(arg_object(ctx.args, 0), arg_i64(ctx.args, 1), arg_i64(ctx.args,
+		2)))
+}
+
+fn on_lang_external(ctx Call) {
+	write_bool(ctx.ret, editor_program().len > 0)
+}
+
+fn on_lang_strings(ctx Call) {
+	write_packed(ctx.ret, ["'", '"'])
+}
+
+fn on_lang_templates(ctx Call) {
+	write_bool(ctx.ret, true)
+}
+
+fn on_lang_validate(ctx Call) {
+	write_validate(ctx.ret, validate_source(arg_string(ctx.args, 0)))
+}
+
+fn on_lang_find(ctx Call) {
+	write_number(ctx.ret, i64(find_function_line(arg_string(ctx.args, 0), arg_string(ctx.args, 1))))
+}
+
+fn on_lang_template(ctx Call) {
+	write_template(ctx.args, ctx.ret)
+}
+
+fn on_lang_create(ctx Call) {
+	write_pointer(ctx.ret, construct_class(kind_script))
+}
+
+fn on_script_can_instantiate(ctx Call) {
+	write_bool(ctx.ret, script_can_run(ctx.instance))
+}
+
+fn on_script_instance(ctx Call) {
+	write_pointer(ctx.ret, make_live(script_state(ctx.instance), arg_object(ctx.args, 0)))
+}
+
+fn on_script_has_method(ctx Call) {
+	write_bool(ctx.ret, script_has_method(ctx.instance, read_name(arg(ctx.args, 0))))
+}
+
+fn on_script_methods(ctx Call) {
+	write_methods(ctx.instance, ctx.ret)
+}
+
+fn on_script_member(ctx Call) {
+	write_number(ctx.ret, i64(member_line_of(ctx.instance, read_name(arg(ctx.args, 0)))))
+}
+
+fn on_script_has_signal(ctx Call) {
+	write_bool(ctx.ret, script_has_signal_name(ctx.instance, read_name(arg(ctx.args, 0))))
+}
+
+fn on_script_signals(ctx Call) {
+	write_named_list(ctx.instance, ctx.ret, 'signal')
+}
+
+fn on_script_properties(ctx Call) {
+	write_named_list(ctx.instance, ctx.ret, 'prop')
+}
+
+fn on_script_arg_count(ctx Call) {
+	write_arg_count(ctx.instance, read_name(arg(ctx.args, 0)), ctx.ret)
+}
+
+fn on_script_global(ctx Call) {
+	write_string_name(ctx.ret, script_facts(ctx.instance).name)
+}
+
+fn on_script_tool(ctx Call) {
+	write_bool(ctx.ret, script_facts(ctx.instance).tool)
+}
+
+fn on_script_abstract(ctx Call) {
+	write_bool(ctx.ret, script_facts(ctx.instance).abstract)
+}
+
+fn on_script_icon(ctx Call) {
+	write_string(ctx.ret, script_facts(ctx.instance).icon)
+}
+
+fn on_script_rpc(ctx Call) {
+	write_rpc_config(ctx.ret, script_facts(ctx.instance).rpcs)
+}
+
+fn on_script_reload_file(ctx Call) {
+	write_bool(ctx.ret, true)
+}
+
+fn on_script_valid(ctx Call) {
+	write_bool(ctx.ret, true)
+}
+
+fn on_script_reload(ctx Call) {
+	load_project_scripts()
+	write_number(ctx.ret, 0)
+}
+
+fn on_scripts_refresh(_ctx Call) {
+	load_project_scripts()
+}
+
+fn on_script_language(ctx Call) {
+	write_pointer(ctx.ret, godot_host.api.language)
+}
+
+fn on_script_base(ctx Call) {
+	write_script_base(ctx.instance, ctx.ret)
+}
+
+fn on_script_has_source(ctx Call) {
+	write_bool(ctx.ret, script_state(ctx.instance).source.text().len > 0)
+}
+
+fn on_script_get_source(ctx Call) {
+	script_state(ctx.instance).source.copy_to(ctx.ret)
+}
+
+fn on_script_set_source(ctx Call) {
+	set_script_source(ctx.instance, arg_string(ctx.args, 0))
+}
+
+fn on_script_placeholder(ctx Call) {
+	write_placeholder(ctx.instance, ctx.args, ctx.ret)
+}
+
+fn on_loader_extensions(ctx Call) {
+	write_packed(ctx.ret, ['v'])
+}
+
+fn on_saver_extensions(ctx Call) {
+	write_saver_extensions(ctx.args, ctx.ret)
+}
+
+fn on_loader_handles(ctx Call) {
+	write_bool(ctx.ret, handles_script_type(arg(ctx.args, 0)))
+}
+
+fn on_loader_type(ctx Call) {
+	write_loader_type(ctx.args, ctx.ret)
+}
+
+fn on_loader_recognize(ctx Call) {
+	write_bool(ctx.ret, is_v_path(arg_string(ctx.args, 0)))
+}
+
+fn on_loader_load(ctx Call) {
+	load_script(ctx.args, ctx.ret)
+}
+
+fn on_saver_recognize(ctx Call) {
+	write_bool(ctx.ret, is_v_script(arg_object(ctx.args, 0)))
+}
+
+fn on_saver_path(ctx Call) {
+	write_bool(ctx.ret, is_v_script(arg_object(ctx.args, 0)) && is_v_path(arg_string(ctx.args, 1)))
+}
+
+fn on_saver_save(ctx Call) {
+	save_script(ctx.args, ctx.ret)
 }
 
 fn write_template(args voidptr, ret voidptr) {
@@ -129,12 +267,12 @@ fn set_script_path(instance voidptr, path string) {
 fn write_placeholder(instance voidptr, args voidptr, ret voidptr) {
 	state := script_state(instance)
 	node := arg_object(args, 0)
-	f := unsafe { Placeholder(api.placeholder) }
-	write_pointer(ret, f(api.language, state.object, node))
+	f := unsafe { Placeholder(godot_host.api.placeholder) }
+	write_pointer(ret, f(godot_host.api.language, state.object, node))
 }
 
 fn handles_script_type(typ voidptr) bool {
-	return same_name(typ, api.script_name) || same_name(typ, api.vscript_name)
+	return same_name(typ, godot_host.api.script_name) || same_name(typ, godot_host.api.vscript_name)
 }
 
 fn same_name(value voidptr, expected GdString) bool {
@@ -166,7 +304,7 @@ fn write_loader_type(args voidptr, ret voidptr) {
 }
 
 fn write_named_list(instance voidptr, ret voidptr, kind string) {
-	if api.new_array == unsafe { nil } {
+	if godot_host.api.new_array == unsafe { nil } {
 		return
 	}
 	write_array(ret)
@@ -211,7 +349,7 @@ fn write_arg_count(instance voidptr, name string, ret voidptr) {
 }
 
 fn write_validate(dest voidptr, report ValidateReport) {
-	if dest == unsafe { nil } || api.new_dictionary == unsafe { nil } {
+	if dest == unsafe { nil } || godot_host.api.new_dictionary == unsafe { nil } {
 		return
 	}
 	write_dictionary(dest)
@@ -229,15 +367,15 @@ fn dict_put_bool(dest voidptr, key string, value bool) {
 	key_string.set_text(key)
 	mut key_variant := [24]u8{}
 	mut value_variant := [24]u8{}
-	from_string := unsafe { TypeCtor(api.variant_from_string) }
-	from_bool := unsafe { TypeCtor(api.variant_from_bool) }
+	from_string := unsafe { TypeCtor(godot_host.api.variant_from_string) }
+	from_bool := unsafe { TypeCtor(godot_host.api.variant_from_bool) }
 	flag := u8(if value { 1 } else { 0 })
 	unsafe {
 		from_string(voidptr(&key_variant[0]), voidptr(&key_string))
 		from_bool(voidptr(&value_variant[0]), voidptr(&flag))
-		set := KeyedSet(api.dict_set)
+		set := KeyedSet(godot_host.api.dict_set)
 		set(dest, voidptr(&key_variant[0]), voidptr(&value_variant[0]))
-		destroy := VariantDestroy(api.variant_destroy)
+		destroy := VariantDestroy(godot_host.api.variant_destroy)
 		destroy(voidptr(&key_variant[0]))
 		destroy(voidptr(&value_variant[0]))
 	}
@@ -249,14 +387,14 @@ fn dict_put_int(dest voidptr, key string, value i64) {
 	key_string.set_text(key)
 	mut key_variant := [24]u8{}
 	mut value_variant := [24]u8{}
-	from_string := unsafe { TypeCtor(api.variant_from_string) }
-	from_int := unsafe { TypeCtor(api.variant_from_int) }
+	from_string := unsafe { TypeCtor(godot_host.api.variant_from_string) }
+	from_int := unsafe { TypeCtor(godot_host.api.variant_from_int) }
 	unsafe {
 		from_string(voidptr(&key_variant[0]), voidptr(&key_string))
 		from_int(voidptr(&value_variant[0]), voidptr(&value))
-		set := KeyedSet(api.dict_set)
+		set := KeyedSet(godot_host.api.dict_set)
 		set(dest, voidptr(&key_variant[0]), voidptr(&value_variant[0]))
-		destroy := VariantDestroy(api.variant_destroy)
+		destroy := VariantDestroy(godot_host.api.variant_destroy)
 		destroy(voidptr(&key_variant[0]))
 		destroy(voidptr(&value_variant[0]))
 	}
@@ -270,13 +408,13 @@ fn dict_put_text(dest voidptr, key string, value string) {
 	value_string.set_text(value)
 	mut key_variant := [24]u8{}
 	mut value_variant := [24]u8{}
-	from_string := unsafe { TypeCtor(api.variant_from_string) }
+	from_string := unsafe { TypeCtor(godot_host.api.variant_from_string) }
 	unsafe {
 		from_string(voidptr(&key_variant[0]), voidptr(&key_string))
 		from_string(voidptr(&value_variant[0]), voidptr(&value_string))
-		set := KeyedSet(api.dict_set)
+		set := KeyedSet(godot_host.api.dict_set)
 		set(dest, voidptr(&key_variant[0]), voidptr(&value_variant[0]))
-		destroy := VariantDestroy(api.variant_destroy)
+		destroy := VariantDestroy(godot_host.api.variant_destroy)
 		destroy(voidptr(&key_variant[0]))
 		destroy(voidptr(&value_variant[0]))
 	}
@@ -288,12 +426,12 @@ fn dict_put_raw(dest voidptr, key string, value voidptr) {
 	mut key_string := GdString{}
 	key_string.set_text(key)
 	mut key_variant := [24]u8{}
-	from_string := unsafe { TypeCtor(api.variant_from_string) }
+	from_string := unsafe { TypeCtor(godot_host.api.variant_from_string) }
 	unsafe {
 		from_string(voidptr(&key_variant[0]), voidptr(&key_string))
-		set := KeyedSet(api.dict_set)
+		set := KeyedSet(godot_host.api.dict_set)
 		set(dest, voidptr(&key_variant[0]), value)
-		destroy := VariantDestroy(api.variant_destroy)
+		destroy := VariantDestroy(godot_host.api.variant_destroy)
 		destroy(voidptr(&key_variant[0]))
 	}
 	key_string.clear()
@@ -344,7 +482,7 @@ fn is_v_script(object voidptr) bool {
 	}
 	mut name := GdString{}
 	ok := class_name_of(object, voidptr(&name))
-	same := name.data == api.vscript_name.data
+	same := name.data == godot_host.api.vscript_name.data
 	destroy_string_name(&name)
 	return ok && same
 }
@@ -352,8 +490,8 @@ fn is_v_script(object voidptr) bool {
 type ClassNameOf = fn (voidptr, voidptr, voidptr) u8
 
 fn class_name_of(object voidptr, name voidptr) bool {
-	f := unsafe { ClassNameOf(api.get_class_name) }
-	return f(object, api.library, name) != 0
+	f := unsafe { ClassNameOf(godot_host.api.get_class_name) }
+	return f(object, godot_host.api.library, name) != 0
 }
 
 fn load_script(args voidptr, ret voidptr) {
@@ -363,7 +501,7 @@ fn load_script(args voidptr, ret voidptr) {
 	mut path_string := GdString{}
 	path_string.set_text(path)
 	mut file_text := GdString{}
-	call_ptr(api.file_read, unsafe { nil }, voidptr(&path_string), voidptr(&file_text))
+	call_ptr(godot_host.api.file_read, unsafe { nil }, voidptr(&path_string), voidptr(&file_text))
 	path_string.clear()
 	source := file_text.text()
 	file_text.clear()
@@ -377,7 +515,7 @@ fn load_script(args voidptr, ret voidptr) {
 
 fn release_ref(object voidptr) bool {
 	mut die := u8(0)
-	call_none(api.unref, object, voidptr(&die))
+	call_none(godot_host.api.unref, object, voidptr(&die))
 	if die == 0 {
 		return false
 	}
@@ -393,7 +531,7 @@ fn save_script(args voidptr, ret voidptr) {
 	path_string.set_text(path)
 	flags := i64(2)
 	mut file := voidptr(0)
-	call_ptr2(api.file_open, unsafe { nil }, voidptr(&path_string), voidptr(&flags), voidptr(&file))
+	call_ptr2(godot_host.api.file_open, unsafe { nil }, voidptr(&path_string), voidptr(&flags), voidptr(&file))
 	path_string.clear()
 	if file == unsafe { nil } {
 		write_number(ret, 12)
@@ -402,9 +540,9 @@ fn save_script(args voidptr, ret voidptr) {
 	mut source := GdString{}
 	state.source.copy_to(voidptr(&source))
 	mut stored := u8(0)
-	call_ptr(api.file_store, file, voidptr(&source), voidptr(&stored))
+	call_ptr(godot_host.api.file_store, file, voidptr(&source), voidptr(&stored))
 	source.clear()
-	call_none(api.file_close, file, unsafe { nil })
+	call_none(godot_host.api.file_close, file, unsafe { nil })
 	release_ref(file)
 	code := if stored == 0 { i64(12) } else { i64(0) }
 	write_number(ret, code)

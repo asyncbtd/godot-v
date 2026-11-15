@@ -38,23 +38,23 @@ fn construct_empty(ctor voidptr, dest voidptr) {
 }
 
 fn write_dictionary(dest voidptr) {
-	construct_empty(api.new_dictionary, dest)
+	construct_empty(godot_host.api.new_dictionary, dest)
 }
 
 fn write_array(dest voidptr) {
-	construct_empty(api.new_array, dest)
+	construct_empty(godot_host.api.new_array, dest)
 }
 
 fn write_packed(dest voidptr, values []string) {
-	construct_empty(api.new_packed, dest)
-	push := unsafe { BuiltinCall(api.packed_push) }
+	if gdf == unsafe { nil } || dest == unsafe { nil } {
+		return
+	}
+	mut packed := unsafe { &PackedStringArray(dest) }
+	unsafe {
+		*packed = PackedStringArray.new0()
+	}
 	for value in values {
-		mut item := GdString{}
-		item.set_text(value)
-		item_ptr := voidptr(&item)
-		mut added := u8(0)
-		push(dest, voidptr(&item_ptr), voidptr(&added), 1)
-		item.clear()
+		packed.push_back(value)
 	}
 }
 
@@ -64,15 +64,15 @@ fn dictionary_bool(dest voidptr, key string, value bool) {
 	key_string.set_text(key)
 	mut key_variant := [24]u8{}
 	mut value_variant := [24]u8{}
-	from_string := unsafe { TypeCtor(api.variant_from_string) }
-	from_bool := unsafe { TypeCtor(api.variant_from_bool) }
+	from_string := unsafe { TypeCtor(godot_host.api.variant_from_string) }
+	from_bool := unsafe { TypeCtor(godot_host.api.variant_from_bool) }
 	flag := u8(if value { 1 } else { 0 })
 	unsafe {
 		from_string(voidptr(&key_variant[0]), voidptr(&key_string))
 		from_bool(voidptr(&value_variant[0]), voidptr(&flag))
-		set := KeyedSet(api.dict_set)
+		set := KeyedSet(godot_host.api.dict_set)
 		set(dest, voidptr(&key_variant[0]), voidptr(&value_variant[0]))
-		destroy := VariantDestroy(api.variant_destroy)
+		destroy := VariantDestroy(godot_host.api.variant_destroy)
 		destroy(voidptr(&key_variant[0]))
 		destroy(voidptr(&value_variant[0]))
 	}
@@ -87,13 +87,13 @@ fn dictionary_text(dest voidptr, key string, value string) {
 	value_string.set_text(value)
 	mut key_variant := [24]u8{}
 	mut value_variant := [24]u8{}
-	from_string := unsafe { TypeCtor(api.variant_from_string) }
+	from_string := unsafe { TypeCtor(godot_host.api.variant_from_string) }
 	unsafe {
 		from_string(voidptr(&key_variant[0]), voidptr(&key_string))
 		from_string(voidptr(&value_variant[0]), voidptr(&value_string))
-		set := KeyedSet(api.dict_set)
+		set := KeyedSet(godot_host.api.dict_set)
 		set(dest, voidptr(&key_variant[0]), voidptr(&value_variant[0]))
-		destroy := VariantDestroy(api.variant_destroy)
+		destroy := VariantDestroy(godot_host.api.variant_destroy)
 		destroy(voidptr(&key_variant[0]))
 		destroy(voidptr(&value_variant[0]))
 	}
@@ -102,22 +102,21 @@ fn dictionary_text(dest voidptr, key string, value string) {
 }
 
 fn push_array(array voidptr, item voidptr) {
-	name := string_name('push_back')
-	method := builtin_method_of(type_array, voidptr(&name), 3316032543)
-	if method == unsafe { nil } {
+	if gdf == unsafe { nil } || array == unsafe { nil } || item == unsafe { nil } {
 		return
 	}
-	call := unsafe { BuiltinCall(method) }
-	call(array, voidptr(&item), unsafe { nil }, 1)
+	list := unsafe { &Array(array) }
+	held := unsafe { &Variant(item) }
+	list.push_back(held)
 }
 
 fn variant_object(dest voidptr, object voidptr) {
-	from_object := unsafe { TypeCtor(api.variant_from_object) }
+	from_object := unsafe { TypeCtor(godot_host.api.variant_from_object) }
 	from_object(dest, voidptr(&object))
 }
 
 fn variant_number(dest voidptr, value i64) {
-	from_int := unsafe { TypeCtor(api.variant_from_int) }
+	from_int := unsafe { TypeCtor(godot_host.api.variant_from_int) }
 	from_int(dest, voidptr(&value))
 }
 

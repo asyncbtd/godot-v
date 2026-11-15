@@ -14,28 +14,23 @@
 
 module godot
 
-// delta_of reads the process delta of a node.
-pub fn delta_of(object voidptr) f64 {
-	if gdf == unsafe { nil } || object == unsafe { nil } {
-		return 0
+fn zero(ptr voidptr, size int) {
+	mut bytes := unsafe { &u8(ptr) }
+	for i in 0 .. size {
+		unsafe {
+			bytes[i] = 0
+		}
 	}
-	return Node{
-		ptr: object
-	}.get_process_delta_time()
 }
 
-// feature reports whether Godot was started with the named feature.
-pub fn feature(name string) bool {
-	if gdf == unsafe { nil } || name == '' {
-		return false
-	}
-	return OS.singleton().has_feature(name)
+fn alloc(size uint) voidptr {
+	f := unsafe { MemAlloc(godot_host.api.mem_alloc) }
+	ptr := f(size)
+	zero(ptr, int(size))
+	return ptr
 }
 
-// action_down reports whether an input action is pressed.
-pub fn action_down(name string) bool {
-	if gdf == unsafe { nil } || name == '' {
-		return false
-	}
-	return Input.singleton().is_action_pressed(name)
+fn free_mem(ptr voidptr) {
+	f := unsafe { MemFree(godot_host.api.mem_free) }
+	f(ptr)
 }

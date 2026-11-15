@@ -18,7 +18,7 @@ fn ignore_frame(_delta f64) {}
 
 fn guest_enter() {}
 
-fn guest_signal(name string) bool {
+fn guest_signal(_owner voidptr, name string) bool {
 	return name == 'hop'
 }
 
@@ -109,8 +109,7 @@ fn test_kind_pointers_and_method_lookup() {
 	}
 	assert pointer_kind(unsafe { nil }) == -1
 	mut def := MethodDef{
-		action: 3
-		ret:    1
+		ret: 1
 	}
 	list := [
 		MethodSlot{
@@ -125,13 +124,13 @@ fn test_kind_pointers_and_method_lookup() {
 }
 
 fn test_remembered_scripts_round_trip() {
-	saved := script_resources.clone()
+	saved := godot_host.scripts.clone()
 	defer {
-		script_resources = saved.clone()
+		godot_host.scripts = saved.clone()
 	}
 	mut marker := 1
 	assert script_is_remembered(voidptr(&marker)) == false
-	script_resources << voidptr(&marker)
+	godot_host.scripts << voidptr(&marker)
 	assert script_is_remembered(voidptr(&marker))
 	assert script_is_remembered(unsafe { nil }) == false
 }
@@ -172,19 +171,19 @@ fn test_instance_info_points_at_callbacks() {
 }
 
 fn test_guest_registration_stores_hooks() {
-	register_main(guest_enter, guest_signal)
-	main_hook := registry.hook('res://main.v')
+	godot_host.registry.add_script('main', voidptr(guest_enter), unsafe { nil }, voidptr(guest_signal))
+	main_hook := godot_host.registry.hook('res://main.v')
 	assert main_hook.enter == voidptr(guest_enter)
 	assert main_hook.frame == unsafe { nil }
-	assert call_signal(main_hook.signal, 'hop')
-	register_player(guest_enter, ignore_frame, guest_signal)
-	player_hook := registry.hook('player')
+	assert call_script(main_hook.call, unsafe { nil }, 'hop')
+	godot_host.registry.add_script('player', voidptr(guest_enter), voidptr(ignore_frame), voidptr(guest_signal))
+	player_hook := godot_host.registry.hook('player')
 	assert player_hook.enter == voidptr(guest_enter)
 	assert player_hook.frame == voidptr(ignore_frame)
-	assert call_signal(player_hook.signal, 'idle') == false
-	register_mob(guest_enter)
-	mob_hook := registry.hook('mob.v')
+	assert call_script(player_hook.call, unsafe { nil }, 'idle') == false
+	godot_host.registry.add_script('mob', voidptr(guest_enter), unsafe { nil }, unsafe { nil })
+	mob_hook := godot_host.registry.hook('mob.v')
 	assert mob_hook.enter == voidptr(guest_enter)
 	assert mob_hook.frame == unsafe { nil }
-	assert mob_hook.signal == unsafe { nil }
+	assert mob_hook.call == unsafe { nil }
 }

@@ -73,7 +73,7 @@ fn test_parser_reads_tool_abstract_icon_and_rpc() {
 
 fn test_register_stores_class_facts() {
 	register[Marked]()
-	slot := registry.get('marked') or {
+	slot := godot_host.registry.get('marked') or {
 		assert false
 		return
 	}

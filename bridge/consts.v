@@ -17,20 +17,6 @@ module godot
 const level_scene = u32(2)
 const level_editor = u32(3)
 
-const type_bool = 1
-const type_int = 2
-const type_float = 3
-const type_string = 4
-const type_vector2 = 5
-const type_rect2 = 7
-const type_string_name = 21
-const type_node_path = 22
-const type_object = 24
-const type_callable = 25
-const type_dictionary = 27
-const type_array = 28
-const type_packed_string_array = 34
-
 const kind_language = 0
 const kind_script = 1
 const kind_loader = 2
