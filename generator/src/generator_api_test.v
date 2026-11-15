@@ -137,12 +137,12 @@ fn test_run_writes_api_bindings() {
 	mut g := GeneratorAPI.new(sample_api, out_dir)
 	g.run()!
 
-	enums := os.read_file(os.join_path(out_dir, '__enums.v'))!
+	enums := os.read_file(os.join_path(out_dir, '_gen_enums.v'))!
 	assert enums.contains('pub enum GDError as i64 {')
 	assert enums.contains('\tfailed = 1')
 	assert !enums.contains('err_dup')
 
-	functions := os.read_file(os.join_path(out_dir, '__functions.v'))!
+	functions := os.read_file(os.join_path(out_dir, '_gen_functions.v'))!
 	assert functions.contains('pub fn abs(x i64) i64 {')
 	assert functions.contains("utility_function(0, 'abs', i64(7))")
 
@@ -163,16 +163,16 @@ fn test_run_writes_api_bindings() {
 	gd_ext := os.read_file(os.join_path(out_dir, '_GDExtension.v'))!
 	assert gd_ext.contains('pub enum GDExtensionLibraryInitializationLevel as i64 {')
 
-	structs := os.read_file(os.join_path(out_dir, '__structs.v'))!
+	structs := os.read_file(os.join_path(out_dir, '_gen_structs.v'))!
 	assert structs.contains('pub struct ObjectID {')
 	assert structs.contains('\tid u64')
 
-	counts := os.read_file(os.join_path(out_dir, '__bind_count.v'))!
+	counts := os.read_file(os.join_path(out_dir, '_gen_bind_count.v'))!
 	assert counts.contains('const class_bind_count = 1')
 	assert counts.contains('const builtin_bind_count = 0')
 	assert counts.contains('const utility_bind_count = 1')
 
-	info := os.read_file(os.join_path(out_dir, '__info.v'))!
+	info := os.read_file(os.join_path(out_dir, '_gen_info.v'))!
 	assert info.contains("name:        'godot'")
 	assert info.contains('major:       1')
 	assert info.contains('minor:       2')

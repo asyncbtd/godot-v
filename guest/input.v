@@ -14,23 +14,9 @@
 
 module godot
 
-// feature reports whether Godot was started with the named feature.
-pub fn feature(name string) bool {
-	return feature_impl(name)
-}
-
-// action_down reports whether an input action is pressed.
-pub fn action_down(name string) bool {
-	return action_down_impl(name)
-}
-
 // delta_of reads the process delta of a node.
 pub fn delta_of(object voidptr) f64 {
-	return delta_of_impl(object)
-}
-
-fn delta_of_impl(object voidptr) f64 {
-	ret := scratch()
+	ret := temp_variant()
 	ok := invoke(object, 'get_process_delta_time', []voidptr{}, ret)
 	mut value := f64(0)
 	if ok {
@@ -41,13 +27,14 @@ fn delta_of_impl(object voidptr) f64 {
 	return value
 }
 
-fn feature_impl(name string) bool {
+// feature reports whether Godot was started with the named feature.
+pub fn feature(name string) bool {
 	target := singleton('OS')
 	mut text := GdString{}
 	text.set_text(name)
-	slot := scratch()
-	put_string(slot, text)
-	ret := scratch()
+	slot := temp_variant()
+	write_variant_string(slot, text)
+	ret := temp_variant()
 	ok := invoke(target, 'has_feature', [slot], ret)
 	mut flag := u8(0)
 	if ok {
@@ -60,12 +47,13 @@ fn feature_impl(name string) bool {
 	return flag != 0
 }
 
-fn action_down_impl(name string) bool {
+// action_down reports whether an input action is pressed.
+pub fn action_down(name string) bool {
 	input := singleton('Input')
 	stored := cached_name(name)
-	slot := scratch()
-	put_name(slot, stored)
-	ret := scratch()
+	slot := temp_variant()
+	write_variant_name(slot, stored)
+	ret := temp_variant()
 	ok := invoke(input, 'is_action_pressed', [slot], ret)
 	mut flag := u8(0)
 	if ok {

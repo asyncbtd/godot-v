@@ -14,32 +14,23 @@
 
 module godot
 
-fn test_text_of_reads_cstring() {
-	assert text_of(unsafe { nil }, 0) == ''
-	assert text_of(unsafe { nil }, 5) == ''
-	assert text_of(c'hello', 5) == 'hello'
-	assert text_of(c'hello', 2) == 'he'
+fn test_text_from_ptr_reads_cstring() {
+	assert text_from_ptr(unsafe { nil }, 0) == ''
+	assert text_from_ptr(unsafe { nil }, 5) == ''
+	assert text_from_ptr(c'hello', 5) == 'hello'
+	assert text_from_ptr(c'hello', 2) == 'he'
 }
 
-fn test_flag_of_converts_bool() {
-	assert flag_of(true) == u8(1)
-	assert flag_of(false) == u8(0)
+fn test_bool_to_u8_converts_bool() {
+	assert bool_to_u8(true) == u8(1)
+	assert bool_to_u8(false) == u8(0)
 }
 
-fn test_source_has_method() {
-	assert source_has_method("if name == 'jump' {", 'jump')
-	assert source_has_method('if name == "jump" {', 'jump')
-	assert source_has_method('fn (mut self Foo) ready() {}', 'ready')
-	assert source_has_method('fn (mut self Foo) ready() {}', 'process') == false
-	assert source_has_method('', 'ready') == false
-	assert source_has_method('fn (mut self Foo) ready() {}', '') == false
-}
-
-fn test_script_key_strips_path_and_suffix() {
-	assert script_key('res://game/player.v') == 'player'
-	assert script_key('player.v') == 'player'
-	assert script_key('res://game/sub/dir/player.v') == 'player'
-	assert script_key('res://game/player') == 'player'
+fn test_script_id_of_path_strips_path_and_suffix() {
+	assert script_id_of_path('res://game/player.v') == 'player'
+	assert script_id_of_path('player.v') == 'player'
+	assert script_id_of_path('res://game/sub/dir/player.v') == 'player'
+	assert script_id_of_path('res://game/player') == 'player'
 }
 
 fn test_script_library_suffix_matches_platform() {

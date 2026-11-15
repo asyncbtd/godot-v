@@ -29,15 +29,6 @@ pub:
 	name string
 }
 
-struct ScriptBinding {
-mut:
-	key     string
-	base    string
-	methods []string
-}
-
-__global script_bindings = []ScriptBinding{}
-
 // register reads NodeClass and the methods of T and stores them under the struct name.
 pub fn register[T]() int {
 	mut base := ''
@@ -60,8 +51,8 @@ pub fn register[T]() int {
 		}
 	}
 	key := T.name.all_after_last('.').to_lower()
-	store_binding(key, base, methods)
-	bind_script(key, unsafe { nil }, unsafe { nil }, voidptr(call_named[T]))
+	registry.set(key, base, methods)
+	registry.add_script(key, unsafe { nil }, unsafe { nil }, voidptr(call_named[T]))
 	return 0
 }
 
@@ -83,46 +74,15 @@ fn call_named[T](name string) bool {
 	return found
 }
 
-fn store_binding(key string, base string, methods []string) {
-	for i, slot in script_bindings {
-		if slot.key == key {
-			script_bindings[i].base = base
-			script_bindings[i].methods = methods
-			return
-		}
-	}
-	script_bindings << ScriptBinding{
-		key:     key
-		base:    base
-		methods: methods
-	}
-}
-
-fn binding_of_key(key string) ?ScriptBinding {
-	for slot in script_bindings {
-		if slot.key == key {
-			return slot
-		}
-	}
-	return none
-}
-
 fn base_for(path string) string {
-	slot := binding_of_key(script_key(path)) or { return 'Node' }
+	slot := registry.get(script_id_of_path(path)) or { return 'Node' }
 	if slot.base.len == 0 {
 		return 'Node'
 	}
 	return slot.base
 }
 
-fn answers(path string, source string, name string) bool {
-	if slot := binding_of_key(script_key(path)) {
-		return name in slot.methods
-	}
-	return source_has_method(source, name)
-}
-
-fn refresh_base(mut state ScriptState) {
+fn refresh_base(mut state ScriptResource) {
 	path := state.path.text()
 	if path.len == 0 {
 		return
@@ -133,9 +93,9 @@ fn refresh_base(mut state ScriptState) {
 fn write_methods(instance voidptr, ret voidptr) {
 	write_array(ret)
 	state := script_state(instance)
-	slot := binding_of_key(script_key(state.path.text())) or { return }
+	slot := registry.get(script_id_of_path(state.path.text())) or { return }
 	for name in slot.methods {
-		item := scratch()
+		item := temp_variant()
 		dictionary_text(item, 'name', name)
 		push_array(ret, item)
 		free_variant(item)

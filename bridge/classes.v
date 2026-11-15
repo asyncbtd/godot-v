@@ -16,7 +16,7 @@ module godot
 
 struct MethodSlot {
 	key    u64
-	method &Method
+	method &MethodDef
 }
 
 __global language_methods = []MethodSlot{}
@@ -38,11 +38,11 @@ fn register_classes() {
 	register_class('VScriptSaver', 'ResourceFormatSaver', kind_saver)
 }
 
-fn register_method(spec Spec) {
+fn register_method(spec MethodSpec) {
 	name := string_name(spec.name)
 	keep_name(name.data)
 	key := u64(uint(name.data))
-	mut method := unsafe { &Method(alloc(uint(sizeof(Method)))) }
+	mut method := unsafe { &MethodDef(alloc(uint(sizeof(MethodDef)))) }
 	method.action = spec.action
 	method.ret = spec.ret
 	slot := MethodSlot{
@@ -145,12 +145,12 @@ fn create_instance(class_userdata voidptr, notify u8) voidptr {
 
 fn new_instance(kind int, object voidptr) voidptr {
 	if kind == kind_script {
-		mut state := unsafe { &ScriptState(alloc(uint(sizeof(ScriptState)))) }
+		mut state := unsafe { &ScriptResource(alloc(uint(sizeof(ScriptResource)))) }
 		state.kind = kind
 		state.object = object
 		return voidptr(state)
 	}
-	mut plain := unsafe { &PlainObject(alloc(uint(sizeof(PlainObject)))) }
+	mut plain := unsafe { &RawObject(alloc(uint(sizeof(RawObject)))) }
 	plain.kind = kind
 	plain.object = object
 	return voidptr(plain)
@@ -165,12 +165,12 @@ fn free_instance(class_userdata voidptr, instance voidptr) {
 		if script_is_remembered(instance) {
 			return
 		}
-		mut state := unsafe { &ScriptState(instance) }
+		mut state := unsafe { &ScriptResource(instance) }
 		state.source.clear()
 		state.base.clear()
 		state.path.clear()
 	}
-	release(instance)
+	free_mem(instance)
 }
 
 fn script_is_remembered(state voidptr) bool {
@@ -195,7 +195,7 @@ fn virtual_data(class_userdata voidptr, name voidptr, _hash u32) voidptr {
 }
 
 fn call_virtual(instance voidptr, _name voidptr, method_data voidptr, args voidptr, ret voidptr) {
-	method := unsafe { &Method(method_data) }
+	method := unsafe { &MethodDef(method_data) }
 	if method.action == action_stub {
 		write_stub(ret, method.ret)
 		return

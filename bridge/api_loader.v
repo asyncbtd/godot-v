@@ -71,7 +71,11 @@ type KeyedSet = fn (voidptr, voidptr, voidptr)
 
 // report writes a message to Godot's error output.
 pub fn report(message string) {
-	report_impl(message)
+	if api.print_error == unsafe { nil } {
+		return
+	}
+	f := unsafe { PrintError(api.print_error) }
+	f(message.str, c'godot_v', c'bridge/entry.v', 0, 1)
 }
 
 fn proc(name string) voidptr {
@@ -197,12 +201,4 @@ fn singleton(name string) voidptr {
 	object := f(voidptr(&sn))
 	destroy_string_name(&sn)
 	return object
-}
-
-fn report_impl(message string) {
-	if api.print_error == unsafe { nil } {
-		return
-	}
-	f := unsafe { PrintError(api.print_error) }
-	f(message.str, c'godot_v', c'bridge/entry.v', 0, 1)
 }

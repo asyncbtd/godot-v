@@ -82,7 +82,7 @@ pub fn (mut g GeneratorAPI) run() ! {
 }
 
 fn (g &GeneratorAPI) gen_bind_counts() ! {
-	os.write_file(g.file('__bind_count.v'), "
+	os.write_file(g.file('_gen_bind_count.v'), "
 		|module godot
 		|
 		|const class_bind_count = ${g.class_bind}
@@ -161,7 +161,7 @@ fn (g &GeneratorAPI) gen_gdext_info() ! {
 		|}
 	".strip_margin().trim('\n'))
 
-	mut f := os.create(g.file('__info.v'))!
+	mut f := os.create(g.file('_gen_info.v'))!
 	defer { f.close() }
 	f.write(buf)!
 }
@@ -275,7 +275,7 @@ fn (mut g GeneratorAPI) gen_functions() ! {
 		buf.writeln('}')
 	}
 
-	mut f := os.create(g.file('__functions.v'))!
+	mut f := os.create(g.file('_gen_functions.v'))!
 	defer { f.close() }
 	f.write(buf)!
 }
@@ -301,7 +301,7 @@ fn (g &GeneratorAPI) gen_enums() ! {
 		buf.writeln('}')
 	}
 
-	mut f := os.create(g.file('__enums.v'))!
+	mut f := os.create(g.file('_gen_enums.v'))!
 	defer { f.close() }
 	f.write(buf)!
 }
@@ -378,7 +378,7 @@ fn (mut g GeneratorAPI) gen_signals() ! {
 	'.strip_margin().trim_right('\n'))
 	// |	${clauses.join(' else ')}
 
-	mut f := os.create(g.file('__signals.v'))!
+	mut f := os.create(g.file('_gen_signals.v'))!
 	defer { f.close() }
 	f.write(buf)!
 }
@@ -1285,7 +1285,7 @@ fn (g &GeneratorAPI) gen_structs() ! {
 		buf.writeln('}')
 	}
 
-	mut f := os.create(g.file('__structs.v'))!
+	mut f := os.create(g.file('_gen_structs.v'))!
 	defer { f.close() }
 	f.write(buf)!
 }

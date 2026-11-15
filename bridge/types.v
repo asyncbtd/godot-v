@@ -62,7 +62,7 @@ mut:
 	data voidptr
 }
 
-struct ScriptState {
+struct ScriptResource {
 mut:
 	kind   int
 	object voidptr
@@ -72,25 +72,25 @@ mut:
 	owned  u8
 }
 
-struct PlainObject {
+struct RawObject {
 mut:
 	kind   int
 	object voidptr
 }
 
-struct NameNode {
+struct KeptName {
 mut:
 	data voidptr
 	next voidptr
 }
 
-struct Method {
+struct MethodDef {
 mut:
 	action int
 	ret    int
 }
 
-struct Spec {
+struct MethodSpec {
 	kind   int
 	name   string
 	action int

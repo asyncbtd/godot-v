@@ -18,6 +18,13 @@ type HookSignal = fn (string) bool
 
 type EnterFn = fn ()
 
+struct ScriptBinding {
+mut:
+	key     string
+	base    string
+	methods []string
+}
+
 struct ScriptHook {
 mut:
 	key    string
@@ -26,22 +33,15 @@ mut:
 	signal voidptr
 }
 
-__global script_hooks = []ScriptHook{}
-
-fn source_has_method(source string, name string) bool {
-	if name == '' || source == '' {
-		return false
-	}
-	if source.contains("name == '${name}'") {
-		return true
-	}
-	if source.contains('name == "${name}"') {
-		return true
-	}
-	return source.contains(') ${name}(')
+struct Registry {
+mut:
+	bindings []ScriptBinding
+	hooks    []ScriptHook
 }
 
-fn script_key(path string) string {
+__global registry = Registry{}
+
+fn script_id_of_path(path string) string {
 	name := path.all_after_last('/')
 	if name.ends_with('.v') {
 		return name[..name.len - 2]
@@ -49,16 +49,40 @@ fn script_key(path string) string {
 	return name
 }
 
-fn bind_script(key string, enter voidptr, frame voidptr, signal voidptr) {
-	for i, slot in script_hooks {
+fn (mut r Registry) set(key string, base string, methods []string) {
+	for i, slot in r.bindings {
 		if slot.key == key {
-			script_hooks[i].enter = enter
-			script_hooks[i].frame = frame
-			script_hooks[i].signal = signal
+			r.bindings[i].base = base
+			r.bindings[i].methods = methods
 			return
 		}
 	}
-	script_hooks << ScriptHook{
+	r.bindings << ScriptBinding{
+		key:     key
+		base:    base
+		methods: methods
+	}
+}
+
+fn (r &Registry) get(key string) ?ScriptBinding {
+	for slot in r.bindings {
+		if slot.key == key {
+			return slot
+		}
+	}
+	return none
+}
+
+fn (mut r Registry) add_script(key string, enter voidptr, frame voidptr, signal voidptr) {
+	for i, slot in r.hooks {
+		if slot.key == key {
+			r.hooks[i].enter = enter
+			r.hooks[i].frame = frame
+			r.hooks[i].signal = signal
+			return
+		}
+	}
+	r.hooks << ScriptHook{
 		key:    key
 		enter:  enter
 		frame:  frame
@@ -66,14 +90,21 @@ fn bind_script(key string, enter voidptr, frame voidptr, signal voidptr) {
 	}
 }
 
-fn hook_for(path string) ScriptHook {
-	key := script_key(path)
-	for slot in script_hooks {
+fn (r &Registry) hook(path string) ScriptHook {
+	key := script_id_of_path(path)
+	for slot in r.hooks {
 		if slot.key == key {
 			return slot
 		}
 	}
 	return ScriptHook{}
+}
+
+fn (r &Registry) has_method(path string, name string) bool {
+	if slot := r.get(script_id_of_path(path)) {
+		return name in slot.methods
+	}
+	return false
 }
 
 fn call_signal(signal voidptr, name string) bool {
@@ -89,16 +120,16 @@ fn run_script_method(data voidptr, name string) bool {
 		return false
 	}
 	ensure_project_scripts()
-	box := live_box(data)
+	box := script_instance_of(data)
 	if box == unsafe { nil } {
 		return false
 	}
-	if answers(box.path.text(), box.source.text(), name) == false {
+	if registry.has_method(box.path.text(), name) == false {
 		return false
 	}
 	previous := bound_owner
-	bound_owner = box.owner
-	hook := hook_for(box.path.text())
+	bound_owner = box.node
+	hook := registry.hook(box.path.text())
 	ok := call_signal(hook.signal, name)
 	bound_owner = previous
 	return ok
@@ -108,19 +139,19 @@ fn run_script_enter(data voidptr) {
 	if data == unsafe { nil } {
 		return
 	}
-	box := live_box(data)
+	box := script_instance_of(data)
 	if box == unsafe { nil } {
 		return
 	}
-	if answers(box.path.text(), box.source.text(), '_ready') {
+	if registry.has_method(box.path.text(), '_ready') {
 		return
 	}
-	hook := hook_for(box.path.text())
+	hook := registry.hook(box.path.text())
 	if hook.enter == unsafe { nil } {
 		return
 	}
 	previous := bound_owner
-	bound_owner = box.owner
+	bound_owner = box.node
 	f := unsafe { EnterFn(hook.enter) }
 	f()
 	bound_owner = previous

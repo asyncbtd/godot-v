@@ -76,8 +76,8 @@ fn template_source(class_name string, base string) string {
 	return "@[godot.NodeClass('${parent}')]\npub struct ${name} {\n}\n\npub fn (mut self ${name}) ready() {}\n"
 }
 
-fn script_state(instance voidptr) &ScriptState {
-	return unsafe { &ScriptState(instance) }
+fn script_state(instance voidptr) &ScriptResource {
+	return unsafe { &ScriptResource(instance) }
 }
 
 fn write_script_base(instance voidptr, ret voidptr) {
@@ -87,13 +87,13 @@ fn write_script_base(instance voidptr, ret voidptr) {
 }
 
 fn set_script_source(instance voidptr, source string) {
-	mut state := unsafe { &ScriptState(instance) }
+	mut state := unsafe { &ScriptResource(instance) }
 	state.source.set_text(source)
 	refresh_base(mut state)
 }
 
 fn set_script_path(instance voidptr, path string) {
-	mut state := unsafe { &ScriptState(instance) }
+	mut state := unsafe { &ScriptResource(instance) }
 	state.path.set_text(path)
 	refresh_base(mut state)
 }
@@ -187,7 +187,7 @@ fn release_ref(object voidptr) bool {
 fn save_script(args voidptr, ret voidptr) {
 	resource := arg_object(args, 0)
 	path := arg_string(args, 1)
-	state := unsafe { &ScriptState(binding_of(resource)) }
+	state := unsafe { &ScriptResource(binding_of(resource)) }
 	mut path_string := GdString{}
 	path_string.set_text(path)
 	flags := i64(2)

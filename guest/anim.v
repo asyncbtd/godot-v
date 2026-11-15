@@ -14,24 +14,20 @@
 
 module godot
 
-// play_anim plays an animation, or the current one when name is empty.
-pub fn play_anim(object voidptr, name string) {
-	play_anim_impl(object, name)
-}
-
 // stop_anim stops an animated sprite.
 pub fn stop_anim(object voidptr) {
 	call_void(object, 'stop')
 }
 
-fn play_anim_impl(object voidptr, name string) {
+// play_anim plays an animation, or the current one when name is empty.
+pub fn play_anim(object voidptr, name string) {
 	if name == '' {
 		call_void(object, 'play')
 		return
 	}
 	stored := cached_name(name)
-	slot := scratch()
-	put_name(slot, stored)
+	slot := temp_variant()
+	write_variant_name(slot, stored)
 	call_with(object, 'play', slot)
 	free_variant(slot)
 }

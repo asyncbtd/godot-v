@@ -21,7 +21,7 @@ fn prepare_binding() {
 }
 
 fn binding_create(_token voidptr, object voidptr) voidptr {
-	mut state := unsafe { &ScriptState(alloc(uint(sizeof(ScriptState)))) }
+	mut state := unsafe { &ScriptResource(alloc(uint(sizeof(ScriptResource)))) }
 	state.kind = kind_script
 	state.object = object
 	state.owned = 1
@@ -32,14 +32,14 @@ fn binding_free(_token voidptr, _object voidptr, instance voidptr) {
 	if instance == unsafe { nil } {
 		return
 	}
-	mut state := unsafe { &ScriptState(instance) }
+	mut state := unsafe { &ScriptResource(instance) }
 	if state.kind != kind_script || state.owned == 0 {
 		return
 	}
 	state.source.clear()
 	state.base.clear()
 	state.path.clear()
-	release(instance)
+	free_mem(instance)
 }
 
 fn binding_reference(_token voidptr, _binding voidptr, _reference u8) u8 {

@@ -30,7 +30,7 @@ fn alloc(size uint) voidptr {
 	return ptr
 }
 
-fn release(ptr voidptr) {
+fn free_mem(ptr voidptr) {
 	f := unsafe { MemFree(api.mem_free) }
 	f(ptr)
 }

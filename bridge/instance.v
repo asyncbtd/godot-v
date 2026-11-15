@@ -44,12 +44,12 @@ mut:
 	free_func                      voidptr
 }
 
-struct Live {
+struct ScriptInstance {
 mut:
-	owner  voidptr
-	script voidptr
-	source GdString
-	path   GdString
+	node     voidptr
+	resource voidptr
+	source   GdString
+	path     GdString
 }
 
 __global script_info InstanceInfo
@@ -57,15 +57,15 @@ __global script_info InstanceInfo
 type ScriptCreate = fn (voidptr, voidptr) voidptr
 
 fn prepare_instance_info() {
-	script_info.has_method_func = voidptr(live_has_method)
-	script_info.call_func = voidptr(live_call)
-	script_info.notification_func = voidptr(live_notify)
-	script_info.get_owner_func = voidptr(live_owner)
-	script_info.get_script_func = voidptr(live_script)
-	script_info.get_language_func = voidptr(live_language)
-	script_info.is_placeholder_func = voidptr(live_placeholder)
-	script_info.refcount_decremented_func = voidptr(live_can_die)
-	script_info.free_func = voidptr(live_free)
+	script_info.has_method_func = voidptr(instance_has_method)
+	script_info.call_func = voidptr(instance_call)
+	script_info.notification_func = voidptr(instance_notify)
+	script_info.get_owner_func = voidptr(instance_owner)
+	script_info.get_script_func = voidptr(instance_script)
+	script_info.get_language_func = voidptr(instance_language)
+	script_info.is_placeholder_func = voidptr(instance_placeholder)
+	script_info.refcount_decremented_func = voidptr(instance_can_die)
+	script_info.free_func = voidptr(instance_free)
 }
 
 fn script_can_run(instance voidptr) bool {
@@ -82,49 +82,78 @@ fn script_can_run(instance voidptr) bool {
 
 fn script_has_method(instance voidptr, name string) bool {
 	state := script_state(instance)
-	return answers(state.path.text(), state.source.text(), name)
+	return registry.has_method(state.path.text(), name)
 }
 
-fn make_live(state &ScriptState, owner voidptr) voidptr {
-	mut box := unsafe { &Live(alloc(uint(sizeof(Live)))) }
-	box.owner = owner
-	box.script = state.object
+fn make_live(state &ScriptResource, owner voidptr) voidptr {
+	mut box := unsafe { &ScriptInstance(alloc(uint(sizeof(ScriptInstance)))) }
+	box.node = owner
+	box.resource = state.object
 	box.source.set_text(state.source.text())
 	box.path.set_text(state.path.text())
 	ensure_project_scripts()
 	create := unsafe { ScriptCreate(api.script_instance) }
 	instance := create(voidptr(&script_info), voidptr(box))
-	if answers(state.path.text(), state.source.text(), '_process') {
+	if registry.has_method(state.path.text(), '_process') {
 		set_process_enabled(owner)
 	}
 	return instance
 }
 
-fn live_box(data voidptr) &Live {
+fn script_instance_of(data voidptr) &ScriptInstance {
 	if data == unsafe { nil } {
 		return unsafe { nil }
 	}
-	return unsafe { &Live(data) }
+	return unsafe { &ScriptInstance(data) }
 }
 
-fn live_has_method(data voidptr, method voidptr) bool {
-	box := live_box(data)
-	if box == unsafe { nil } {
-		return false
-	}
-	return answers(box.path.text(), box.source.text(), read_name(method))
+fn (s &ScriptInstance) has_method(method voidptr) bool {
+	return registry.has_method(s.path.text(), read_name(method))
 }
 
-fn live_call(data voidptr, method voidptr, _args voidptr, _count i64, ret voidptr, err voidptr) {
+fn (s &ScriptInstance) call(method voidptr, ret voidptr, err voidptr) {
 	if ret != unsafe { nil } {
 		zero(ret, 24)
 	}
 	if err != unsafe { nil } {
 		zero(err, 12)
 	}
-	if run_script_method(data, read_name(method)) == false {
+	if run_script_method(voidptr(s), read_name(method)) == false {
 		mark_bad(err)
 	}
+}
+
+fn (s &ScriptInstance) notify(what int) {
+	if what != 13 {
+		return
+	}
+	run_script_enter(voidptr(s))
+}
+
+fn (s &ScriptInstance) owner() voidptr {
+	return s.node
+}
+
+fn (s &ScriptInstance) script() voidptr {
+	return s.resource
+}
+
+fn (s &ScriptInstance) language() voidptr {
+	return api.language
+}
+
+fn (s &ScriptInstance) placeholder() u8 {
+	return 0
+}
+
+fn (s &ScriptInstance) can_die() u8 {
+	return 1
+}
+
+fn (mut s ScriptInstance) free() {
+	s.source.clear()
+	s.path.clear()
+	free_mem(voidptr(s))
 }
 
 fn mark_bad(err voidptr) {
@@ -136,45 +165,63 @@ fn mark_bad(err voidptr) {
 	}
 }
 
-fn live_notify(data voidptr, what int, _reversed u8) {
-	if what != 13 {
+fn instance_has_method(data voidptr, method voidptr) bool {
+	box := script_instance_of(data)
+	if box == unsafe { nil } {
+		return false
+	}
+	return box.has_method(method)
+}
+
+fn instance_call(data voidptr, method voidptr, _args voidptr, _count i64, ret voidptr, err voidptr) {
+	box := script_instance_of(data)
+	if box == unsafe { nil } {
+		mark_bad(err)
 		return
 	}
-	run_script_enter(data)
+	box.call(method, ret, err)
 }
 
-fn live_owner(data voidptr) voidptr {
-	if data == unsafe { nil } {
-		return unsafe { nil }
-	}
-	return unsafe { &Live(data) }.owner
-}
-
-fn live_script(data voidptr) voidptr {
-	if data == unsafe { nil } {
-		return unsafe { nil }
-	}
-	return unsafe { &Live(data) }.script
-}
-
-fn live_language(_data voidptr) voidptr {
-	return api.language
-}
-
-fn live_placeholder(_data voidptr) u8 {
-	return 0
-}
-
-fn live_can_die(_data voidptr) u8 {
-	return 1
-}
-
-fn live_free(data voidptr) {
-	mut box := live_box(data)
+fn instance_notify(data voidptr, what int, _reversed u8) {
+	box := script_instance_of(data)
 	if box == unsafe { nil } {
 		return
 	}
-	box.source.clear()
-	box.path.clear()
-	release(data)
+	box.notify(what)
+}
+
+fn instance_owner(data voidptr) voidptr {
+	box := script_instance_of(data)
+	if box == unsafe { nil } {
+		return unsafe { nil }
+	}
+	return box.owner()
+}
+
+fn instance_script(data voidptr) voidptr {
+	box := script_instance_of(data)
+	if box == unsafe { nil } {
+		return unsafe { nil }
+	}
+	return box.script()
+}
+
+fn instance_language(_data voidptr) voidptr {
+	return api.language
+}
+
+fn instance_placeholder(_data voidptr) u8 {
+	return 0
+}
+
+fn instance_can_die(_data voidptr) u8 {
+	return 1
+}
+
+fn instance_free(data voidptr) {
+	mut box := script_instance_of(data)
+	if box == unsafe { nil } {
+		return
+	}
+	box.free()
 }

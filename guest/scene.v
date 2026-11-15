@@ -18,17 +18,17 @@ __global host_session Session
 
 // register_main stores the callbacks for a main script.
 pub fn register_main(enter fn (), signal fn (string) bool) {
-	bind_script('main', voidptr(enter), unsafe { nil }, voidptr(signal))
+	registry.add_script('main', voidptr(enter), unsafe { nil }, voidptr(signal))
 }
 
 // register_player stores the callbacks for a player script.
 pub fn register_player(enter fn (), frame fn (f64), signal fn (string) bool) {
-	bind_script('player', voidptr(enter), voidptr(frame), voidptr(signal))
+	registry.add_script('player', voidptr(enter), voidptr(frame), voidptr(signal))
 }
 
 // register_mob stores the callback for a mob script.
 pub fn register_mob(enter fn ()) {
-	bind_script('mob', voidptr(enter), unsafe { nil }, unsafe { nil })
+	registry.add_script('mob', voidptr(enter), unsafe { nil }, unsafe { nil })
 }
 
 // live returns the session shared by the running scripts.
@@ -36,27 +36,19 @@ pub fn live() &Session {
 	return active_session
 }
 
-// load_resource loads the resource at path.
-pub fn load_resource(path string) voidptr {
-	return load_resource_impl(path)
-}
-
 // instance_scene instantiates a packed scene.
 pub fn instance_scene(scene voidptr) voidptr {
 	return call_object(scene, 'instantiate')
 }
 
-fn init() {
-	active_session = unsafe { &host_session }
-}
-
-fn load_resource_impl(path string) voidptr {
+// load_resource loads the resource at path.
+pub fn load_resource(path string) voidptr {
 	loader := singleton('ResourceLoader')
 	mut text := GdString{}
 	text.set_text(path)
-	slot := scratch()
-	put_string(slot, text)
-	ret := scratch()
+	slot := temp_variant()
+	write_variant_string(slot, text)
+	ret := temp_variant()
 	ok := invoke(loader, 'load', [slot], ret)
 	found := variant_object_ptr(ret)
 	if ok && found != unsafe { nil } {
@@ -69,4 +61,8 @@ fn load_resource_impl(path string) voidptr {
 		return unsafe { nil }
 	}
 	return found
+}
+
+fn init() {
+	active_session = unsafe { &host_session }
 }

@@ -41,11 +41,6 @@ pub fn owner() voidptr {
 	return bound_owner
 }
 
-// call_group calls method on every node in group.
-pub fn call_group(object voidptr, group string, method string) {
-	call_group_impl(object, group, method)
-}
-
 // call_method calls method on object with no arguments.
 pub fn call_method(object voidptr, method string) {
 	call_void(object, method)
@@ -75,15 +70,10 @@ pub fn connect(source voidptr, signal_name string, target voidptr, method string
 	call(bind, source, voidptr(&args[0]), voidptr(&err))
 	drop := unsafe { TypeCtor(destructor_of(type_callable)) }
 	drop(callable, unsafe { nil })
-	release(callable)
+	free_mem(callable)
 	if err != 0 {
 		report('connect ${signal_name} -> ${method} failed: ${err}')
 	}
-}
-
-// node_at returns the node at path, or nil when it is missing.
-pub fn node_at(object voidptr, path string) voidptr {
-	return node_at_impl(object, path)
 }
 
 // timer_start starts a timer node.
@@ -106,11 +96,6 @@ pub fn show_node(object voidptr) {
 	call_void(object, 'show')
 }
 
-// set_text_prop sets a string property on object.
-pub fn set_text_prop(object voidptr, prop string, value string) {
-	set_text_prop_impl(object, prop, value)
-}
-
 // set_flag_prop sets a bool property on object.
 pub fn set_flag_prop(object voidptr, prop string, value bool) {
 	set_bool_prop(object, prop, value)
@@ -131,29 +116,9 @@ pub fn rotation_of(object voidptr) f64 {
 	return get_float(object, 'rotation')
 }
 
-// move_to sets the position of a node.
-pub fn move_to(object voidptr, x f32, y f32) {
-	move_to_impl(object, x, y)
-}
-
 // set_rotation sets the rotation of a node.
 pub fn set_rotation(object voidptr, angle f64) {
 	set_float_prop(object, 'rotation', angle)
-}
-
-// push_velocity sets the linear velocity of a rigid body.
-pub fn push_velocity(object voidptr, x f32, y f32) {
-	push_velocity_impl(object, x, y)
-}
-
-// add_child adds child to parent.
-pub fn add_child(parent voidptr, child voidptr) {
-	add_child_impl(parent, child)
-}
-
-// viewport_size reads the visible size of the node's viewport.
-pub fn viewport_size(object voidptr) (f32, f32) {
-	return viewport_size_impl(object)
 }
 
 // set_disabled sets the disabled property of a collision shape.
@@ -171,14 +136,112 @@ pub fn set_deferred_flag(object voidptr, prop string, value bool) {
 	set_deferred_bool(object, prop, value)
 }
 
-fn text_of(ptr &u8, len int) string {
+// node_at returns the node at path, or nil when it is missing.
+pub fn node_at(object voidptr, path string) voidptr {
+	if object == unsafe { nil } {
+		return unsafe { nil }
+	}
+	mut text := GdString{}
+	text.set_text(path)
+	mut node_path := GdString{}
+	ctor := unsafe { TypeCtor(constructor_of(type_node_path, 2)) }
+	src := voidptr(&text)
+	ctor(voidptr(&node_path), voidptr(&src))
+	slot := temp_variant()
+	from := unsafe { TypeCtor(from_type_of(type_node_path)) }
+	from(slot, voidptr(&node_path))
+	ret := temp_variant()
+	ok := invoke(object, 'get_node_or_null', [slot], ret)
+	found := variant_object_ptr(ret)
+	free_variant(slot)
+	free_variant(ret)
+	destroy_builtin(type_node_path, voidptr(&node_path))
+	text.clear()
+	if ok == false {
+		return unsafe { nil }
+	}
+	return found
+}
+
+// set_text_prop sets a string property on object.
+pub fn set_text_prop(object voidptr, prop string, value string) {
+	mut text := GdString{}
+	text.set_text(value)
+	slot := temp_variant()
+	write_variant_string(slot, text)
+	set_prop(object, prop, slot)
+	free_variant(slot)
+	text.clear()
+}
+
+// call_group calls method on every node in group.
+pub fn call_group(object voidptr, group string, method string) {
+	tree := call_object(object, 'get_tree')
+	if tree == unsafe { nil } {
+		return
+	}
+	group_name := cached_name(group)
+	method_name := cached_name(method)
+	first := temp_variant()
+	second := temp_variant()
+	write_variant_name(first, group_name)
+	write_variant_name(second, method_name)
+	ret := temp_variant()
+	invoke(tree, 'call_group', [first, second], ret)
+	free_variant(first)
+	free_variant(second)
+	free_variant(ret)
+}
+
+// move_to sets the position of a node.
+pub fn move_to(object voidptr, x f32, y f32) {
+	slot := temp_variant()
+	write_variant_vector(slot, x, y)
+	set_prop(object, 'position', slot)
+	free_variant(slot)
+}
+
+// push_velocity sets the linear velocity of a rigid body.
+pub fn push_velocity(object voidptr, x f32, y f32) {
+	slot := temp_variant()
+	write_variant_vector(slot, x, y)
+	set_prop(object, 'linear_velocity', slot)
+	free_variant(slot)
+}
+
+// add_child adds child to parent.
+pub fn add_child(parent voidptr, child voidptr) {
+	if parent == unsafe { nil } || child == unsafe { nil } {
+		return
+	}
+	slot := temp_variant()
+	from := unsafe { TypeCtor(from_type_of(type_object)) }
+	from(slot, voidptr(&child))
+	call_with(parent, 'add_child', slot)
+	free_variant(slot)
+}
+
+// viewport_size reads the visible size of the node's viewport.
+pub fn viewport_size(object voidptr) (f32, f32) {
+	ret := temp_variant()
+	ok := invoke(object, 'get_viewport_rect', []voidptr{}, ret)
+	mut rect := Rect{}
+	if ok {
+		to := unsafe { TypeCtor(to_type_of(type_rect2)) }
+		to(voidptr(&rect), ret)
+	}
+	free_variant(ret)
+	return rect.w, rect.h
+}
+
+fn text_from_ptr(ptr &u8, len int) string {
 	if ptr == unsafe { nil } || len <= 0 {
 		return ''
 	}
 	return unsafe { tos(ptr, len) }
 }
 
-fn flag_of(value bool) u8 {
+fn bool_to_u8(value bool) u8 {
 	if value {
 		return 1
 	}
@@ -199,20 +262,20 @@ fn cached_name(text string) GdString {
 	return name
 }
 
-fn scratch() voidptr {
+fn temp_variant() voidptr {
 	return alloc(24)
 }
 
-fn scratch_err() voidptr {
+fn temp_call_error() voidptr {
 	return alloc(12)
 }
 
 fn free_variant(ptr voidptr) {
-	drop_variant(ptr)
-	release(ptr)
+	destroy_variant(ptr)
+	free_mem(ptr)
 }
 
-fn drop_variant(ptr voidptr) {
+fn destroy_variant(ptr voidptr) {
 	if ptr == unsafe { nil } || api.variant_destroy == unsafe { nil } {
 		return
 	}
@@ -220,23 +283,23 @@ fn drop_variant(ptr voidptr) {
 	f(ptr)
 }
 
-fn drop_builtin(typ int, ptr voidptr) {
+fn destroy_builtin(typ int, ptr voidptr) {
 	dtor := unsafe { TypeCtor(destructor_of(typ)) }
 	dtor(ptr, unsafe { nil })
 }
 
-fn put_bool(dest voidptr, value bool) {
-	flag := flag_of(value)
+fn write_variant_bool(dest voidptr, value bool) {
+	flag := bool_to_u8(value)
 	from := unsafe { TypeCtor(from_type_of(type_bool)) }
 	from(dest, voidptr(&flag))
 }
 
-fn put_float(dest voidptr, value f64) {
+fn write_variant_float(dest voidptr, value f64) {
 	from := unsafe { TypeCtor(from_type_of(type_float)) }
 	from(dest, voidptr(&value))
 }
 
-fn put_vector(dest voidptr, x f32, y f32) {
+fn write_variant_vector(dest voidptr, x f32, y f32) {
 	point := Vec2{
 		x: x
 		y: y
@@ -245,12 +308,12 @@ fn put_vector(dest voidptr, x f32, y f32) {
 	from(dest, voidptr(&point))
 }
 
-fn put_string(dest voidptr, text &GdString) {
+fn write_variant_string(dest voidptr, text &GdString) {
 	from := unsafe { TypeCtor(from_type_of(type_string)) }
 	from(dest, voidptr(text))
 }
 
-fn put_name(dest voidptr, name &GdString) {
+fn write_variant_name(dest voidptr, name &GdString) {
 	from := unsafe { TypeCtor(from_type_of(type_string_name)) }
 	from(dest, voidptr(name))
 }
@@ -259,9 +322,9 @@ fn invoke(object voidptr, method string, args []voidptr, ret voidptr) bool {
 	if object == unsafe { nil } || api.variant_call == unsafe { nil } {
 		return false
 	}
-	self_var := scratch()
-	out := scratch()
-	err := scratch_err()
+	self_var := temp_variant()
+	out := temp_variant()
+	err := temp_call_error()
 	from := unsafe { TypeCtor(from_type_of(type_object)) }
 	from(self_var, voidptr(&object))
 	name := cached_name(method)
@@ -275,7 +338,7 @@ fn invoke(object voidptr, method string, args []voidptr, ret voidptr) bool {
 	free_variant(self_var)
 	free_variant(out)
 	code := unsafe { *&int(err) }
-	release(err)
+	free_mem(err)
 	return code == 0
 }
 
@@ -287,7 +350,7 @@ fn variant_object_ptr(variant voidptr) voidptr {
 }
 
 fn call_object(object voidptr, method string) voidptr {
-	ret := scratch()
+	ret := temp_variant()
 	ok := invoke(object, method, []voidptr{}, ret)
 	found := variant_object_ptr(ret)
 	free_variant(ret)
@@ -298,13 +361,13 @@ fn call_object(object voidptr, method string) voidptr {
 }
 
 fn call_void(object voidptr, method string) {
-	ret := scratch()
+	ret := temp_variant()
 	invoke(object, method, []voidptr{}, ret)
 	free_variant(ret)
 }
 
 fn call_with(object voidptr, method string, arg voidptr) {
-	ret := scratch()
+	ret := temp_variant()
 	invoke(object, method, [arg], ret)
 	free_variant(ret)
 }
@@ -317,30 +380,30 @@ fn keep_ref(object voidptr) {
 }
 
 fn set_prop(object voidptr, prop string, value voidptr) {
-	name_var := scratch()
+	name_var := temp_variant()
 	stored := cached_name(prop)
-	put_name(name_var, stored)
-	ret := scratch()
+	write_variant_name(name_var, stored)
+	ret := temp_variant()
 	invoke(object, 'set', [name_var, value], ret)
 	free_variant(name_var)
 	free_variant(ret)
 }
 
 fn set_deferred_prop(object voidptr, prop string, value voidptr) {
-	name_var := scratch()
+	name_var := temp_variant()
 	stored := cached_name(prop)
-	put_name(name_var, stored)
-	ret := scratch()
+	write_variant_name(name_var, stored)
+	ret := temp_variant()
 	invoke(object, 'set_deferred', [name_var, value], ret)
 	free_variant(name_var)
 	free_variant(ret)
 }
 
 fn get_vector(object voidptr, prop string) (f32, f32) {
-	name_var := scratch()
+	name_var := temp_variant()
 	stored := cached_name(prop)
-	put_name(name_var, stored)
-	ret := scratch()
+	write_variant_name(name_var, stored)
+	ret := temp_variant()
 	ok := invoke(object, 'get', [name_var], ret)
 	mut point := Vec2{}
 	if ok {
@@ -353,10 +416,10 @@ fn get_vector(object voidptr, prop string) (f32, f32) {
 }
 
 fn get_float(object voidptr, prop string) f64 {
-	name_var := scratch()
+	name_var := temp_variant()
 	stored := cached_name(prop)
-	put_name(name_var, stored)
-	ret := scratch()
+	write_variant_name(name_var, stored)
+	ret := temp_variant()
 	ok := invoke(object, 'get', [name_var], ret)
 	mut value := f64(0)
 	if ok {
@@ -369,120 +432,29 @@ fn get_float(object voidptr, prop string) f64 {
 }
 
 fn set_process_enabled(object voidptr) {
-	value := scratch()
-	put_bool(value, true)
+	value := temp_variant()
+	write_variant_bool(value, true)
 	call_with(object, 'set_process', value)
 	free_variant(value)
 }
 
-fn node_at_impl(object voidptr, path string) voidptr {
-	if object == unsafe { nil } {
-		return unsafe { nil }
-	}
-	mut text := GdString{}
-	text.set_text(path)
-	mut node_path := GdString{}
-	ctor := unsafe { TypeCtor(constructor_of(type_node_path, 2)) }
-	src := voidptr(&text)
-	ctor(voidptr(&node_path), voidptr(&src))
-	slot := scratch()
-	from := unsafe { TypeCtor(from_type_of(type_node_path)) }
-	from(slot, voidptr(&node_path))
-	ret := scratch()
-	ok := invoke(object, 'get_node_or_null', [slot], ret)
-	found := variant_object_ptr(ret)
-	free_variant(slot)
-	free_variant(ret)
-	drop_builtin(type_node_path, voidptr(&node_path))
-	text.clear()
-	if ok == false {
-		return unsafe { nil }
-	}
-	return found
-}
-
-fn set_text_prop_impl(object voidptr, prop string, value string) {
-	mut text := GdString{}
-	text.set_text(value)
-	slot := scratch()
-	put_string(slot, text)
-	set_prop(object, prop, slot)
-	free_variant(slot)
-	text.clear()
-}
-
 fn set_bool_prop(object voidptr, prop string, value bool) {
-	slot := scratch()
-	put_bool(slot, value)
+	slot := temp_variant()
+	write_variant_bool(slot, value)
 	set_prop(object, prop, slot)
 	free_variant(slot)
 }
 
 fn set_deferred_bool(object voidptr, prop string, value bool) {
-	slot := scratch()
-	put_bool(slot, value)
+	slot := temp_variant()
+	write_variant_bool(slot, value)
 	set_deferred_prop(object, prop, slot)
 	free_variant(slot)
 }
 
-fn call_group_impl(object voidptr, group string, method string) {
-	tree := call_object(object, 'get_tree')
-	if tree == unsafe { nil } {
-		return
-	}
-	group_name := cached_name(group)
-	method_name := cached_name(method)
-	first := scratch()
-	second := scratch()
-	put_name(first, group_name)
-	put_name(second, method_name)
-	ret := scratch()
-	invoke(tree, 'call_group', [first, second], ret)
-	free_variant(first)
-	free_variant(second)
-	free_variant(ret)
-}
-
-fn move_to_impl(object voidptr, x f32, y f32) {
-	slot := scratch()
-	put_vector(slot, x, y)
-	set_prop(object, 'position', slot)
-	free_variant(slot)
-}
-
-fn push_velocity_impl(object voidptr, x f32, y f32) {
-	slot := scratch()
-	put_vector(slot, x, y)
-	set_prop(object, 'linear_velocity', slot)
-	free_variant(slot)
-}
-
 fn set_float_prop(object voidptr, prop string, value f64) {
-	slot := scratch()
-	put_float(slot, value)
+	slot := temp_variant()
+	write_variant_float(slot, value)
 	set_prop(object, prop, slot)
 	free_variant(slot)
-}
-
-fn add_child_impl(parent voidptr, child voidptr) {
-	if parent == unsafe { nil } || child == unsafe { nil } {
-		return
-	}
-	slot := scratch()
-	from := unsafe { TypeCtor(from_type_of(type_object)) }
-	from(slot, voidptr(&child))
-	call_with(parent, 'add_child', slot)
-	free_variant(slot)
-}
-
-fn viewport_size_impl(object voidptr) (f32, f32) {
-	ret := scratch()
-	ok := invoke(object, 'get_viewport_rect', []voidptr{}, ret)
-	mut rect := Rect{}
-	if ok {
-		to := unsafe { TypeCtor(to_type_of(type_rect2)) }
-		to(voidptr(&rect), ret)
-	}
-	free_variant(ret)
-	return rect.w, rect.h
 }

@@ -34,7 +34,7 @@ fn (mut self TestCritter) process(delta f64) {
 
 fn test_register_stores_class_and_methods() {
 	register[TestCritter]()
-	slot := binding_of_key('testcritter') or {
+	slot := registry.get('testcritter') or {
 		assert false
 		return
 	}
@@ -50,7 +50,7 @@ fn test_register_stores_class_and_methods() {
 fn test_register_updates_existing_slot() {
 	register[TestCritter]()
 	register[TestCritter]()
-	slot := binding_of_key('testcritter') or {
+	slot := registry.get('testcritter') or {
 		assert false
 		return
 	}
@@ -59,7 +59,7 @@ fn test_register_updates_existing_slot() {
 
 fn test_base_for_registered_and_fallback() {
 	register[TestCritter]()
-	// The registry key is the lowercased struct name, and script_key does not
+	// The registry key is the lowercased struct name, and script_id_of_path does not
 	// normalize the file name, so the script file must be named exactly
 	// 'testcritter.v' (docs/PLAN.ru.md 1.4.7).
 	assert base_for('res://scripts/testcritter.v') == 'Area2D'
@@ -73,18 +73,15 @@ fn test_underscored_filename_misses_the_registry() {
 	assert base_for('res://scripts/test_critter.v') == 'Node'
 }
 
-fn test_answers_uses_registry() {
+fn test_has_method_uses_registry() {
 	register[TestCritter]()
-	assert answers('res://scripts/testcritter.v', '', 'hop')
-	assert answers('res://scripts/testcritter.v', '', '_ready')
-	assert answers('res://scripts/testcritter.v', '', 'missing') == false
+	assert registry.has_method('res://scripts/testcritter.v', 'hop')
+	assert registry.has_method('res://scripts/testcritter.v', '_ready')
+	assert registry.has_method('res://scripts/testcritter.v', 'missing') == false
 }
 
-fn test_answers_falls_back_to_source_scan() {
-	assert answers('res://scripts/ghost.v', 'fn (mut self Ghost) ready() {}', 'ready')
-	assert answers('res://scripts/ghost.v', "if name == 'jump' {}", 'jump')
-	assert answers('res://scripts/ghost.v', 'if name == "jump" {}', 'jump')
-	assert answers('res://scripts/ghost.v', '', 'anything') == false
+fn test_has_method_ignores_source_text() {
+	assert registry.has_method('res://scripts/ghost.v', 'ready') == false
 }
 
 fn test_call_named_dispatches_methods() {

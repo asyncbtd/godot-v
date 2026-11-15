@@ -113,7 +113,7 @@ fn write_string_name(dest voidptr, text string) {
 }
 
 fn keep_name(data voidptr) {
-	mut node := unsafe { &NameNode(alloc(uint(sizeof(NameNode)))) }
+	mut node := unsafe { &KeptName(alloc(uint(sizeof(KeptName)))) }
 	node.data = data
 	node.next = api.names
 	api.names = voidptr(node)
@@ -125,12 +125,12 @@ fn release_kept_names() {
 	destroy_string_name(&api.vscript_name)
 	api.vscript_name = GdString{}
 	for api.names != unsafe { nil } {
-		node := unsafe { &NameNode(api.names) }
+		node := unsafe { &KeptName(api.names) }
 		mut name := GdString{
 			data: node.data
 		}
 		api.names = node.next
 		destroy_string_name(&name)
-		release(voidptr(node))
+		free_mem(voidptr(node))
 	}
 }
