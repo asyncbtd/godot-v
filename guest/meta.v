@@ -47,6 +47,7 @@ mut:
 	hint_string string
 	exported    bool
 	line        int
+	fallback    string
 }
 
 struct SignalRecord {
@@ -399,12 +400,16 @@ fn parse_outline(source string) ScriptOutline {
 			pending = []string{}
 			continue
 		}
-		if name, typ := field_from_line(text) {
-			mut prop := prop_from_pending(name, typ, line, pending)
+		body, extra := split_line_attrs(text)
+		if name, typ := field_from_line(body) {
+			mut attrs := pending.clone()
+			attrs << extra
+			mut prop := prop_from_pending(name, typ, line, attrs)
+			prop.fallback = field_default(body)
 			if prop.exported {
 				outline.props << prop
 			}
-			if typ.contains('VSignal') || has_signal_attr(pending) {
+			if typ.contains('VSignal') || has_signal_attr(attrs) {
 				outline.signals << SignalRecord{
 					name: name
 					args: signal_args(typ)
@@ -501,6 +506,26 @@ fn args_from_signature(text string) []MethodArg {
 		}
 	}
 	return args
+}
+
+fn split_line_attrs(text string) (string, []string) {
+	at := text.index('@[') or { return text, []string{} }
+	mut attrs := []string{}
+	for part in text[at..].split('@[') {
+		piece := part.trim_space()
+		if piece == '' {
+			continue
+		}
+		attrs << '@[${piece}'
+	}
+	return text[..at].trim_space(), attrs
+}
+
+fn field_default(text string) string {
+	if text.contains('=') == false {
+		return ''
+	}
+	return text.all_after('=').trim_space()
 }
 
 fn field_from_line(text string) ?(string, string) {

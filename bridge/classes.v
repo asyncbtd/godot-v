@@ -112,6 +112,7 @@ fn construct_class(kind int) voidptr {
 }
 
 fn create_instance(class_userdata voidptr, notify u8) voidptr {
+	attach_gc_thread()
 	kind := pointer_kind(class_userdata)
 	parent := match kind {
 		kind_language { 'ScriptLanguageExtension' }
@@ -158,6 +159,7 @@ fn new_instance(kind int, object voidptr) voidptr {
 }
 
 fn free_instance(class_userdata voidptr, instance voidptr) {
+	attach_gc_thread()
 	if instance == unsafe { nil } {
 		return
 	}
@@ -170,6 +172,7 @@ fn free_instance(class_userdata voidptr, instance voidptr) {
 		state.source.clear()
 		state.base.clear()
 		state.path.clear()
+		drop_placeholders(instance)
 	}
 	free_mem(instance)
 }
@@ -196,6 +199,8 @@ fn virtual_data(class_userdata voidptr, name voidptr, _hash u32) voidptr {
 }
 
 fn call_virtual(instance voidptr, _name voidptr, method_data voidptr, args voidptr, ret voidptr) {
+	// Godot may call this on a worker thread the GC does not know about.
+	attach_gc_thread()
 	method := unsafe { &MethodDef(method_data) }
 	if method.handler == unsafe { nil } {
 		write_stub(ret, method.ret)

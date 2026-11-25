@@ -62,8 +62,9 @@ type BuiltinCall = fn (voidptr, voidptr, voidptr, int)
 
 type KeyedSet = fn (voidptr, voidptr, voidptr)
 
-// report writes a message to Godot's error output.
+// report writes a message to Godot's error output and to the persistent log.
 pub fn report(message string) {
+	log_line(message)
 	if gdf != unsafe { nil } {
 		text := String.new(message)
 		defer {

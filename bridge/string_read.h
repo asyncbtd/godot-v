@@ -14,6 +14,21 @@
  * limitations under the License.
  */
 
+static const char *godot_v_object_path(void *addr) {
+	typedef struct {
+		const char *dli_fname;
+		void *dli_fbase;
+		const char *dli_sname;
+		void *dli_saddr;
+	} GodotVDlInfo;
+	int dladdr(const void *, void *);
+	GodotVDlInfo info = {0};
+	if (addr == 0 || dladdr(addr, &info) == 0 || info.dli_fname == 0) {
+		return 0;
+	}
+	return info.dli_fname;
+}
+
 static void godot_v_module_anchor(void) {
 }
 

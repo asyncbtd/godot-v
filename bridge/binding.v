@@ -21,6 +21,7 @@ fn prepare_binding() {
 }
 
 fn binding_create(_token voidptr, object voidptr) voidptr {
+	attach_gc_thread()
 	mut state := unsafe { &ScriptResource(alloc(uint(sizeof(ScriptResource)))) }
 	state.kind = kind_script
 	state.object = object
@@ -29,6 +30,7 @@ fn binding_create(_token voidptr, object voidptr) voidptr {
 }
 
 fn binding_free(_token voidptr, _object voidptr, instance voidptr) {
+	attach_gc_thread()
 	if instance == unsafe { nil } {
 		return
 	}
@@ -39,6 +41,7 @@ fn binding_free(_token voidptr, _object voidptr, instance voidptr) {
 	state.source.clear()
 	state.base.clear()
 	state.path.clear()
+	drop_placeholders(instance)
 	free_mem(instance)
 }
 

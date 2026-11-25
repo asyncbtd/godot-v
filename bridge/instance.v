@@ -146,6 +146,9 @@ fn enable_loops(owner voidptr, key string) {
 }
 
 fn script_instance_of(data voidptr) &ScriptInstance {
+	// Every script-instance callback that touches V memory funnels through
+	// here; make sure the calling Godot thread is known to the GC first.
+	attach_gc_thread()
 	if data == unsafe { nil } {
 		return unsafe { nil }
 	}

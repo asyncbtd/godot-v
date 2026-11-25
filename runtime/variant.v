@@ -30,12 +30,23 @@ mut:
 
 // deinit releases this variant.
 pub fn (s &Variant) deinit() {
+	if gdf == unsafe { nil } {
+		return
+	}
 	gdf.variant_destroy(s)
 }
 
-// to_variant returns this value as a variant.
-pub fn (s Variant) to_variant() Variant {
-	return s
+// to_variant returns a reference-counted copy of this variant.
+pub fn (s &Variant) to_variant() Variant {
+	result := Variant{}
+	if gdf == unsafe { nil } {
+		unsafe {
+			C.memcpy(&result, s, sizeof(result))
+		}
+		return result
+	}
+	gdf.variant_new_copy(GDExtensionUninitializedVariantPtr(&result), s)
+	return result
 }
 
 // from_variant copies src into this variant.

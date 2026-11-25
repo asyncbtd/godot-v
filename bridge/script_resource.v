@@ -111,6 +111,18 @@ fn on_script_placeholder(ctx Call) {
 	write_placeholder(ctx.instance, ctx.args, ctx.ret)
 }
 
+fn on_placeholder_erased(ctx Call) {
+	forget_placeholder(ctx.instance, arg_object(ctx.args, 0))
+}
+
+fn on_script_exports(ctx Call) {
+	refresh_exports(ctx.instance)
+}
+
+fn on_placeholder_fallback(ctx Call) {
+	write_bool(ctx.ret, true)
+}
+
 fn script_state(instance voidptr) &ScriptResource {
 	return unsafe { &ScriptResource(instance) }
 }
@@ -125,6 +137,7 @@ fn set_script_source(instance voidptr, source string) {
 	mut state := unsafe { &ScriptResource(instance) }
 	state.source.set_text(source)
 	refresh_base(mut state)
+	refresh_exports(instance)
 }
 
 fn set_script_path(instance voidptr, path string) {
@@ -137,7 +150,10 @@ fn write_placeholder(instance voidptr, args voidptr, ret voidptr) {
 	state := script_state(instance)
 	node := arg_object(args, 0)
 	f := unsafe { Placeholder(godot_host.api.placeholder) }
-	write_pointer(ret, f(godot_host.api.language, state.object, node))
+	holder := f(godot_host.api.language, state.object, node)
+	remember_placeholder(instance, holder)
+	write_pointer(ret, holder)
+	refresh_exports(instance)
 }
 
 fn write_named_list(instance voidptr, ret voidptr, kind string) {
@@ -152,17 +168,14 @@ fn write_named_list(instance voidptr, ret voidptr, kind string) {
 			names << signal.name
 		}
 	} else {
-		for prop in outline.props {
-			if prop.exported {
-				names << prop.name
-			}
+		for prop in exported_of(instance) {
+			info := property_dictionary(prop)
+			push_godot(ret, voidptr(&info), GDExtensionVariantType.type_dictionary)
 		}
+		return
 	}
 	for name in names {
-		item := temp_variant()
-		dictionary_text(item, 'name', name)
-		push_array(ret, item)
-		free_variant(item)
+		push_named_dict(ret, name)
 	}
 }
 
@@ -183,4 +196,139 @@ fn write_arg_count(instance voidptr, name string, ret voidptr) {
 			return
 		}
 	}
+}
+
+__global placeholders_of = map[u64][]voidptr{}
+
+fn remember_placeholder(instance voidptr, holder voidptr) {
+	if instance == unsafe { nil } || holder == unsafe { nil } {
+		return
+	}
+	key := u64(instance)
+	mut list := placeholders_of[key] or { []voidptr{} }
+	for item in list {
+		if item == holder {
+			return
+		}
+	}
+	list << holder
+	placeholders_of[key] = list
+}
+
+fn forget_placeholder(instance voidptr, holder voidptr) {
+	if instance == unsafe { nil } {
+		return
+	}
+	key := u64(instance)
+	list := placeholders_of[key] or { return }
+	mut next := []voidptr{}
+	for item in list {
+		if item != holder {
+			next << item
+		}
+	}
+	if next.len == 0 {
+		placeholders_of.delete(key)
+		return
+	}
+	placeholders_of[key] = next
+}
+
+fn drop_placeholders(instance voidptr) {
+	if instance == unsafe { nil } {
+		return
+	}
+	key := u64(instance)
+	if key in placeholders_of {
+		placeholders_of.delete(key)
+	}
+}
+
+fn placeholders_for(instance voidptr) []voidptr {
+	return placeholders_of[u64(instance)] or { []voidptr{} }
+}
+
+fn exported_of(instance voidptr) []PropRecord {
+	if instance == unsafe { nil } {
+		return []PropRecord{}
+	}
+	parsed := parse_outline(script_state(instance).source.text())
+	if parsed.props.len > 0 {
+		return parsed.props
+	}
+	mut props := []PropRecord{}
+	for prop in outline_of_script(instance).props {
+		if prop.exported {
+			props << prop
+		}
+	}
+	return props
+}
+
+fn property_dictionary(prop PropRecord) Dictionary {
+	mut info := Dictionary.new0()
+	dict_put_text(voidptr(&info), 'name', prop.name)
+	dict_put_int(voidptr(&info), 'type', i64(variant_type_of(prop.typ)))
+	dict_put_int(voidptr(&info), 'hint', i64(hint_code(prop.hint)))
+	dict_put_text(voidptr(&info), 'hint_string', prop.hint_string)
+	dict_put_int(voidptr(&info), 'usage', 4102)
+	return info
+}
+
+fn refresh_exports(instance voidptr) {
+	if gdf == unsafe { nil } || instance == unsafe { nil } {
+		return
+	}
+	holders := placeholders_for(instance)
+	if holders.len == 0 {
+		return
+	}
+	mut props := Array.new0()
+	mut values := Dictionary.new0()
+	for prop in exported_of(instance) {
+		info := property_dictionary(prop)
+		push_godot(voidptr(&props), voidptr(&info), GDExtensionVariantType.type_dictionary)
+		mut value := [24]u8{}
+		write_fallback(voidptr(&value[0]), prop)
+		dict_put_raw(voidptr(&values), prop.name, voidptr(&value[0]))
+		destroy_variant(voidptr(&value[0]))
+	}
+	update := gdf.placeholder_script_instance_update
+	for holder in holders {
+		update(holder, voidptr(&props), voidptr(&values))
+	}
+}
+
+fn write_fallback(dest voidptr, prop PropRecord) {
+	match prop.typ {
+		'bool' {
+			flag := u8(if prop.fallback == 'true' { 1 } else { 0 })
+			from := unsafe { TypeCtor(godot_host.api.variant_from_bool) }
+			from(dest, voidptr(&flag))
+		}
+		'int', 'i64' {
+			number := prop.fallback.i64()
+			variant_number(dest, number)
+		}
+		'f32', 'f64' {
+			number := prop.fallback.f64()
+			from := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_float)
+			from(dest, voidptr(&number))
+		}
+		'string' {
+			mut raw := GdString{}
+			raw.set_text(quoted_text(prop.fallback))
+			from := unsafe { TypeCtor(godot_host.api.variant_from_string) }
+			from(dest, voidptr(&raw))
+			raw.clear()
+		}
+		else {}
+	}
+}
+
+fn quoted_text(value string) string {
+	if value.len >= 2 && (value[0] == `'` || value[0] == `"`) {
+		return value[1..value.len - 1]
+	}
+	return value
 }

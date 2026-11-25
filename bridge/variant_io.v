@@ -119,6 +119,31 @@ fn dictionary_text(dest voidptr, key string, value string) {
 	value_string.clear()
 }
 
+fn push_named_dict(array voidptr, name string) {
+	if gdf == unsafe { nil } || array == unsafe { nil } {
+		return
+	}
+	dict := temp_variant()
+	dictionary_text(dict, 'name', name)
+	mut wrapped := [24]u8{}
+	from := gdf.get_variant_from_type_constructor(GDExtensionVariantType.type_dictionary)
+	from(voidptr(&wrapped[0]), dict)
+	push_array(array, voidptr(&wrapped[0]))
+	destroy_variant(voidptr(&wrapped[0]))
+	release_godot(dict, GDExtensionVariantType.type_dictionary)
+}
+
+fn push_godot(array voidptr, builtin voidptr, kind GDExtensionVariantType) {
+	if gdf == unsafe { nil } || array == unsafe { nil } || builtin == unsafe { nil } {
+		return
+	}
+	mut wrapped := [24]u8{}
+	from := gdf.get_variant_from_type_constructor(kind)
+	from(voidptr(&wrapped[0]), builtin)
+	push_array(array, voidptr(&wrapped[0]))
+	destroy_variant(voidptr(&wrapped[0]))
+}
+
 fn push_array(array voidptr, item voidptr) {
 	if gdf == unsafe { nil } || array == unsafe { nil } || item == unsafe { nil } {
 		return

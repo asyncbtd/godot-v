@@ -72,7 +72,6 @@ fn spec_class(kind int) string {
 fn not_registered_yet() map[string][]string {
 	return {
 		'ScriptLanguageExtension': ['_preferred_file_name_casing']
-		'ScriptExtension':         ['_placeholder_erased']
 		'ResourceFormatLoader':    ['_exists', '_get_classes_used', '_get_dependencies',
 			'_get_resource_script_class', '_get_resource_uid', '_rename_dependencies']
 		'ResourceFormatSaver':     ['_set_uid']

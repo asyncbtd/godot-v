@@ -34,14 +34,7 @@ fn C.GetLastError() u32
 
 fn C.godot_v_module_address() voidptr
 
-struct C.Dl_info {
-	dli_fname &u8
-	dli_fbase voidptr
-	dli_sname &u8
-	dli_saddr voidptr
-}
-
-fn C.dladdr(addr voidptr, info &C.Dl_info) int
+fn C.godot_v_object_path(addr voidptr) &u8
 
 fn C.GetModuleHandleExA(flags u32, addr voidptr, module &voidptr) int
 
@@ -155,11 +148,11 @@ fn loaded_module_path() string {
 		}
 		return unsafe { tos(buf.data, n) }.clone()
 	} $else {
-		info := C.Dl_info{}
-		if C.dladdr(addr, &info) == 0 || info.dli_fname == unsafe { nil } {
+		path := C.godot_v_object_path(addr)
+		if path == unsafe { nil } {
 			return ''
 		}
-		return unsafe { cstring_to_vstring(info.dli_fname) }
+		return unsafe { cstring_to_vstring(path) }
 	}
 }
 

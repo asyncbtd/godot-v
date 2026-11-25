@@ -172,6 +172,11 @@ fn test_outline_parser_and_validate() {
 	assert outline.methods[1].args[0].typ == 'i64'
 	assert outline.props.len == 1
 	assert outline.props[0].name == 'hp'
+	same_line := parse_outline('pub struct Player {\npub mut:\n\tspeed f32 = 400 @[godot.Export]\n}\n')
+	assert same_line.props.len == 1
+	assert same_line.props[0].name == 'speed'
+	assert same_line.props[0].typ == 'f32'
+	assert same_line.props[0].fallback == '400'
 	assert outline.signals.len == 1
 	assert outline.signals[0].name == 'died'
 	assert outline.signals[0].args[0].typ == 'int'

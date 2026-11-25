@@ -388,9 +388,6 @@ fn write_methods(instance voidptr, ret voidptr) {
 	state := script_state(instance)
 	slot := godot_host.registry.get(script_id_of_path(state.path.text())) or { return }
 	for name in slot.methods {
-		item := temp_variant()
-		dictionary_text(item, 'name', name)
-		push_array(ret, item)
-		free_variant(item)
+		push_named_dict(ret, name)
 	}
 }

@@ -21,6 +21,7 @@ fn godot_v_init(get_proc_address voidptr, library voidptr, initialization voidpt
 	godot_host.api.library = library
 	load_api()
 	load_gdf(get_proc_address, library)
+	install_crash_logging()
 	mut startup := unsafe { &Initialization(initialization) }
 	startup.minimum_level = level_scene
 	startup.userdata = unsafe { nil }
@@ -36,6 +37,7 @@ fn initialize_level(_userdata voidptr, level u32) {
 	godot_host.api.engine = singleton('Engine')
 	godot_host.api.resource_loader = singleton('ResourceLoader')
 	godot_host.api.resource_saver = singleton('ResourceSaver')
+	setup_project_log()
 	register_classes()
 	godot_host.api.language = construct_class(kind_language)
 	godot_host.api.loader = construct_class(kind_loader)
